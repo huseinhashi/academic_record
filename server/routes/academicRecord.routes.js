@@ -10,6 +10,7 @@ import {
   getMyAcademicRecords,
   getPendingAcademicRecords,
   checkHashValidity,
+  getAllAcademicRecords,
 } from "../controllers/academicRecord.controller.js";
 import { protect, authorize } from "../middlewares/auth.middleware.js";
 import { uploadMiddleware } from "../config/cloudinary.js";
@@ -65,5 +66,8 @@ router.get("/check-hash/:hash", checkHashValidity);
 
 // Delete a record (admin or student if pending)
 router.delete("/:id", authorize("Admin", "Student"), deleteAcademicRecord);
+
+// Get all academic records (admin only)
+router.get("/admin/all", authorize("Admin"), getAllAcademicRecords);
 
 export default router;

@@ -118,6 +118,56 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const registerInstitution = async (userData) => {
+    try {
+      const response = await api.post(`/auth/register/institution`, userData);
+      
+      if (!response.data || !response.data.data) {
+        throw new Error("Invalid response from server");
+      }
+      
+      const { token, user } = response.data.data;
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      setUser(user);
+      setIsAuthenticated(true);
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+      return user;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || "Registration failed";
+      console.error("Registration error:", errorMessage);
+      throw new Error(errorMessage);
+    }
+  };
+
+  const registerCompany = async (userData) => {
+    try {
+      const response = await api.post(`/auth/register/company`, userData);
+      
+      if (!response.data || !response.data.data) {
+        throw new Error("Invalid response from server");
+      }
+      
+      const { token, user } = response.data.data;
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      setUser(user);
+      setIsAuthenticated(true);
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+      return user;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || "Registration failed";
+      console.error("Registration error:", errorMessage);
+      throw new Error(errorMessage);
+    }
+  };
+
   const loginWithWallet = async () => {
     try {
       const walletAddress = await connectWallet();
@@ -204,6 +254,8 @@ export const AuthProvider = ({ children }) => {
         isConnecting,
         currentWallet,
         registerStudent,
+        registerInstitution,
+        registerCompany,
         loginWithWallet,
         loginWithPassword,
         connectWallet,

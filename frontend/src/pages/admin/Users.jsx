@@ -458,6 +458,8 @@ export const AdminUsers = () => {
                     <TableRow>
                       <TableHead>Name</TableHead>
                       <TableHead>Email</TableHead>
+                      <TableHead>Website</TableHead>
+                      <TableHead>Location</TableHead>
                       <TableHead>Authentication</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
@@ -466,7 +468,7 @@ export const AdminUsers = () => {
                   <TableBody>
                     {institutions.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center">
+                        <TableCell colSpan={7} className="text-center">
                           No institutions found
                         </TableCell>
                       </TableRow>
@@ -475,6 +477,17 @@ export const AdminUsers = () => {
                         <TableRow key={institution._id}>
                           <TableCell>{institution.name}</TableCell>
                           <TableCell>{institution.email}</TableCell>
+                          <TableCell>
+                            <a 
+                              href={institution.website} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline"
+                            >
+                              {institution.website}
+                            </a>
+                          </TableCell>
+                          <TableCell>{institution.location}</TableCell>
                           <TableCell>
                             {institution.authMethod === "password" ? (
                               <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
@@ -559,6 +572,9 @@ export const AdminUsers = () => {
                     <TableRow>
                       <TableHead>Name</TableHead>
                       <TableHead>Email</TableHead>
+                      <TableHead>Website</TableHead>
+                      <TableHead>Address</TableHead>
+                      <TableHead>Phone</TableHead>
                       <TableHead>Authentication</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
@@ -567,7 +583,7 @@ export const AdminUsers = () => {
                   <TableBody>
                     {companies.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center">
+                        <TableCell colSpan={8} className="text-center">
                           No companies found
                         </TableCell>
                       </TableRow>
@@ -576,6 +592,18 @@ export const AdminUsers = () => {
                         <TableRow key={company._id}>
                           <TableCell>{company.name}</TableCell>
                           <TableCell>{company.email}</TableCell>
+                          <TableCell>
+                            <a 
+                              href={company.website} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline"
+                            >
+                              {company.website}
+                            </a>
+                          </TableCell>
+                          <TableCell>{company.address}</TableCell>
+                          <TableCell>{company.phone}</TableCell>
                           <TableCell>
                             {company.authMethod === "password" ? (
                               <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
@@ -688,8 +716,33 @@ export const AdminUsers = () => {
                 required
               />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="website">Website</Label>
+              <Input 
+                id="website" 
+                name="website" 
+                type="url"
+                value={createFormData.website}
+                onChange={handleCreateFormChange}
+                placeholder={createType === 'institution' ? 'https://university.edu' : 'https://company.com'}
+                required
+              />
+            </div>
             
-            {createType === 'company' && (
+            {createType === 'institution' ? (
+              <div className="space-y-2">
+                <Label htmlFor="location">Location</Label>
+                <Input 
+                  id="location" 
+                  name="location" 
+                  value={createFormData.location}
+                  onChange={handleCreateFormChange}
+                  placeholder="City, Country"
+                  required
+                />
+              </div>
+            ) : (
               <>
                 <div className="space-y-2">
                   <Label htmlFor="address">Address</Label>

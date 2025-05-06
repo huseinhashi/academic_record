@@ -215,7 +215,7 @@ export const getApplicationById = async (req, res, next) => {
           select: "name email",
         },
       })
-      .populate("studentId", "name wallet roleNumber")
+      .populate("studentId", "name wallet roleNumber skills")
       .populate("academicRecords");
 
     if (!application) {
@@ -224,7 +224,7 @@ export const getApplicationById = async (req, res, next) => {
         message: "Application not found",
       });
     }
-
+    //5320465
     // Check authorization
     const isOwnerStudent =
       req.user.userType === "Student" &&
@@ -338,7 +338,7 @@ export const getCompanyApplications = async (req, res, next) => {
     // Find all applications for these jobs
     const applications = await Application.find({ jobId: { $in: jobIds } })
       .populate("jobId", "title status")
-      .populate("studentId", "name roleNumber")
+      .populate("studentId", "name roleNumber skills")
       .populate({
         path: "academicRecords",
         populate: {
@@ -417,6 +417,52 @@ export const updateApplicationStatus = async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: processedApplication,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get all applications (admin only)
+export const getAllApplicationsAdmin = async (req, res, next) => {
+  try {
+    const { status } = req.query;
+    const query = {};
+
+    if (status && ["pending", "accepted", "rejected"].includes(status)) {
+      query.status = status;
+    }
+
+    const applications = await Application.find(query)
+      .populate("studentId", "name wallet roleNumber skills")
+      .populate("jobId", "title description requirements")
+      .populate({
+        path: "jobId",
+        populate: {
+          path: "companyId",
+          select: "name email",
+        },
+      })
+      .populate("academicRecords")
+      .sort({ createdAt: -1 });
+
+    // Add signed URLs to academic records
+    const applicationsWithUrls = await Promise.all(
+      applications.map(async (application) => {
+        const applicationObj = application.toObject();
+        if (applicationObj.academicRecords?.length > 0) {
+          applicationObj.academicRecords = await addSignedUrlsToRecords(
+            applicationObj.academicRecords
+          );
+        }
+        return applicationObj;
+      })
+    );
+
+    res.status(200).json({
+      success: true,
+      count: applications.length,
+      data: applicationsWithUrls,
     });
   } catch (error) {
     next(error);

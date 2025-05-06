@@ -16,6 +16,12 @@ const studentSchema = new mongoose.Schema(
       ref: "Institution",
       required: true,
     },
+    skills: [
+      {
+        type: String,
+        required: true,
+      },
+    ],
     isVerifiedByInstitution: {
       type: Boolean,
       default: false,

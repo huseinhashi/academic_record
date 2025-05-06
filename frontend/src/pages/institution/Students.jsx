@@ -113,6 +113,7 @@ export const InstitutionStudents = () => {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Wallet</TableHead>
+                  <TableHead>Skills</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -120,7 +121,7 @@ export const InstitutionStudents = () => {
               <TableBody>
                 {filteredStudents.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center">
+                    <TableCell colSpan={5} className="text-center">
                       {searchQuery ? "No matching students found" : "No students found"}
                     </TableCell>
                   </TableRow>
@@ -129,6 +130,18 @@ export const InstitutionStudents = () => {
                     <TableRow key={student._id}>
                       <TableCell className="font-medium">{student.name}</TableCell>
                       <TableCell className="font-mono">{student.wallet}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {student.skills?.map((skill, index) => (
+                            <Badge key={index} variant="secondary">
+                              {skill}
+                            </Badge>
+                          ))}
+                          {(!student.skills || student.skills.length === 0) && (
+                            <span className="text-muted-foreground text-sm">No skills listed</span>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         {student.isVerifiedByInstitution ? (
                           <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">

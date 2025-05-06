@@ -15,6 +15,10 @@ const companySchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    website: {
+      type: String,
+      required: true,
+    },
     isVerifiedByAdmin: {
       type: Boolean,
       default: false,

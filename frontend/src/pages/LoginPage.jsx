@@ -211,12 +211,26 @@ export const LoginPage = () => {
             <div className="text-sm text-center">
               Don't have an account yet?
             </div>
-            <Link to="/register" className="w-full">
-              <Button variant="outline" className="w-full" size="lg">
-                Create Student Account
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+            <div className="grid grid-cols-3 gap-2 w-full">
+              <Link to="/register?type=student" className="w-full">
+                <Button variant="outline" className="w-full" size="lg">
+                  Student
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              <Link to="/register?type=institution" className="w-full">
+                <Button variant="outline" className="w-full" size="lg">
+                  Institution
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              <Link to="/register?type=company" className="w-full">
+                <Button variant="outline" className="w-full" size="lg">
+                  Company
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
           </CardFooter>
         </Card>
       </div>

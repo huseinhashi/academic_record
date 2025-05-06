@@ -258,7 +258,7 @@ export const getPendingAcademicRecords = async (req, res, next) => {
       institutionId,
       status: "pending",
     })
-      .populate("studentId", "name wallet roleNumber")
+      .populate("studentId", "name wallet roleNumber skills")
       .sort({ createdAt: -1 });
 
     // Add signed URLs to each record
@@ -301,7 +301,7 @@ export const getInstitutionAcademicRecords = async (req, res, next) => {
     }
 
     const records = await AcademicRecord.find(query)
-      .populate("studentId", "name wallet roleNumber")
+      .populate("studentId", "name wallet roleNumber skills")
       .sort({ createdAt: -1 });
 
     // Add signed URLs to each record
@@ -323,7 +323,7 @@ export const getAcademicRecordById = async (req, res, next) => {
     const { id } = req.params;
 
     const record = await AcademicRecord.findById(id)
-      .populate("studentId", "name wallet roleNumber")
+      .populate("studentId", "name wallet roleNumber skills")
       .populate("institutionId", "name email");
 
     if (!record) {
@@ -529,6 +529,34 @@ export const deleteAcademicRecord = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "Academic record deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get all academic records (admin only)
+export const getAllAcademicRecords = async (req, res, next) => {
+  try {
+    const { status } = req.query;
+    const query = {};
+
+    if (status && ["pending", "verified", "rejected"].includes(status)) {
+      query.status = status;
+    }
+
+    const records = await AcademicRecord.find(query)
+      .populate("studentId", "name wallet roleNumber skills")
+      .populate("institutionId", "name email")
+      .sort({ createdAt: -1 });
+
+    // Add signed URLs to each record
+    const recordsWithUrls = await addSignedUrlsToRecords(records);
+
+    res.status(200).json({
+      success: true,
+      count: records.length,
+      data: recordsWithUrls,
     });
   } catch (error) {
     next(error);

@@ -136,7 +136,10 @@ export const getAllStudents = async (req, res, next) => {
     res.status(200).json({
       success: true,
       count: students.length,
-      data: students,
+      data: students.map((student) => ({
+        ...student.toObject(),
+        skills: student.skills,
+      })),
     });
   } catch (error) {
     next(error);
@@ -170,7 +173,10 @@ export const getStudentById = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      data: student,
+      data: {
+        ...student.toObject(),
+        skills: student.skills,
+      },
     });
   } catch (error) {
     next(error);
@@ -307,7 +313,11 @@ export const getAllInstitutions = async (req, res, next) => {
     res.status(200).json({
       success: true,
       count: institutions.length,
-      data: institutions,
+      data: institutions.map((institution) => ({
+        ...institution.toObject(),
+        website: institution.website,
+        location: institution.location,
+      })),
     });
   } catch (error) {
     next(error);
@@ -330,7 +340,11 @@ export const getInstitutionById = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      data: institution,
+      data: {
+        ...institution.toObject(),
+        website: institution.website,
+        location: institution.location,
+      },
     });
   } catch (error) {
     next(error);
@@ -494,7 +508,10 @@ export const getAllCompanies = async (req, res, next) => {
     res.status(200).json({
       success: true,
       count: companies.length,
-      data: companies,
+      data: companies.map((company) => ({
+        ...company.toObject(),
+        website: company.website,
+      })),
     });
   } catch (error) {
     next(error);
@@ -517,7 +534,10 @@ export const getCompanyById = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      data: company,
+      data: {
+        ...company.toObject(),
+        website: company.website,
+      },
     });
   } catch (error) {
     next(error);

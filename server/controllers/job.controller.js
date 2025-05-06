@@ -10,6 +10,16 @@ export const createJob = async (req, res, next) => {
     // Get company ID from authenticated user
     const companyId = req.user._id;
 
+    // Check if company is verified by admin
+    const company = await Company.findById(companyId);
+    if (!company.isVerifiedByAdmin) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Your company account needs to be verified by admin before posting jobs",
+      });
+    }
+
     // Create the job
     const job = await Job.create({
       companyId,
@@ -358,6 +368,31 @@ export const deleteJob = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "Job deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get all jobs (admin only)
+export const getAllJobsAdmin = async (req, res, next) => {
+  try {
+    const { status } = req.query;
+    const query = {};
+
+    if (status && ["open", "closed", "filled"].includes(status)) {
+      query.status = status;
+    }
+
+    const jobs = await Job.find(query)
+      .populate("companyId", "name email")
+      .populate("hiredApplicant", "name wallet roleNumber")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: jobs.length,
+      data: jobs,
     });
   } catch (error) {
     next(error);

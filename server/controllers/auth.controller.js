@@ -111,12 +111,12 @@ export const registerStudent = async (req, res, next) => {
 // Create new institution (only callable by admin)
 export const createInstitution = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, website, location } = req.body;
 
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !website || !location) {
       return res.status(400).json({
         success: false,
-        message: "Please provide name, email, and password",
+        message: "Please provide name, email, password, website, and location",
       });
     }
 
@@ -134,6 +134,8 @@ export const createInstitution = async (req, res, next) => {
       name,
       email, // This will go to the User model
       password, // This will go to the User model
+      website,
+      location,
       authMethod: "password",
       isVerifiedByAdmin: false,
       wallet: null, // Explicitly set wallet to null for password auth
@@ -146,6 +148,8 @@ export const createInstitution = async (req, res, next) => {
           id: institution._id,
           name: institution.name,
           email: institution.email,
+          website: institution.website,
+          location: institution.location,
           userType: institution.userType,
           isVerifiedByAdmin: institution.isVerifiedByAdmin,
           authMethod: institution.authMethod,
@@ -170,12 +174,12 @@ export const createInstitution = async (req, res, next) => {
 // Create new company (only callable by admin)
 export const createCompany = async (req, res, next) => {
   try {
-    const { name, email, password, address, phone } = req.body;
+    const { name, email, password, address, phone, website } = req.body;
 
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !website) {
       return res.status(400).json({
         success: false,
-        message: "Please provide name, email, and password",
+        message: "Please provide name, email, password, and website",
       });
     }
 
@@ -195,6 +199,7 @@ export const createCompany = async (req, res, next) => {
       password, // This will go to the User model
       address: address || "",
       phone: phone || "",
+      website,
       authMethod: "password",
       isVerifiedByAdmin: false,
       wallet: null, // Explicitly set wallet to null for password auth
@@ -209,6 +214,7 @@ export const createCompany = async (req, res, next) => {
           email: company.email,
           address: company.address,
           phone: company.phone,
+          website: company.website,
           userType: company.userType,
           isVerifiedByAdmin: company.isVerifiedByAdmin,
           authMethod: company.authMethod,
@@ -377,6 +383,152 @@ export const loginWithPassword = async (req, res, next) => {
       },
     });
   } catch (error) {
+    next(error);
+  }
+};
+
+// Register new institution (public endpoint)
+export const registerInstitution = async (req, res, next) => {
+  try {
+    const { name, email, password, website, location } = req.body;
+
+    if (!name || !email || !password || !website || !location) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide name, email, password, website, and location",
+      });
+    }
+
+    // Check if email is already registered
+    const existingEmail = await User.findOne({ email: email.toLowerCase() });
+    if (existingEmail) {
+      return res.status(400).json({
+        success: false,
+        message: "Institution with this email already exists",
+      });
+    }
+
+    // Create institution with email in the base User schema
+    const institution = await Institution.create({
+      name,
+      email, // This will go to the User model
+      password, // This will go to the User model
+      website,
+      location,
+      authMethod: "password",
+      isVerifiedByAdmin: false,
+      wallet: null, // Explicitly set wallet to null for password auth
+    });
+
+    const token = jwt.sign(
+      { id: institution._id, userType: institution.userType },
+      JWT_SECRET,
+      {
+        expiresIn: JWT_EXPIRES_IN,
+      }
+    );
+
+    res.status(201).json({
+      success: true,
+      data: {
+        user: {
+          id: institution._id,
+          name: institution.name,
+          email: institution.email,
+          website: institution.website,
+          location: institution.location,
+          userType: institution.userType,
+          isVerifiedByAdmin: institution.isVerifiedByAdmin,
+          authMethod: institution.authMethod,
+        },
+        token,
+      },
+    });
+  } catch (error) {
+    console.error("Institution registration error:", error);
+
+    // Handle MongoDB duplicate key errors
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "An institution with this email already exists",
+      });
+    }
+
+    next(error);
+  }
+};
+
+// Register new company (public endpoint)
+export const registerCompany = async (req, res, next) => {
+  try {
+    const { name, email, password, address, phone, website } = req.body;
+
+    if (!name || !email || !password || !website) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide name, email, password, and website",
+      });
+    }
+
+    // Check if email is already registered
+    const existingEmail = await User.findOne({ email: email.toLowerCase() });
+    if (existingEmail) {
+      return res.status(400).json({
+        success: false,
+        message: "Company with this email already exists",
+      });
+    }
+
+    // Create company with email in the base User schema
+    const company = await Company.create({
+      name,
+      email, // This will go to the User model
+      password, // This will go to the User model
+      address: address || "",
+      phone: phone || "",
+      website,
+      authMethod: "password",
+      isVerifiedByAdmin: false,
+      wallet: null, // Explicitly set wallet to null for password auth
+    });
+
+    const token = jwt.sign(
+      { id: company._id, userType: company.userType },
+      JWT_SECRET,
+      {
+        expiresIn: JWT_EXPIRES_IN,
+      }
+    );
+
+    res.status(201).json({
+      success: true,
+      data: {
+        user: {
+          id: company._id,
+          name: company.name,
+          email: company.email,
+          address: company.address,
+          phone: company.phone,
+          website: company.website,
+          userType: company.userType,
+          isVerifiedByAdmin: company.isVerifiedByAdmin,
+          authMethod: company.authMethod,
+        },
+        token,
+      },
+    });
+  } catch (error) {
+    console.error("Company registration error:", error);
+
+    // Handle MongoDB duplicate key errors
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "A company with this email already exists",
+      });
+    }
+
     next(error);
   }
 };

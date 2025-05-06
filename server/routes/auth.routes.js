@@ -2,6 +2,8 @@ import express from "express";
 import {
   createAdmin,
   registerStudent,
+  registerInstitution,
+  registerCompany,
   createInstitution,
   createCompany,
   loginWithWallet,
@@ -13,6 +15,8 @@ const router = express.Router();
 
 // Public routes
 router.post("/register/student", registerStudent);
+router.post("/register/institution", registerInstitution);
+router.post("/register/company", registerCompany);
 router.post("/login/wallet", loginWithWallet);
 router.post("/login/password", loginWithPassword);
 

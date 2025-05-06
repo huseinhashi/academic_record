@@ -14,7 +14,9 @@ import {
   Building,
   GraduationCap,
   BookOpen,
-  Briefcase
+  Briefcase,
+  ClipboardList,
+  BarChart3
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -86,6 +88,30 @@ export const DashboardLayout = ({ children }) => {
           icon: Users,
           href: `${basePath}/users`,
           description: "Manage all system users",
+        },
+        {
+          title: "Academic Records",
+          icon: FileText,
+          href: `${basePath}/records`,
+          description: "View and manage academic records",
+        },
+        {
+          title: "Jobs",
+          icon: Briefcase,
+          href: `${basePath}/jobs`,
+          description: "View and manage job postings",
+        },
+        {
+          title: "Applications",
+          icon: ClipboardList,
+          href: `${basePath}/applications`,
+          description: "View and manage job applications",
+        },
+        {
+          title: "Reports",
+          icon: BarChart3,
+          href: `${basePath}/reports`,
+          description: "View and export system reports",
         }
       );
     } 

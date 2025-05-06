@@ -11,6 +11,10 @@ import { Toaster } from "@/components/ui/toaster";
 // Dashboard Pages
 import { AdminDashboard } from "@/pages/admin/Dashboard";
 import { AdminUsers } from "@/pages/admin/Users";
+import { AdminRecords } from "@/pages/admin/Records";
+import { AdminJobs } from "@/pages/admin/Jobs";
+import { AdminApplications } from "@/pages/admin/Applications";
+import { AdminReports } from "@/pages/admin/Reports";
 import { 
   StudentDashboard, 
   StudentRecords, 
@@ -68,6 +72,50 @@ function App() {
               <ProtectedRoute requiredType="Admin">
                 <DashboardLayout>
                   <AdminUsers />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/admin/records"
+            element={
+              <ProtectedRoute requiredType="Admin">
+                <DashboardLayout>
+                  <AdminRecords />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/admin/jobs"
+            element={
+              <ProtectedRoute requiredType="Admin">
+                <DashboardLayout>
+                  <AdminJobs />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/admin/applications"
+            element={
+              <ProtectedRoute requiredType="Admin">
+                <DashboardLayout>
+                  <AdminApplications />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/admin/reports"
+            element={
+              <ProtectedRoute requiredType="Admin">
+                <DashboardLayout>
+                  <AdminReports />
                 </DashboardLayout>
               </ProtectedRoute>
             }
