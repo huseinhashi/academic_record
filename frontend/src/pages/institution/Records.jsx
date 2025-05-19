@@ -211,7 +211,7 @@ export const InstitutionRecords = () => {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Academic Records</h1>
         <p className="text-muted-foreground">
-          Verify and manage academic records submitted by your students
+          Verify and manage academic records submitted by your Graduates
         </p>
       </div>
 
@@ -243,7 +243,7 @@ export const InstitutionRecords = () => {
             <CardHeader>
               <CardTitle>Pending Records</CardTitle>
               <CardDescription>
-                Review and verify academic records submitted by students
+                Review and verify academic records submitted by Graduates
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -262,6 +262,7 @@ export const InstitutionRecords = () => {
                       <TableHead>Student</TableHead>
                       <TableHead>Record Type</TableHead>
                       <TableHead>Title</TableHead>
+                      <TableHead>GPA</TableHead>
                       <TableHead>Submitted On</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
@@ -278,6 +279,8 @@ export const InstitutionRecords = () => {
                         </TableCell>
                         <TableCell>{record.recordType}</TableCell>
                         <TableCell>{record.title}</TableCell>
+                                                <TableCell>{record.gpa}</TableCell>
+
                         <TableCell>{new Date(record.createdAt).toLocaleDateString()}</TableCell>
                         <TableCell>{getStatusBadge(record.status)}</TableCell>
                         <TableCell>
@@ -349,6 +352,7 @@ export const InstitutionRecords = () => {
                   <TableHead>Student</TableHead>
                       <TableHead>Record Type</TableHead>
                       <TableHead>Title</TableHead>
+                      <TableHead>GPA</TableHead>
                       <TableHead>Verified On</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
@@ -365,6 +369,7 @@ export const InstitutionRecords = () => {
                     </TableCell>
                       <TableCell>{record.recordType}</TableCell>
                         <TableCell>{record.title}</TableCell>
+                        <TableCell>{record.gpa}</TableCell>
                         <TableCell>{new Date(record.updatedAt).toLocaleDateString()}</TableCell>
                         <TableCell>{getStatusBadge(record.status)}</TableCell>
                       <TableCell>
@@ -420,6 +425,7 @@ export const InstitutionRecords = () => {
                       <TableHead>Student</TableHead>
                       <TableHead>Record Type</TableHead>
                       <TableHead>Title</TableHead>
+                      <TableHead>GPA</TableHead>
                       <TableHead>Submitted On</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
@@ -436,6 +442,8 @@ export const InstitutionRecords = () => {
                         </TableCell>
                         <TableCell>{record.recordType}</TableCell>
                         <TableCell>{record.title}</TableCell>
+                                                <TableCell>{record.gpa}</TableCell>
+
                         <TableCell>{new Date(record.createdAt).toLocaleDateString()}</TableCell>
                         <TableCell>{getStatusBadge(record.status)}</TableCell>
                         <TableCell>
@@ -500,7 +508,10 @@ export const InstitutionRecords = () => {
                 <Label className="text-sm font-medium">Title</Label>
                 <div className="mt-1 font-medium">{selectedRecord.title}</div>
               </div>
-              
+              <div>
+                <Label className="text-sm font-medium">Title</Label>
+                <div className="mt-1 font-medium">{selectedRecord.gpa}</div>
+              </div>
               <div>
                 <Label className="text-sm font-medium">Status</Label>
                 <div className="mt-1">{getStatusBadge(selectedRecord.status)}</div>

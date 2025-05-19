@@ -58,6 +58,8 @@ export const AdminUsers = () => {
     password: "",
     address: "",
     phone: "",
+    website: "",
+    location: "",
   });
   const [creatingUser, setCreatingUser] = useState(false);
   
@@ -150,11 +152,11 @@ export const AdminUsers = () => {
   const handleCreateUser = async (e) => {
     e.preventDefault();
     
-    const { name, email, password, address, phone } = createFormData;
+    const { name, email, password, address, phone, website, location } = createFormData;
     
     // Validate form based on user type
     if (createType === 'institution') {
-      if (!name || !email || !password) {
+      if (!name || !email || !password || !website || !location) {
         toast({
           title: "Missing fields",
           description: "Please fill in all required fields",
@@ -163,7 +165,7 @@ export const AdminUsers = () => {
         return;
       }
     } else if (createType === 'company') {
-      if (!name || !email || !password || !address || !phone) {
+      if (!name || !email || !password || !website || !address || !phone) {
         toast({
           title: "Missing fields",
           description: "Please fill in all required fields",
@@ -180,10 +182,10 @@ export const AdminUsers = () => {
       
       if (createType === 'institution') {
         endpoint = '/auth/institution/create';
-        data = { name, email, password };
+        data = { name, email, password, website, location };
       } else {
         endpoint = '/auth/company/create';
-        data = { name, email, password, address, phone };
+        data = { name, email, password, website, address, phone };
       }
       
       await api.post(endpoint, data);
@@ -200,6 +202,8 @@ export const AdminUsers = () => {
         password: "",
         address: "",
         phone: "",
+        website: "",
+        location: "",
       });
       setShowCreateDialog(false);
       
@@ -282,6 +286,8 @@ export const AdminUsers = () => {
       password: "",
       address: "",
       phone: "",
+      website: "",
+      location: "",
     });
     setShowCreateDialog(true);
   };
@@ -309,7 +315,7 @@ export const AdminUsers = () => {
           </TabsTrigger>
           <TabsTrigger value="students" className="flex items-center gap-2">
             <User className="h-4 w-4" />
-            <span>Students</span>
+            <span>Graduates</span>
           </TabsTrigger>
           <TabsTrigger value="institutions" className="flex items-center gap-2">
             <School className="h-4 w-4" />
@@ -376,9 +382,9 @@ export const AdminUsers = () => {
         <TabsContent value="students">
           <Card>
             <CardHeader>
-              <CardTitle>Students</CardTitle>
+              <CardTitle>Graduates</CardTitle>
               <CardDescription>
-                View and manage student accounts
+                View and manage Graduates accounts
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -400,7 +406,7 @@ export const AdminUsers = () => {
                     {students.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={4} className="text-center">
-                          No students found
+                          No Graduates found
                         </TableCell>
                       </TableRow>
                     ) : (

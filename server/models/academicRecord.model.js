@@ -14,12 +14,18 @@ const academicRecordSchema = new mongoose.Schema(
     },
     recordType: {
       type: String,
-      enum: ["certificate", "degree", "course", "transcript"],
+      enum: ["specialty", "profession"],
       required: true,
     },
     title: {
       type: String,
       required: true,
+    },
+    gpa: {
+      type: Number,
+      required: true,
+      min: 0,
+      max: 4.0,
     },
     fileUrl: {
       type: String,

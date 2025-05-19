@@ -30,7 +30,8 @@ import {
   PlusCircle, 
   AlertCircle,
   UploadCloud,
-  RefreshCw
+  RefreshCw,
+  School
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -67,9 +68,13 @@ export const StudentRecords = () => {
   // State for new record form
   const [recordType, setRecordType] = useState("");
   const [title, setTitle] = useState("");
+  const [gpa, setGpa] = useState("");
+  const [institutionId, setInstitutionId] = useState("");
   const [document, setDocument] = useState(null);
   const fileInputRef = useRef(null);
   const reuploadFileInputRef = useRef(null);
+  const [institutions, setInstitutions] = useState([]);
+  const [loadingInstitutions, setLoadingInstitutions] = useState(false);
 
   const handleFileChange = (e) => {
     if (e.target.files.length > 0) {
@@ -176,13 +181,46 @@ export const StudentRecords = () => {
     fetchRecords();
   }, []);
 
+  // Fetch institutions
+  useEffect(() => {
+    const fetchInstitutions = async () => {
+      setLoadingInstitutions(true);
+      try {
+        const response = await api.get("/public/institutions");
+        setInstitutions(response.data.data || []);
+      } catch (error) {
+        console.error("Error fetching institutions:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load institutions",
+          variant: "destructive",
+        });
+      } finally {
+        setLoadingInstitutions(false);
+      }
+    };
+    
+    fetchInstitutions();
+  }, [toast]);
+
   const handleSubmitRecord = async (e) => {
     e.preventDefault();
     
-    if (!recordType || !title || !document) {
+    if (!recordType || !title || !document || !institutionId || !gpa) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all fields and upload a document",
+        description: "Please fill in all required fields and upload a document",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Validate GPA
+    const gpaValue = parseFloat(gpa);
+    if (isNaN(gpaValue) || gpaValue < 0 || gpaValue > 4.0) {
+      toast({
+        title: "Invalid GPA",
+        description: "GPA must be between 0 and 4.0",
         variant: "destructive",
       });
       return;
@@ -216,6 +254,8 @@ export const StudentRecords = () => {
       const formData = new FormData();
       formData.append("title", title);
       formData.append("recordType", recordType);
+      formData.append("institutionId", institutionId);
+      formData.append("gpa", gpa);
       formData.append("document", document);
       
       // Submit record
@@ -233,6 +273,8 @@ export const StudentRecords = () => {
       // Reset form
       setRecordType("");
       setTitle("");
+      setGpa("");
+      setInstitutionId("");
       setDocument(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -414,13 +456,48 @@ export const StudentRecords = () => {
                       <SelectValue placeholder="Select record type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="certificate">Certificate</SelectItem>
-                      <SelectItem value="degree">Degree</SelectItem>
-                      <SelectItem value="course">Course</SelectItem>
-                      <SelectItem value="transcript">Transcript</SelectItem>
+                      <SelectItem value="specialty">Specialty</SelectItem>
+                      <SelectItem value="profession">Profession</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="institution" className="col-span-1">
+                    Institution
+                  </Label>
+                  <Select
+                    value={institutionId}
+                    onValueChange={setInstitutionId}
+                    required
+                  >
+                    <SelectTrigger id="institution" className="col-span-3">
+                      <SelectValue placeholder="Select institution" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {loadingInstitutions ? (
+                        <div className="flex items-center justify-center p-2">
+                          <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full mr-2"></div>
+                          <span>Loading...</span>
+                        </div>
+                      ) : institutions.length > 0 ? (
+                        institutions.map((institution) => (
+                          <SelectItem 
+                            key={institution._id} 
+                            value={institution._id}
+                          >
+                            {institution.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="p-2 text-center text-sm">
+                          No institutions available
+                        </div>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="title" className="col-span-1">
                     Title
@@ -434,6 +511,25 @@ export const StudentRecords = () => {
                     required
                   />
                 </div>
+
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="gpa" className="col-span-1">
+                    GPA
+                  </Label>
+                  <Input
+                    id="gpa"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="4.0"
+                    value={gpa}
+                    onChange={(e) => setGpa(e.target.value)}
+                    placeholder="Enter GPA (0-4.0)"
+                    className="col-span-3"
+                    required
+                  />
+                </div>
+
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="document" className="col-span-1">
                     Document
@@ -463,7 +559,14 @@ export const StudentRecords = () => {
               </div>
               <DialogFooter>
                 <Button type="submit" disabled={submitting}>
-                  {submitting ? "Submitting..." : "Submit Record"}
+                  {submitting ? (
+                    <>
+                      <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2"></div>
+                      Submitting...
+                    </>
+                  ) : (
+                    "Submit Record"
+                  )}
                 </Button>
               </DialogFooter>
             </form>

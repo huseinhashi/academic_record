@@ -12,6 +12,7 @@ import {
   updateStudent,
   verifyStudent,
   deleteStudent,
+  changeStudentPassword,
 
   // Institution routes
   getAllInstitutions,
@@ -53,6 +54,11 @@ router.get("/students", authorize("Admin", "Institution"), getAllStudents);
 router.get("/students/:id", authorize("Admin", "Institution"), getStudentById);
 router.put("/students/:id", authorize("Admin", "Institution"), updateStudent);
 router.patch("/students/:id/verify", authorize("Institution"), verifyStudent);
+router.patch(
+  "/students/:id/password",
+  authorize("Admin", "Institution"),
+  changeStudentPassword
+);
 router.delete("/students/:id", authorize("Admin"), deleteStudent);
 
 // Institution routes

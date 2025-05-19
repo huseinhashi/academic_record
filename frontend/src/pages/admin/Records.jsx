@@ -165,6 +165,7 @@ export const AdminRecords = () => {
                       <th className="h-12 px-4 text-left align-middle font-medium">Record Type</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Title</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Institution</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium">GPA</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Submitted On</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Actions</th>
@@ -182,6 +183,7 @@ export const AdminRecords = () => {
                         <TableCell>{record.recordType}</TableCell>
                         <TableCell>{record.title}</TableCell>
                         <TableCell>{record.institutionId?.name}</TableCell>
+                        <TableCell>{record.gpa}</TableCell>
                         <TableCell>{new Date(record.createdAt).toLocaleDateString()}</TableCell>
                         <TableCell>{getStatusBadge(record.status)}</TableCell>
                         <TableCell>
@@ -251,7 +253,11 @@ export const AdminRecords = () => {
                 <h4 className="text-sm font-medium">Institution</h4>
                 <div className="mt-1 font-medium">{selectedRecord.institutionId?.name}</div>
               </div>
-              
+                
+              <div>
+                <h4 className="text-sm font-medium">GPA</h4>
+                <div className="mt-1 font-medium">{selectedRecord.gpa}</div>
+              </div>
               <div>
                 <h4 className="text-sm font-medium">Status</h4>
                 <div className="mt-1">{getStatusBadge(selectedRecord.status)}</div>

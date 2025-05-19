@@ -19,6 +19,9 @@ export const CompanyDashboard = () => {
   });
   const [loading, setLoading] = useState(true);
 
+  // Add verification check
+  const isVerified = user?.isVerifiedByAdmin;
+
   useEffect(() => {
     const fetchStats = async () => {
       setLoading(true);
@@ -83,6 +86,27 @@ export const CompanyDashboard = () => {
           Welcome back, {user?.name || "Company Admin"}
         </p>
       </div>
+
+      {!isVerified && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardHeader>
+            <CardTitle className="text-amber-800">Account Verification Required</CardTitle>
+            <CardDescription className="text-amber-700">
+              Your company account is pending verification by an administrator.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <p className="text-amber-800">
+                To ensure the quality and authenticity of job postings, all company accounts must be verified before they can post jobs.
+              </p>
+              <p className="text-sm text-amber-700">
+                While your account is pending verification, you can still browse the platform and prepare your job listings.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>

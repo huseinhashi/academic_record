@@ -104,9 +104,6 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem("user", JSON.stringify(user));
 
       setUser(user);
-      if (user.authMethod === "wallet") {
-        setCurrentWallet(user.wallet);
-      }
       setIsAuthenticated(true);
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 

@@ -42,13 +42,15 @@ export const LoginPage = () => {
         description: "You have been logged in successfully",
       });
       
-      // Redirect based on user type
+      // Only allow admin login with wallet
       if (user.userType === "Admin") {
         navigate("/admin/dashboard");
-      } else if (user.userType === "Student") {
-        navigate("/student/dashboard");
       } else {
-        navigate("/dashboard");
+        toast({
+          title: "Login failed",
+          description: "Only administrators can login with MetaMask",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error("Login error:", error);
@@ -85,7 +87,9 @@ export const LoginPage = () => {
       });
       
       // Redirect based on user type
-      if (user.userType === "Institution") {
+      if (user.userType === "Student") {
+        navigate("/student/dashboard");
+      } else if (user.userType === "Institution") {
         navigate("/institution/dashboard");
       } else if (user.userType === "Company") {
         navigate("/company/dashboard");
@@ -121,15 +125,14 @@ export const LoginPage = () => {
           <CardContent className="space-y-6">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid grid-cols-2 w-full">
-                <TabsTrigger value="wallet">MetaMask Login</TabsTrigger>
+                <TabsTrigger value="wallet">Admin Login</TabsTrigger>
                 <TabsTrigger value="password">Email Login</TabsTrigger>
               </TabsList>
               
               <TabsContent value="wallet" className="space-y-4 mt-4">
                 <div className="bg-muted/30 p-4 rounded-lg border">
                   <p className="text-sm text-center">
-                    Connect with your MetaMask wallet to securely access your account. 
-                    Available for students and administrators only.
+                    Connect with your MetaMask wallet to securely access your admin account.
                   </p>
                 </div>
                 
@@ -156,8 +159,8 @@ export const LoginPage = () => {
               <TabsContent value="password" className="space-y-4 mt-4">
                 <div className="bg-muted/30 p-4 rounded-lg border">
                   <p className="text-sm text-center">
-                    Log in with your email and password. 
-                    Available for institutions and companies.
+                    Log in with your email and password.
+                    Available for students, institutions, and companies.
                   </p>
                 </div>
                 
@@ -214,7 +217,7 @@ export const LoginPage = () => {
             <div className="grid grid-cols-3 gap-2 w-full">
               <Link to="/register?type=student" className="w-full">
                 <Button variant="outline" className="w-full" size="lg">
-                  Student
+                  Graduate
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>

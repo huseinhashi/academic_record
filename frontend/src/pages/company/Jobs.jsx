@@ -31,7 +31,8 @@ import {
   ArrowUpDown,
   CheckCircle2,
   XCircle,
-  Eye
+  Eye,
+  FileText
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,6 +47,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import api from "@/lib/axios";
+import { SkillsSelect } from "@/components/SkillsSelect";
 
 export const CompanyJobs = () => {
   const { toast } = useToast();
@@ -67,8 +69,11 @@ export const CompanyJobs = () => {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    requirements: "",
+    requirements: [],
     location: "",
+    salary: "",
+    certificateRequirements: ["all"],
+    document: null,
     status: "open",
   });
   
@@ -86,6 +91,9 @@ export const CompanyJobs = () => {
   const [updating, setUpdating] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [processingApplication, setProcessingApplication] = useState(false);
+  
+  // Add verification check
+  const isVerified = user?.isVerifiedByAdmin;
   
   // Fetch company's jobs
   const fetchJobs = async () => {
@@ -148,7 +156,7 @@ export const CompanyJobs = () => {
     e.preventDefault();
     
     // Validation
-    if (!formData.title.trim() || !formData.description.trim() || !formData.requirements.trim() || !formData.location.trim()) {
+    if (!formData.title.trim() || !formData.description.trim() || !formData.requirements.length || !formData.location.trim() || !formData.salary.trim()) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields",
@@ -160,16 +168,38 @@ export const CompanyJobs = () => {
     setSubmitting(true);
     
     try {
+      // Create FormData object for file upload
+      const formDataToSend = new FormData();
+      formDataToSend.append("title", formData.title);
+      formDataToSend.append("description", formData.description);
+      formDataToSend.append("requirements", JSON.stringify(formData.requirements));
+      formDataToSend.append("location", formData.location);
+      formDataToSend.append("salary", formData.salary);
+      formDataToSend.append("certificateRequirements", JSON.stringify(formData.certificateRequirements));
+      formDataToSend.append("status", formData.status);
+      
+      if (formData.document) {
+        formDataToSend.append("document", formData.document);
+      }
+      
       let response;
       
       if (currentAction === "add") {
-        response = await api.post("/jobs", formData);
+        response = await api.post("/jobs", formDataToSend, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
         toast({
           title: "Job Posted",
           description: "Your job listing has been published successfully",
         });
       } else {
-        response = await api.put(`/jobs/${selectedJob._id}`, formData);
+        response = await api.put(`/jobs/${selectedJob._id}`, formDataToSend, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
         toast({
           title: "Job Updated",
           description: "Your job listing has been updated successfully",
@@ -180,8 +210,11 @@ export const CompanyJobs = () => {
       setFormData({
         title: "",
         description: "",
-        requirements: "",
+        requirements: [],
         location: "",
+        salary: "",
+        certificateRequirements: ["all"],
+        document: null,
         status: "open",
       });
       
@@ -294,9 +327,11 @@ export const CompanyJobs = () => {
     setFormData({
       title: job.title || "",
       description: job.description || "",
-      requirements: job.requirements || "",
+      requirements: job.requirements || [],
       location: job.location || "",
       status: job.status || "open",
+      salary: job.salary || "",
+      certificateRequirements: job.certificateRequirements || ["all"],
     });
     setCurrentAction("edit");
     setShowJobDialog(true);
@@ -372,6 +407,32 @@ export const CompanyJobs = () => {
         );
     }
   };
+  
+  // Add this function after the getApplicationStatusBadge function
+  const handleViewDocument = (job) => {
+    if (!job?.signedUrl) {
+      toast({
+        title: "Error",
+        description: "Document is not available for viewing",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Try to open the file in a new tab
+    const newWindow = window.open(job.signedUrl, '_blank');
+    
+    // If the window was blocked or failed to open
+    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+      // Create a temporary anchor element
+      const link = document.createElement('a');
+      link.href = job.signedUrl;
+      link.setAttribute('target', '_blank');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -382,21 +443,58 @@ export const CompanyJobs = () => {
             Create and manage job opportunities for students
           </p>
         </div>
-        <Button onClick={() => {
-          setCurrentAction("add");
-          setFormData({
-            title: "",
-            description: "",
-            requirements: "",
-            location: "",
-            status: "open",
-          });
-          setShowJobDialog(true);
-        }}>
-          <Plus className="h-4 w-4 mr-2" />
-          Post New Job
-        </Button>
+        {isVerified ? (
+          <Button onClick={() => {
+            setCurrentAction("add");
+            setFormData({
+              title: "",
+              description: "",
+              requirements: [],
+              location: "",
+              status: "open",
+              salary: "",
+              certificateRequirements: ["all"],
+              document: null,
+            });
+            setShowJobDialog(true);
+          }}>
+            <Plus className="h-4 w-4 mr-2" />
+            Post New Job
+          </Button>
+        ) : (
+          <div className="bg-amber-50 border border-amber-200 rounded-md p-4">
+            <p className="text-amber-800">
+              Your company account needs to be verified by an administrator before you can post jobs.
+            </p>
+          </div>
+        )}
       </div>
+      
+      {!isVerified && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Account Verification Required</CardTitle>
+            <CardDescription>
+              To ensure the quality and authenticity of job postings, all company accounts must be verified by an administrator.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p>
+                While your account is pending verification, you can:
+              </p>
+              <ul className="list-disc pl-5 space-y-2">
+                <li>View and manage your company profile</li>
+                <li>Browse the platform and understand its features</li>
+                <li>Prepare job descriptions for future posting</li>
+              </ul>
+              <p className="text-sm text-muted-foreground mt-4">
+                Verification typically takes 1-2 business days. You will be notified once your account is verified.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       
       <Tabs defaultValue="jobs">
         <TabsList className="grid w-full grid-cols-2">
@@ -487,6 +585,16 @@ export const CompanyJobs = () => {
                           </td>
                           <td className="p-4 align-middle">
                             <div className="flex items-center space-x-2">
+                              {job.documentUrl && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  onClick={() => handleViewDocument(job)}
+                                  title="View Job Document"
+                                >
+                                  <FileText className="h-4 w-4" />
+                                </Button>
+                              )}
                               <Button 
                                 variant="ghost" 
                                 size="icon"
@@ -594,7 +702,8 @@ export const CompanyJobs = () => {
       
       {/* Add/Edit Job Dialog */}
       <Dialog open={showJobDialog} onOpenChange={setShowJobDialog}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        
           <DialogHeader>
             <DialogTitle>{currentAction === "add" ? "Post a New Job" : "Edit Job Posting"}</DialogTitle>
             <DialogDescription>
@@ -631,15 +740,12 @@ export const CompanyJobs = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="requirements">Requirements</Label>
-                <Textarea
-                  id="requirements"
-                  name="requirements"
-                  placeholder="List the job requirements..."
-                  value={formData.requirements}
-                  onChange={handleInputChange}
-                  className="min-h-24"
+                <Label htmlFor="requirements">Required Skills</Label>
+                <SkillsSelect
+                  selectedSkills={formData.requirements}
+                  onSkillsChange={(skills) => setFormData(prev => ({ ...prev, requirements: skills }))}
                   required
+                  error={formData.requirements.length === 0 ? "Please select at least one required skill" : undefined}
                 />
               </div>
               
@@ -654,13 +760,63 @@ export const CompanyJobs = () => {
                   required
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="salary">Salary</Label>
+                <Input
+                  id="salary"
+                  name="salary"
+                  placeholder="e.g. $50,000 - $70,000 or Competitive"
+                  value={formData.salary}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="certificateRequirements">Required Certificates</Label>
+                <Select
+                  name="certificateRequirements"
+                  value={formData.certificateRequirements[0]}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, certificateRequirements: [value] }))}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select required certificates" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Certificates</SelectItem>
+                    <SelectItem value="specialty">Specialty Only</SelectItem>
+                    <SelectItem value="profession">Profession Only</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="document">Job Description Document (Optional)</Label>
+                <Input
+                  id="document"
+                  name="document"
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      setFormData(prev => ({ ...prev, document: file }));
+                    }
+                  }}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Upload a detailed job description document (PDF, DOC, or DOCX)
+                </p>
+              </div>
               
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
                 <Select
                   name="status"
                   value={formData.status}
-                  onValueChange={(value) => setFormData({...formData, status: value})}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select job status" />
@@ -781,6 +937,7 @@ export const CompanyJobs = () => {
                             Verified
                           </Badge>
                         </div>
+                        
                         <Button 
                           variant="link" 
                           className="p-0 h-auto mt-1"

@@ -16,7 +16,11 @@ import {
   BookOpen,
   Briefcase,
   ClipboardList,
-  BarChart3
+  BarChart3,
+  Shield,
+  User,
+  School,
+  Building2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -85,9 +89,27 @@ export const DashboardLayout = ({ children }) => {
       items.push(
         {
           title: "Users",
-          icon: Users,
-          href: `${basePath}/users`,
-          description: "Manage all system users",
+          icon: Shield,
+          href: `${basePath}/users/admins`,
+          description: "Manage system administrators",
+        },
+        {
+          title: "Graduates",
+          icon: User,
+          href: `${basePath}/users/students`,
+          description: "Manage graduate students",
+        },
+        {
+          title: "Institutions",
+          icon: School,
+          href: `${basePath}/users/institutions`,
+          description: "Manage educational institutions",
+        },
+        {
+          title: "Companies",
+          icon: Building2,
+          href: `${basePath}/users/companies`,
+          description: "Manage company accounts",
         },
         {
           title: "Academic Records",

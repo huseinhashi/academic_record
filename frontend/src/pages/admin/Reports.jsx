@@ -50,11 +50,16 @@ export const AdminReports = () => {
     try {
       const response = await api.get(`/reports/${reportType}`, {
         params: {
-          startDate: dateRange.from.toISOString(),
-          endDate: dateRange.to.toISOString()
+          startDate: format(dateRange.from, 'yyyy-MM-dd'),
+          endDate: format(dateRange.to, 'yyyy-MM-dd')
         }
       });
-      setReportData(response.data.data);
+      
+      if (response.data.success) {
+        setReportData(response.data.data);
+      } else {
+        console.error("Failed to fetch report data");
+      }
     } catch (error) {
       console.error("Error fetching report data:", error);
     } finally {
@@ -62,7 +67,9 @@ export const AdminReports = () => {
     }
   };
 
-  const exportToCSV = () => {
+  const exportToExcel = () => {
+    if (!reportData.length) return;
+
     const worksheet = XLSX.utils.json_to_sheet(reportData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
@@ -70,6 +77,8 @@ export const AdminReports = () => {
   };
 
   const exportToPDF = () => {
+    if (!reportData.length) return;
+
     const doc = new jsPDF();
     
     // Add title
@@ -189,11 +198,11 @@ export const AdminReports = () => {
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={exportToCSV}
+                  onClick={exportToExcel}
                   disabled={loading || !reportData.length}
                 >
                   <FileText className="mr-2 h-4 w-4" />
-                  Export CSV
+                  Export Excel
                 </Button>
                 <Button
                   variant="outline"

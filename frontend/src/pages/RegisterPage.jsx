@@ -1,37 +1,23 @@
+//register page
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserPlus, Wallet, Shield, Building2, School, User } from "lucide-react";
-import { LoaderCircle } from "@/components/LoaderCircle";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import api from "@/lib/axios";
+import { UserPlus, Wallet,  X, Eye, EyeOff } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import api from "@/lib/axios";
+import { useToast } from "@/hooks/use-toast";
+import { LoaderCircle } from "@/components/LoaderCircle";
+import { SkillsSelect } from "@/components/SkillsSelect";
 
 export const RegisterPage = () => {
   const { connectWallet, registerStudent, registerInstitution, registerCompany, isConnecting } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [walletConnected, setWalletConnected] = useState(false);
@@ -43,11 +29,14 @@ export const RegisterPage = () => {
   // Student form data
   const [studentData, setStudentData] = useState({
     name: "",
+    email: "",
+    password: "",
     institutionId: "",
     roleNumber: "",
     skills: [],
   });
   const [skillInput, setSkillInput] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   // Institution form data
   const [institutionData, setInstitutionData] = useState({
@@ -57,6 +46,7 @@ export const RegisterPage = () => {
     website: "",
     location: "",
   });
+  const [showInstitutionPassword, setShowInstitutionPassword] = useState(false);
 
   // Company form data
   const [companyData, setCompanyData] = useState({
@@ -67,6 +57,7 @@ export const RegisterPage = () => {
     address: "",
     phone: "",
   });
+  const [showCompanyPassword, setShowCompanyPassword] = useState(false);
   
   // Fetch institutions for student registration
   useEffect(() => {
@@ -154,12 +145,63 @@ export const RegisterPage = () => {
   };
 
   const validateStudentForm = () => {
-    if (!walletConnected) {
-      return { isValid: false, errorMessage: "Please connect your wallet first" };
+    const { name, email, password, institutionId, roleNumber, skills } = studentData;
+    
+    // Name validation
+    if (!name.trim()) {
+      return { isValid: false, errorMessage: "Name is required" };
     }
     
-    if (!studentData.name || !studentData.institutionId || !studentData.roleNumber) {
-      return { isValid: false, errorMessage: "Please fill in all required fields" };
+    if (!/^[a-zA-Z][a-zA-Z\s]*$/.test(name)) {
+      return { isValid: false, errorMessage: "Name must start with a letter and contain only letters and spaces" };
+    }
+    
+    // Email validation
+    if (!email.trim()) {
+      return { isValid: false, errorMessage: "Email is required" };
+    }
+    
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return { isValid: false, errorMessage: "Please enter a valid email address" };
+    }
+    
+    // Password validation
+    if (!password) {
+      return { isValid: false, errorMessage: "Password is required" };
+    }
+    
+    if (password.length < 8) {
+      return { isValid: false, errorMessage: "Password must be at least 8 characters long" };
+    }
+    
+    if (!/(?=.*[a-z])/.test(password)) {
+      return { isValid: false, errorMessage: "Password must contain at least one lowercase letter" };
+    }
+    
+    if (!/(?=.*[A-Z])/.test(password)) {
+      return { isValid: false, errorMessage: "Password must contain at least one uppercase letter" };
+    }
+    
+    if (!/(?=.*\d)/.test(password)) {
+      return { isValid: false, errorMessage: "Password must contain at least one number" };
+    }
+  
+    
+    // Role number validation
+    if (!roleNumber.trim()) {
+      return { isValid: false, errorMessage: "Role Number is required" };
+    }
+    
+    if (!/^[A-Za-z0-9-]+$/.test(roleNumber)) {
+      return { isValid: false, errorMessage: "Role Number can only contain letters, numbers, and hyphens" };
+    }
+    
+    if (!institutionId) {
+      return { isValid: false, errorMessage: "Please select an institution" };
+    }
+    
+    if (!skills || skills.length === 0) {
+      return { isValid: false, errorMessage: "Please select at least one skill" };
     }
     
     return { isValid: true };
@@ -167,17 +209,138 @@ export const RegisterPage = () => {
 
   const validateInstitutionForm = () => {
     const { name, email, password, website, location } = institutionData;
-    if (!name || !email || !password || !website || !location) {
-      return { isValid: false, errorMessage: "Please fill in all required fields" };
+    
+    // Name validation
+    if (!name.trim()) {
+      return { isValid: false, errorMessage: "Institution name is required" };
     }
+    
+    if (!/^[a-zA-Z][a-zA-Z\s]*$/.test(name)) {
+      return { isValid: false, errorMessage: "Institution name must start with a letter and contain only letters and spaces" };
+    }
+    
+    // Email validation
+    if (!email.trim()) {
+      return { isValid: false, errorMessage: "Email is required" };
+    }
+    
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return { isValid: false, errorMessage: "Please enter a valid email address" };
+    }
+    
+    // Password validation
+    if (!password) {
+      return { isValid: false, errorMessage: "Password is required" };
+    }
+    
+    if (password.length < 8) {
+      return { isValid: false, errorMessage: "Password must be at least 8 characters long" };
+    }
+    
+    if (!/(?=.*[a-z])/.test(password)) {
+      return { isValid: false, errorMessage: "Password must contain at least one lowercase letter" };
+    }
+    
+    if (!/(?=.*[A-Z])/.test(password)) {
+      return { isValid: false, errorMessage: "Password must contain at least one uppercase letter" };
+    }
+    
+    if (!/(?=.*\d)/.test(password)) {
+      return { isValid: false, errorMessage: "Password must contain at least one number" };
+    }
+    
+   
+    // Website validation
+    if (!website.trim()) {
+      return { isValid: false, errorMessage: "Website is required" };
+    }
+    
+    if (!/^https?:\/\/.+/.test(website)) {
+      return { isValid: false, errorMessage: "Please enter a valid website URL starting with http:// or https://" };
+    }
+    
+    // Location validation
+    if (!location.trim()) {
+      return { isValid: false, errorMessage: "Location is required" };
+    }
+    
+    if (!/^[a-zA-Z][a-zA-Z\s,]*$/.test(location)) {
+      return { isValid: false, errorMessage: "Location must start with a letter and contain only letters, spaces, and commas" };
+    }
+    
     return { isValid: true };
   };
 
   const validateCompanyForm = () => {
     const { name, email, password, website, address, phone } = companyData;
-    if (!name || !email || !password || !website || !address || !phone) {
-      return { isValid: false, errorMessage: "Please fill in all required fields" };
+    
+    // Name validation
+    if (!name.trim()) {
+      return { isValid: false, errorMessage: "Company name is required" };
     }
+    
+    if (!/^[a-zA-Z][a-zA-Z\s]*$/.test(name)) {
+      return { isValid: false, errorMessage: "Company name must start with a letter and contain only letters and spaces" };
+    }
+    
+    // Email validation
+    if (!email.trim()) {
+      return { isValid: false, errorMessage: "Email is required" };
+    }
+    
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return { isValid: false, errorMessage: "Please enter a valid email address" };
+    }
+    
+    // Password validation
+    if (!password) {
+      return { isValid: false, errorMessage: "Password is required" };
+    }
+    
+    if (password.length < 8) {
+      return { isValid: false, errorMessage: "Password must be at least 8 characters long" };
+    }
+    
+    if (!/(?=.*[a-z])/.test(password)) {
+      return { isValid: false, errorMessage: "Password must contain at least one lowercase letter" };
+    }
+    
+    if (!/(?=.*[A-Z])/.test(password)) {
+      return { isValid: false, errorMessage: "Password must contain at least one uppercase letter" };
+    }
+    
+    if (!/(?=.*\d)/.test(password)) {
+      return { isValid: false, errorMessage: "Password must contain at least one number" };
+    }
+ 
+    
+    // Website validation
+    if (!website.trim()) {
+      return { isValid: false, errorMessage: "Website is required" };
+    }
+    
+    if (!/^https?:\/\/.+/.test(website)) {
+      return { isValid: false, errorMessage: "Please enter a valid website URL starting with http:// or https://" };
+    }
+    
+    // Address validation
+    if (!address.trim()) {
+      return { isValid: false, errorMessage: "Address is required" };
+    }
+    
+    if (!/^[a-zA-Z0-9][a-zA-Z0-9\s,.-]*$/.test(address)) {
+      return { isValid: false, errorMessage: "Address must start with a letter or number and contain only letters, numbers, spaces, and basic punctuation" };
+    }
+    
+    // Phone validation
+    if (!phone.trim()) {
+      return { isValid: false, errorMessage: "Phone number is required" };
+    }
+    
+    if (!/^\d{10,15}$/.test(phone.replace(/[\s-]/g, ''))) {
+      return { isValid: false, errorMessage: "Phone number must contain only numbers and be between 10-15 digits" };
+    }
+    
     return { isValid: true };
   };
 
@@ -198,16 +361,11 @@ export const RegisterPage = () => {
 
     setLoading(true);
     try {
-      const userData = {
-        ...studentData,
-        wallet: walletAddress,
-      };
-      
-      const user = await registerStudent(userData);
+      await registerStudent(studentData);
       
       toast({
         title: "Registration successful",
-        description: "Your student account has been created successfully",
+        description: "Your account has been created successfully",
       });
       
       navigate("/student/dashboard");
@@ -240,7 +398,7 @@ export const RegisterPage = () => {
 
     setLoading(true);
     try {
-      const user = await registerInstitution(institutionData);
+      await registerInstitution(institutionData);
       
       toast({
         title: "Registration successful",
@@ -277,7 +435,7 @@ export const RegisterPage = () => {
 
     setLoading(true);
     try {
-      const user = await registerCompany(companyData);
+      await registerCompany(companyData);
       
       toast({
         title: "Registration successful",
@@ -297,440 +455,508 @@ export const RegisterPage = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen flex">
-      {/* Left side - Registration form */}
-      <div className="w-full md:w-1/2 flex items-center justify-center bg-background px-6 py-8">
-        <div className="w-full max-w-md">
-          <div className="flex justify-center mb-8">
-            <img src="/logo.png" alt="eSkooly Logo" className="h-12" />
-          </div>
-          
-          <div className="text-center mb-6">
-            <p className="text-muted-foreground text-sm">I do not have an account yet</p>
-            <p className="font-medium mt-6 mb-4">I am</p>
-          </div>
-          
-          <div className="flex justify-center gap-4 mb-8">
-            <button 
-              className={`rounded-full p-3 flex flex-col items-center gap-2 transition-all ${activeTab === "institution" ? "bg-blue-100 ring-2 ring-primary" : "bg-background hover:bg-blue-50"}`}
-              onClick={() => setActiveTab("institution")}
-            >
-              <div className="w-14 h-14 rounded-full flex items-center justify-center bg-blue-500 text-white">
-                <School className="h-8 w-8" />
+  const renderForm = () => {
+    if (activeTab === "student") {
+      return (
+        <form onSubmit={handleStudentSubmit} className="space-y-4">
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="name" className="mb-2 block">
+                Full Name <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
+                  <UserPlus size={20} />
+                </div>
+                <Input 
+                  id="name" 
+                  name="name" 
+                  placeholder="Enter your full name" 
+                  value={studentData.name}
+                  onChange={(e) => handleInputChange(e, "student")}
+                  required
+                  className="h-12 pl-12"
+                />
               </div>
-              <span className="text-xs font-medium">Institution</span>
-            </button>
+            </div>
             
-            <button 
-              className={`rounded-full p-3 flex flex-col items-center gap-2 transition-all ${activeTab === "student" ? "bg-blue-100 ring-2 ring-primary" : "bg-background hover:bg-blue-50"}`}
-              onClick={() => setActiveTab("student")}
-            >
-              <div className="w-14 h-14 rounded-full flex items-center justify-center border">
-                <Shield className="h-8 w-8 text-gray-500" />
+            <div>
+              <Label htmlFor="email" className="mb-2 block">
+                Email <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
+                  <UserPlus size={20} />
+                </div>
+                <Input 
+                  id="email" 
+                  name="email" 
+                  type="email"
+                  placeholder="Enter your email" 
+                  value={studentData.email}
+                  onChange={(e) => handleInputChange(e, "student")}
+                  required
+                  className="h-12 pl-12"
+                />
               </div>
-              <span className="text-xs font-medium">Student</span>
-            </button>
+            </div>
             
-            <button 
-              className={`rounded-full p-3 flex flex-col items-center gap-2 transition-all ${activeTab === "company" ? "bg-blue-100 ring-2 ring-primary" : "bg-background hover:bg-blue-50"}`}
-              onClick={() => setActiveTab("company")}
-            >
-              <div className="w-14 h-14 rounded-full flex items-center justify-center border">
-                <Building2 className="h-8 w-8 text-gray-500" />
+            <div>
+              <Label htmlFor="password" className="mb-2 block">
+                Password <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
+                  <UserPlus size={20} />
+                </div>
+                <Input 
+                  id="password" 
+                  name="password" 
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password" 
+                  value={studentData.password}
+                  onChange={(e) => handleInputChange(e, "student")}
+                  required
+                  className="h-12 pl-12 pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
-              <span className="text-xs font-medium">Company</span>
-            </button>
-          </div>
-          
-          <Card className="border shadow-sm">
-            <CardContent className="pt-6">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="hidden">
-                  <TabsTrigger value="student">Student</TabsTrigger>
-                  <TabsTrigger value="institution">Institution</TabsTrigger>
-                  <TabsTrigger value="company">Company</TabsTrigger>
-                </TabsList>
-
-                {/* Student Registration Form */}
-                <TabsContent value="student">
-                  <form onSubmit={handleStudentSubmit} className="space-y-4">
-                    <div className="space-y-3">
-                      <div>
-                        <Input 
-                          id="name" 
-                          name="name" 
-                          placeholder="Full Name" 
-                          value={studentData.name}
-                          onChange={(e) => handleInputChange(e, "student")}
-                          required
-                          className="h-12"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Input 
-                          id="roleNumber" 
-                          name="roleNumber" 
-                          placeholder="Role Number / Student ID" 
-                          value={studentData.roleNumber}
-                          onChange={(e) => handleInputChange(e, "student")}
-                          required
-                          className="h-12"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Select 
-                          value={studentData.institutionId} 
-                          onValueChange={(value) => handleSelectChange(value, "institutionId")}
-                          required
-                        >
-                          <SelectTrigger className="h-12">
-                            <SelectValue placeholder="Select your institution" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {loadingInstitutions ? (
-                              <div className="flex items-center justify-center p-2">
-                                <LoaderCircle className="h-4 w-4 animate-spin mr-2" />
-                                <span>Loading...</span>
-                              </div>
-                            ) : institutions.length > 0 ? (
-                              institutions.map((institution) => (
-                                <SelectItem 
-                                  key={institution._id} 
-                                  value={institution._id}
-                                >
-                                  {institution.name}
-                                </SelectItem>
-                              ))
-                            ) : (
-                              <div className="p-2 text-center text-sm">
-                                No institutions available
-                              </div>
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Input 
-                          id="skills" 
-                          placeholder="Type a skill and press Enter" 
-                          value={skillInput}
-                          onChange={(e) => setSkillInput(e.target.value)}
-                          onKeyDown={handleSkillInputKeyDown}
-                          className="h-12"
-                        />
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {studentData.skills.map((skill, index) => (
-                            <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                              {skill}
-                              <button
-                                type="button"
-                                onClick={() => removeSkill(skill)}
-                                className="ml-1 hover:text-destructive"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </Badge>
-                          ))}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Add your skills by typing and pressing Enter
-                        </p>
-                      </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="roleNumber" className="mb-2 block">
+                Role Number / Student ID <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
+                  <UserPlus size={20} />
+                </div>
+                <Input 
+                  id="roleNumber" 
+                  name="roleNumber" 
+                  placeholder="Enter your role number" 
+                  value={studentData.roleNumber}
+                  onChange={(e) => handleInputChange(e, "student")}
+                  required
+                  className="h-12 pl-12"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="institution" className="mb-2 block">
+                Institution <span className="text-red-500">*</span>
+              </Label>
+              <Select 
+                value={studentData.institutionId} 
+                onValueChange={(value) => handleSelectChange(value, "institutionId")}
+                required
+              >
+                <SelectTrigger className="h-12">
+                  <SelectValue placeholder="Select your institution" />
+                </SelectTrigger>
+                <SelectContent>
+                  {loadingInstitutions ? (
+                    <div className="flex items-center justify-center p-2">
+                      <LoaderCircle className="h-4 w-4 animate-spin mr-2" />
+                      <span>Loading...</span>
                     </div>
-                    
-                    <div className="pt-2">
-                      {walletConnected ? (
-                        <div className="flex items-center gap-2">
-                          <Input 
-                            value={`${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}`} 
-                            disabled 
-                            className="font-mono h-12"
-                          />
-                          <Button type="button" variant="outline" size="sm" onClick={handleConnectWallet} className="h-12">
-                            Change
-                          </Button>
-                        </div>
-                      ) : (
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          className="w-full h-12"
-                          onClick={handleConnectWallet}
-                          disabled={isConnecting}
-                        >
-                          {isConnecting ? (
-                            <>
-                              <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                              Connecting...
-                            </>
-                          ) : (
-                            <>
-                              <Wallet className="mr-2 h-4 w-4" />
-                              Connect Wallet
-                            </>
-                          )}
-                        </Button>
-                      )}
-                    </div>
-                  
-                    
-                    <Button 
-                      type="submit" 
-                      className="w-full font-semibold h-12 mt-4 bg-blue-500 hover:bg-blue-600" 
-                      disabled={loading || !walletConnected}
-                    >
-                      {loading ? (
-                        <>
-                          <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />
-                          Registering...
-                        </>
-                      ) : (
-                        "Register"
-                      )}
-                    </Button>
-                  </form>
-                </TabsContent>
-
-                {/* Institution Registration Form */}
-                <TabsContent value="institution">
-                  <form onSubmit={handleInstitutionSubmit} className="space-y-4">
-                    <div className="space-y-3">
-                      <div>
-                        <Input 
-                          id="institution-name" 
-                          name="name" 
-                          placeholder="Institution Name" 
-                          value={institutionData.name}
-                          onChange={(e) => handleInputChange(e, "institution")}
-                          required
-                          className="h-12"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Input 
-                          id="institution-email" 
-                          name="email" 
-                          type="email"
-                          placeholder="Email" 
-                          value={institutionData.email}
-                          onChange={(e) => handleInputChange(e, "institution")}
-                          required
-                          className="h-12"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Input 
-                          id="institution-password" 
-                          name="password" 
-                          type="password"
-                          placeholder="Password" 
-                          value={institutionData.password}
-                          onChange={(e) => handleInputChange(e, "institution")}
-                          required
-                          className="h-12"
-                        />
-                      </div>
-
-                      <div>
-                        <Input 
-                          id="institution-website" 
-                          name="website" 
-                          type="url"
-                          placeholder="Website" 
-                          value={institutionData.website}
-                          onChange={(e) => handleInputChange(e, "institution")}
-                          required
-                          className="h-12"
-                        />
-                      </div>
-
-                      <div>
-                        <Input 
-                          id="institution-location" 
-                          name="location" 
-                          placeholder="Location" 
-                          value={institutionData.location}
-                          onChange={(e) => handleInputChange(e, "institution")}
-                          required
-                          className="h-12"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2 mt-2">
-                      <Checkbox id="remember-institution" />
-                      <label
-                        htmlFor="remember-institution"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  ) : institutions.length > 0 ? (
+                    institutions.map((institution) => (
+                      <SelectItem 
+                        key={institution._id} 
+                        value={institution._id}
                       >
-                        Remember Me
-                      </label>
+                        {institution.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="p-2 text-center text-sm">
+                      No institutions available
                     </div>
-                    
-                    <Button 
-                      type="submit" 
-                      className="w-full font-semibold h-12 mt-4 bg-blue-500 hover:bg-blue-600" 
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <>
-                          <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />
-                          Registering...
-                        </>
-                      ) : (
-                        "Register"
-                      )}
-                    </Button>
-                  </form>
-                </TabsContent>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
 
-                {/* Company Registration Form */}
-                <TabsContent value="company">
-                  <form onSubmit={handleCompanySubmit} className="space-y-4">
-                    <div className="space-y-3">
-                      <div>
-                        <Input 
-                          id="company-name" 
-                          name="name" 
-                          placeholder="Company Name" 
-                          value={companyData.name}
-                          onChange={(e) => handleInputChange(e, "company")}
-                          required
-                          className="h-12"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Input 
-                          id="company-email" 
-                          name="email" 
-                          type="email"
-                          placeholder="Email" 
-                          value={companyData.email}
-                          onChange={(e) => handleInputChange(e, "company")}
-                          required
-                          className="h-12"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Input 
-                          id="company-password" 
-                          name="password" 
-                          type="password"
-                          placeholder="Password" 
-                          value={companyData.password}
-                          onChange={(e) => handleInputChange(e, "company")}
-                          required
-                          className="h-12"
-                        />
-                      </div>
-
-                      <div>
-                        <Input 
-                          id="company-website" 
-                          name="website" 
-                          type="url"
-                          placeholder="Website" 
-                          value={companyData.website}
-                          onChange={(e) => handleInputChange(e, "company")}
-                          required
-                          className="h-12"
-                        />
-                      </div>
-
-                      <div>
-                        <Input 
-                          id="company-address" 
-                          name="address" 
-                          placeholder="Address" 
-                          value={companyData.address}
-                          onChange={(e) => handleInputChange(e, "company")}
-                          required
-                          className="h-12"
-                        />
-                      </div>
-
-                      <div>
-                        <Input 
-                          id="company-phone" 
-                          name="phone" 
-                          placeholder="Phone" 
-                          value={companyData.phone}
-                          onChange={(e) => handleInputChange(e, "company")}
-                          required
-                          className="h-12"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2 mt-2">
-                      <Checkbox id="remember-company" />
-                      <label
-                        htmlFor="remember-company"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        Remember Me
-                      </label>
-                    </div>
-                    
-                    <Button 
-                      type="submit" 
-                      className="w-full font-semibold h-12 mt-4 bg-blue-500 hover:bg-blue-600" 
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <>
-                          <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />
-                          Registering...
-                        </>
-                      ) : (
-                        "Register"
-                      )}
-                    </Button>
-                  </form>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-            
-            <CardFooter className="flex justify-center border-t p-4">
-              {/* <div className="text-sm text-muted-foreground">
-                Forgot password?{" "}
-                <Link to="/forgot-password" className="text-blue-500 font-medium hover:underline">
-                  Reset here
-                </Link>
-              </div> */}
-            </CardFooter>
-          </Card>
-        </div>
-      </div>
-      
-      {/* Right side - Blue banner */}
-      <div className="hidden md:flex md:w-1/2 bg-blue-500 flex-col justify-center items-center px-8 text-white">
-        <div className="max-w-md text-center">
-          <h1 className="text-4xl font-bold mb-6">Start managing now</h1>
-          <p className="text-lg mb-10">
-            academic records, applications, and more
-          </p>
-          <Button className="bg-white text-blue-500 hover:bg-blue-50 font-semibold px-8 py-6 h-12 rounded-full">
-            Get started
+            <div>
+              <Label htmlFor="skills" className="mb-2 block">
+                Skills <span className="text-red-500">*</span>
+              </Label>
+              <SkillsSelect
+                selectedSkills={studentData.skills}
+                onSkillsChange={(skills) => setStudentData(prev => ({ ...prev, skills }))}
+                required
+                error={studentData.skills.length === 0 ? "Please select at least one skill" : undefined}
+              />
+            </div>
+          </div>
+          
+          <Button 
+            type="submit" 
+            className="w-full font-semibold h-12 mt-6" 
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />
+                Registering...
+              </>
+            ) : (
+              "REGISTER"
+            )}
           </Button>
           
-          <div className="mt-16">
-            <img 
-              src="/logo.png" 
-              alt="Platform illustration" 
-              className="max-w-full"
-            />
+          <div className="text-center mt-4">
+            <Link to="/login" className="text-primary hover:underline text-sm">
+              Already have an account? Login
+            </Link>
           </div>
-        </div>
-      </div>
+        </form>
+      );
+    } else if (activeTab === "institution") {
+      return (
+        <form onSubmit={handleInstitutionSubmit} className="space-y-4">
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="institution-name" className="mb-2 block">
+                Institution Name <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
+                  <UserPlus size={20} />
+                </div>
+                <Input 
+                  id="institution-name" 
+                  name="name" 
+                  placeholder="Enter institution name" 
+                  value={institutionData.name}
+                  onChange={(e) => handleInputChange(e, "institution")}
+                  required
+                  className="h-12 pl-12"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="institution-email" className="mb-2 block">
+                Email <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
+                  <UserPlus size={20} />
+                </div>
+                <Input 
+                  id="institution-email" 
+                  name="email" 
+                  type="email"
+                  placeholder="Enter email" 
+                  value={institutionData.email}
+                  onChange={(e) => handleInputChange(e, "institution")}
+                  required
+                  className="h-12 pl-12"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="institution-password" className="mb-2 block">
+                Password <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
+                  <UserPlus size={20} />
+                </div>
+                <Input 
+                  id="institution-password" 
+                  name="password" 
+                  type={showInstitutionPassword ? "text" : "password"}
+                  placeholder="Enter password" 
+                  value={institutionData.password}
+                  onChange={(e) => handleInputChange(e, "institution")}
+                  required
+                  className="h-12 pl-12 pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowInstitutionPassword(!showInstitutionPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
+                >
+                  {showInstitutionPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="institution-website" className="mb-2 block">
+                Website <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
+                  <UserPlus size={20} />
+                </div>
+                <Input 
+                  id="institution-website" 
+                  name="website" 
+                  type="url"
+                  placeholder="Enter website URL" 
+                  value={institutionData.website}
+                  onChange={(e) => handleInputChange(e, "institution")}
+                  required
+                  className="h-12 pl-12"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="institution-location" className="mb-2 block">
+                Location <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
+                  <UserPlus size={20} />
+                </div>
+                <Input 
+                  id="institution-location" 
+                  name="location" 
+                  placeholder="Enter location" 
+                  value={institutionData.location}
+                  onChange={(e) => handleInputChange(e, "institution")}
+                  required
+                  className="h-12 pl-12"
+                />
+              </div>
+            </div>
+          </div>
+          
+          <Button 
+            type="submit" 
+            className="w-full font-semibold h-12 mt-6" 
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />
+                Registering...
+              </>
+            ) : (
+              "REGISTER"
+            )}
+          </Button>
+          
+          <div className="text-center mt-4">
+            <Link to="/login" className="text-primary hover:underline text-sm">
+              Already have an account? Login
+            </Link>
+          </div>
+        </form>
+      );
+    } else {
+      return (
+        <form onSubmit={handleCompanySubmit} className="space-y-4">
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="company-name" className="mb-2 block">
+                Company Name <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
+                  <UserPlus size={20} />
+                </div>
+                <Input 
+                  id="company-name" 
+                  name="name" 
+                  placeholder="Enter company name" 
+                  value={companyData.name}
+                  onChange={(e) => handleInputChange(e, "company")}
+                  required
+                  className="h-12 pl-12"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="company-email" className="mb-2 block">
+                Email <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
+                  <UserPlus size={20} />
+                </div>
+                <Input 
+                  id="company-email" 
+                  name="email" 
+                  type="email"
+                  placeholder="Enter email" 
+                  value={companyData.email}
+                  onChange={(e) => handleInputChange(e, "company")}
+                  required
+                  className="h-12 pl-12"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="company-password" className="mb-2 block">
+                Password <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
+                  <UserPlus size={20} />
+                </div>
+                <Input 
+                  id="company-password" 
+                  name="password" 
+                  type={showCompanyPassword ? "text" : "password"}
+                  placeholder="Enter password" 
+                  value={companyData.password}
+                  onChange={(e) => handleInputChange(e, "company")}
+                  required
+                  className="h-12 pl-12 pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCompanyPassword(!showCompanyPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
+                >
+                  {showCompanyPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="company-website" className="mb-2 block">
+                Website <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
+                  <UserPlus size={20} />
+                </div>
+                <Input 
+                  id="company-website" 
+                  name="website" 
+                  type="url"
+                  placeholder="Enter website URL" 
+                  value={companyData.website}
+                  onChange={(e) => handleInputChange(e, "company")}
+                  required
+                  className="h-12 pl-12"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="company-address" className="mb-2 block">
+                Address <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
+                  <UserPlus size={20} />
+                </div>
+                <Input 
+                  id="company-address" 
+                  name="address" 
+                  placeholder="Enter address" 
+                  value={companyData.address}
+                  onChange={(e) => handleInputChange(e, "company")}
+                  required
+                  className="h-12 pl-12"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="company-phone" className="mb-2 block">
+                Phone <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
+                  <UserPlus size={20} />
+                </div>
+                <Input 
+                  id="company-phone" 
+                  name="phone" 
+                  placeholder="Enter phone number" 
+                  value={companyData.phone}
+                  onChange={(e) => handleInputChange(e, "company")}
+                  required
+                  className="h-12 pl-12"
+                />
+              </div>
+            </div>
+          </div>
+          
+          <Button 
+            type="submit" 
+            className="w-full font-semibold h-12 mt-6" 
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />
+                Registering...
+              </>
+            ) : (
+              "REGISTER"
+            )}
+          </Button>
+          
+          <div className="text-center mt-4">
+            <Link to="/login" className="text-primary hover:underline text-sm">
+              Already have an account? Login
+            </Link>
+          </div>
+        </form>
+      );
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-primary p-4">
+      <Card className="w-full max-w-md shadow-lg">
+        <CardContent className="p-6">
+          <div className="flex justify-center mb-4">
+            <img src="/logo.png" alt="Logo" className="h-12" />
+          </div>
+          
+          <h1 className="text-3xl font-bold text-center mb-8 text-primary">USER REGISTER</h1>
+          
+          <div className="flex rounded-md overflow-hidden mb-8">
+            <button 
+              className={`flex-1 py-4 text-center transition-colors ${activeTab === "student" ? "bg-primary text-white" : "bg-muted text-primary"}`}
+              onClick={() => setActiveTab("student")}
+            >
+              Graduate
+            </button>
+            <button 
+              className={`flex-1 py-4 text-center transition-colors ${activeTab === "institution" ? "bg-primary text-white" : "bg-muted text-primary"}`}
+              onClick={() => setActiveTab("institution")}
+            >
+              Institution
+            </button>
+            <button 
+              className={`flex-1 py-4 text-center transition-colors ${activeTab === "company" ? "bg-primary text-white" : "bg-muted text-primary"}`}
+              onClick={() => setActiveTab("company")}
+            >
+              Employer
+            </button>
+          </div>
+          
+          {renderForm()}
+          
+          <div className="mt-6 text-center">
+            <Link to="/forgot-password" className="text-primary hover:underline text-sm">
+              Forgot password?
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

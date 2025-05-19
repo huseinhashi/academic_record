@@ -1,11 +1,52 @@
 import Job from "../models/job.model.js";
 import Application from "../models/application.model.js";
 import Company from "../models/company.model.js";
+import { cloudinaryUtils } from "../config/cloudinary.js";
+import Student from "../models/student.model.js";
+
+// Add this helper function at the top of the file, after the imports
+const addSignedUrlsToJobs = async (jobs) => {
+  if (!jobs) return jobs;
+
+  if (Array.isArray(jobs)) {
+    // Handle array of jobs
+    const jobsWithUrls = await Promise.all(
+      jobs.map(async (job) => {
+        const jobObj = job.toObject ? job.toObject() : job;
+        if (jobObj.documentPublicId) {
+          jobObj.signedUrl = await cloudinaryUtils.generateSignedUrl(
+            jobObj.documentPublicId,
+            3600 // URL valid for 1 hour
+          );
+        }
+        return jobObj;
+      })
+    );
+    return jobsWithUrls;
+  } else {
+    // Handle single job
+    const jobObj = jobs.toObject ? jobs.toObject() : jobs;
+    if (jobObj.documentPublicId) {
+      jobObj.signedUrl = await cloudinaryUtils.generateSignedUrl(
+        jobObj.documentPublicId,
+        3600 // URL valid for 1 hour
+      );
+    }
+    return jobObj;
+  }
+};
 
 // Create a new job posting (company only)
 export const createJob = async (req, res, next) => {
   try {
-    const { title, description, requirements, location, salary } = req.body;
+    const {
+      title,
+      description,
+      requirements,
+      location,
+      salary,
+      certificateRequirements,
+    } = req.body;
 
     // Get company ID from authenticated user
     const companyId = req.user._id;
@@ -16,7 +57,38 @@ export const createJob = async (req, res, next) => {
       return res.status(403).json({
         success: false,
         message:
-          "Your company account needs to be verified by admin before posting jobs",
+          "Your company account needs to be verified by an administrator before you can post jobs. Please contact support if you believe this is an error.",
+      });
+    }
+
+    // Parse requirements array if it's a string
+    const requirementsArray = Array.isArray(requirements)
+      ? requirements
+      : JSON.parse(requirements);
+
+    // Parse certificate requirements array if it's a string
+    let certificateRequirementsArray;
+    try {
+      certificateRequirementsArray = Array.isArray(certificateRequirements)
+        ? certificateRequirements
+        : JSON.parse(certificateRequirements);
+
+      // Validate certificate requirements
+      if (
+        !certificateRequirementsArray.every((req) =>
+          ["specialty", "profession", "all"].includes(req)
+        )
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Invalid certificate requirements. Must be one of: specialty, profession, all",
+        });
+      }
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid certificate requirements format",
       });
     }
 
@@ -25,16 +97,35 @@ export const createJob = async (req, res, next) => {
       companyId,
       title,
       description,
-      requirements,
+      requirements: requirementsArray,
       location,
       salary,
+      certificateRequirements: certificateRequirementsArray,
+      documentUrl: req.file?.path,
+      documentPublicId: req.file?.filename,
     });
+
+    // Generate a signed URL for the document if it exists
+    let signedUrl = null;
+    if (job.documentPublicId) {
+      signedUrl = await cloudinaryUtils.generateSignedUrl(
+        job.documentPublicId,
+        3600
+      );
+    }
 
     res.status(201).json({
       success: true,
-      data: job,
+      data: {
+        ...job.toObject(),
+        signedUrl,
+      },
     });
   } catch (error) {
+    // If there's an error, cleanup any uploaded file
+    if (req.file) {
+      await cloudinaryUtils.cleanupUpload(req.file);
+    }
     next(error);
   }
 };
@@ -53,14 +144,27 @@ export const getAllJobs = async (req, res, next) => {
       query.status = "open";
     }
 
+    // If the request is from a student, filter jobs based on their skills
+    if (req.user?.userType === "Student") {
+      // Get student's skills
+      const student = await Student.findById(req.user._id);
+      if (student && student.skills && student.skills.length > 0) {
+        // Find jobs where at least one required skill matches the student's skills
+        query.requirements = { $in: student.skills };
+      }
+    }
+
     const jobs = await Job.find(query)
       .populate("companyId", "name")
       .sort({ createdAt: -1 });
 
+    // Add signed URLs to jobs
+    const jobsWithUrls = await addSignedUrlsToJobs(jobs);
+
     res.status(200).json({
       success: true,
       count: jobs.length,
-      data: jobs,
+      data: jobsWithUrls,
     });
   } catch (error) {
     next(error);
@@ -82,10 +186,13 @@ export const getMyJobs = async (req, res, next) => {
 
     const jobs = await Job.find(query).sort({ createdAt: -1 });
 
+    // Add signed URLs to jobs
+    const jobsWithUrls = await addSignedUrlsToJobs(jobs);
+
     res.status(200).json({
       success: true,
       count: jobs.length,
-      data: jobs,
+      data: jobsWithUrls,
     });
   } catch (error) {
     next(error);
@@ -108,9 +215,12 @@ export const getJobById = async (req, res, next) => {
       });
     }
 
+    // Add signed URL to job
+    const jobWithUrl = await addSignedUrlsToJobs(job);
+
     res.status(200).json({
       success: true,
-      data: job,
+      data: jobWithUrl,
     });
   } catch (error) {
     next(error);
@@ -156,14 +266,55 @@ export const updateJob = async (req, res, next) => {
       });
     }
 
+    // Handle certificate requirements if present
+    if (updates.certificateRequirements) {
+      try {
+        const certificateRequirementsArray = Array.isArray(
+          updates.certificateRequirements
+        )
+          ? updates.certificateRequirements
+          : JSON.parse(updates.certificateRequirements);
+
+        // Validate certificate requirements
+        if (
+          !certificateRequirementsArray.every((req) =>
+            ["specialty", "profession", "all"].includes(req)
+          )
+        ) {
+          return res.status(400).json({
+            success: false,
+            message:
+              "Invalid certificate requirements. Must be one of: specialty, profession, all",
+          });
+        }
+
+        updates.certificateRequirements = certificateRequirementsArray;
+      } catch (error) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid certificate requirements format",
+        });
+      }
+    }
+
+    // Handle requirements if present
+    if (updates.requirements) {
+      updates.requirements = Array.isArray(updates.requirements)
+        ? updates.requirements
+        : JSON.parse(updates.requirements);
+    }
+
     const updatedJob = await Job.findByIdAndUpdate(id, updates, {
       new: true,
       runValidators: true,
     });
 
+    // Add signed URL to updated job
+    const jobWithUrl = await addSignedUrlsToJobs(updatedJob);
+
     res.status(200).json({
       success: true,
-      data: updatedJob,
+      data: jobWithUrl,
     });
   } catch (error) {
     next(error);
@@ -389,10 +540,13 @@ export const getAllJobsAdmin = async (req, res, next) => {
       .populate("hiredApplicant", "name wallet roleNumber")
       .sort({ createdAt: -1 });
 
+    // Add signed URLs to jobs
+    const jobsWithUrls = await addSignedUrlsToJobs(jobs);
+
     res.status(200).json({
       success: true,
       count: jobs.length,
-      data: jobs,
+      data: jobsWithUrls,
     });
   } catch (error) {
     next(error);

@@ -49,13 +49,22 @@ export const createAcademicRecord = async (req, res, next) => {
       });
     }
 
-    const { recordType, title } = req.body;
+    const { recordType, title, institutionId, gpa } = req.body;
+
+    // Validate GPA
+    const gpaValue = parseFloat(gpa);
+    if (isNaN(gpaValue) || gpaValue < 0 || gpaValue > 4.0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid GPA value. Must be between 0 and 4.0",
+      });
+    }
 
     // Get the student ID from the authenticated user
     const studentId = req.user._id;
 
-    // Get student details including institution
-    const student = await Student.findById(studentId).populate("institutionId");
+    // Get student details
+    const student = await Student.findById(studentId);
 
     if (!student) {
       return res.status(404).json({
@@ -64,18 +73,16 @@ export const createAcademicRecord = async (req, res, next) => {
       });
     }
 
-    // Get the institution ID from the student
-    const institutionId = student.institutionId;
-
-    if (!institutionId) {
-      return res.status(400).json({
+    // Verify the institution exists
+    const institution = await Institution.findById(institutionId);
+    if (!institution) {
+      return res.status(404).json({
         success: false,
-        message: "Student is not associated with any institution",
+        message: "Institution not found",
       });
     }
 
     // Generate a unique hash for this record
-    // Include more entropy sources to ensure uniqueness
     const uniqueStr = `${studentId}_${institutionId}_${title}_${recordType}_${new Date().getTime()}_${Math.random()
       .toString(36)
       .substring(2, 15)}`;
@@ -95,8 +102,9 @@ export const createAcademicRecord = async (req, res, next) => {
       institutionId,
       recordType,
       title,
-      fileUrl: req.file.path, // This is the Cloudinary URL (but requires signing to access)
-      filePublicId: filePublicId, // Store this for generating signed URLs later
+      gpa: gpaValue,
+      fileUrl: req.file.path,
+      filePublicId: filePublicId,
       hash,
       status: "pending", // Initially pending until institution verifies
     });
@@ -106,7 +114,7 @@ export const createAcademicRecord = async (req, res, next) => {
       success: true,
       data: {
         ...academicRecord.toObject(),
-        signedUrl: signedUrl, // Add temporary signed URL for immediate access
+        signedUrl: signedUrl,
       },
     });
   } catch (error) {

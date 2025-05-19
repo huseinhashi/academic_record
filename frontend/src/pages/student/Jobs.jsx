@@ -29,7 +29,10 @@ import {
   XCircle,
   Clock,
   Send,
-  FileText
+  FileText,
+  Eye,
+  DollarSign,
+  Award
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,6 +56,7 @@ export const StudentJobs = () => {
   const [selectedJob, setSelectedJob] = useState(null);
   const [showApplyDialog, setShowApplyDialog] = useState(false);
   const [applying, setApplying] = useState(false);
+  const [showJobDialog, setShowJobDialog] = useState(false);
   
   // Application form state
   const [coverLetter, setCoverLetter] = useState("");
@@ -250,6 +254,12 @@ export const StudentJobs = () => {
     }
   };
 
+  // Add this new function after the getApplicationStatusBadge function
+  const handleViewJobDetails = (job) => {
+    setSelectedJob(job);
+    setShowJobDialog(true);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -292,67 +302,66 @@ export const StudentJobs = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 gap-4">
-              {filteredJobs.map((job) => (
-                <Card key={job._id} className="overflow-hidden">
-                  <CardHeader className="pb-3">
-                    <div className="flex justify-between">
-                      <div>
-                        <CardTitle>{job.title}</CardTitle>
-                        <CardDescription className="flex items-center mt-1">
-                          <Building className="h-3.5 w-3.5 mr-1" />
-                          {job.companyId?.name || "Unknown Company"}
-                        </CardDescription>
-                      </div>
-                      <Badge variant={job.status === "open" ? "outline" : "secondary"}>
-                        {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pb-3">
-                    <div className="space-y-3">
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <MapPin className="h-4 w-4 mr-1" />
-                        {job.location}
-                      </div>
-                      
-                      <div className="text-sm mt-2">
-                        <p className="font-medium">Requirements:</p>
-                        <p className="text-muted-foreground mt-1">
-                          {job.requirements?.length > 150 
-                            ? `${job.requirements.substring(0, 150)}...` 
-                            : job.requirements}
-                        </p>
-                      </div>
-                      
-                      <div className="flex items-center text-sm text-muted-foreground mt-2">
-                        <Calendar className="h-4 w-4 mr-1" />
-                        Posted: {formatDate(job.createdAt)}
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="pt-0">
-                    <Button 
-                      className="w-full" 
-                      variant={job.status !== "open" ? "outline" : "default"}
-                      disabled={job.status !== "open" || hasApplied(job._id) || verifiedRecords.length === 0}
-                      onClick={() => {
-                        setSelectedJob(job);
-                        setShowApplyDialog(true);
-                      }}
-                    >
-                      {hasApplied(job._id) 
-                        ? "Already Applied" 
-                        : job.status !== "open" 
-                          ? "No Longer Available" 
-                          : verifiedRecords.length === 0
-                            ? "Need Verified Records"
-                            : "Apply Now"
-                      }
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
+            <div className="rounded-md border">
+              <div className="relative w-full overflow-auto">
+                <table className="w-full caption-bottom text-sm">
+                  <thead className="[&_tr]:border-b">
+                    <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                      <th className="h-12 px-4 text-left align-middle font-medium">Title</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium">Company</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium">Location</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium">Posted</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="[&_tr:last-child]:border-0">
+                    {filteredJobs.map((job) => (
+                      <tr key={job._id} className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                        <td className="p-4 align-middle font-medium">{job.title}</td>
+                        <td className="p-4 align-middle">{job.companyId?.name || "Unknown Company"}</td>
+                        <td className="p-4 align-middle">{job.location}</td>
+                        <td className="p-4 align-middle">{formatDate(job.createdAt)}</td>
+                        <td className="p-4 align-middle">
+                          <Badge variant={job.status === "open" ? "outline" : "secondary"}>
+                            {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                          </Badge>
+                        </td>
+                        <td className="p-4 align-middle">
+                          <div className="flex items-center space-x-2">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleViewJobDetails(job)}
+                              title="View Job Details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              className="w-24"
+                              variant={job.status !== "open" ? "outline" : "default"}
+                              disabled={job.status !== "open" || hasApplied(job._id) || verifiedRecords.length === 0}
+                              onClick={() => {
+                                setSelectedJob(job);
+                                setShowApplyDialog(true);
+                              }}
+                            >
+                              {hasApplied(job._id) 
+                                ? "Applied" 
+                                : job.status !== "open" 
+                                  ? "Closed" 
+                                  : verifiedRecords.length === 0
+                                    ? "Need Records"
+                                    : "Apply"
+                              }
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </TabsContent>
@@ -535,6 +544,106 @@ export const StudentJobs = () => {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Job Details Dialog */}
+      <Dialog open={showJobDialog} onOpenChange={setShowJobDialog}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{selectedJob?.title}</DialogTitle>
+            <DialogDescription>
+              <div className="flex items-center mt-1">
+                <Building className="h-3.5 w-3.5 mr-1" />
+                {selectedJob?.companyId?.name || "Unknown Company"}
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          {selectedJob && (
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <MapPin className="h-4 w-4 mr-1" />
+                  {selectedJob.location}
+                </div>
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <DollarSign className="h-4 w-4 mr-1" />
+                  {selectedJob.salary}
+                </div>
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <Calendar className="h-4 w-4 mr-1" />
+                  Posted: {formatDate(selectedJob.createdAt)}
+                </div>
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <Award className="h-4 w-4 mr-1" />
+                  Required Certificates: {selectedJob.certificateRequirements?.join(", ")}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-medium">Description</h4>
+                <p className="text-sm text-muted-foreground">
+                  {selectedJob.description}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-medium">Required Skills</h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedJob.requirements?.map((skill, index) => (
+                    <Badge key={index} variant="secondary">
+                      {skill}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {selectedJob.documentUrl && (
+                <div className="space-y-2">
+                  <h4 className="font-medium">Job Terms Document</h4>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      if (selectedJob.signedUrl) {
+                        window.open(selectedJob.signedUrl, '_blank');
+                      } else {
+                        toast({
+                          title: "Error",
+                          description: "Document is not available for viewing",
+                          variant: "destructive"
+                        });
+                      }
+                    }}
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    View Document
+                  </Button>
+                </div>
+              )}
+
+              <DialogFooter>
+                <Button
+                  className="w-full"
+                  variant={selectedJob.status !== "open" ? "outline" : "default"}
+                  disabled={selectedJob.status !== "open" || hasApplied(selectedJob._id) || verifiedRecords.length === 0}
+                  onClick={() => {
+                    setShowJobDialog(false);
+                    setShowApplyDialog(true);
+                  }}
+                >
+                  {hasApplied(selectedJob._id) 
+                    ? "Already Applied" 
+                    : selectedJob.status !== "open" 
+                      ? "No Longer Available" 
+                      : verifiedRecords.length === 0
+                        ? "Need Verified Records"
+                        : "Apply Now"
+                  }
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

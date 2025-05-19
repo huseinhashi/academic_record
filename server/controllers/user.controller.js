@@ -131,7 +131,7 @@ export const getAllStudents = async (req, res, next) => {
 
     const students = await Student.find(query)
       .populate("institutionId", "name email")
-      .select("-__v");
+      .select("-__v -password");
 
     res.status(200).json({
       success: true,
@@ -151,7 +151,7 @@ export const getStudentById = async (req, res, next) => {
   try {
     const student = await Student.findById(req.params.id)
       .populate("institutionId", "name email")
-      .select("-__v");
+      .select("-__v -password");
 
     if (!student) {
       return res.status(404).json({
@@ -206,16 +206,26 @@ export const updateStudent = async (req, res, next) => {
       });
     }
 
-    // Prevent changing the student's wallet address
-    if (
-      student.authMethod === "wallet" &&
-      req.body.wallet &&
-      req.body.wallet !== student.wallet
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Wallet address cannot be changed",
+    // Check if trying to update email and if it's already in use
+    if (req.body.email && req.body.email !== student.email) {
+      const existingEmail = await User.findOne({
+        email: req.body.email.toLowerCase(),
+        _id: { $ne: student._id }, // Exclude current student
       });
+
+      if (existingEmail) {
+        return res.status(400).json({
+          success: false,
+          message: "Email is already in use by another account",
+        });
+      }
+    }
+
+    // Handle password update
+    if (req.body.password) {
+      // Hash the password before saving
+      const salt = await bcrypt.genSalt(10);
+      req.body.password = await bcrypt.hash(req.body.password, salt);
     }
 
     // Only admin can change institutionId
@@ -235,7 +245,7 @@ export const updateStudent = async (req, res, next) => {
       }
     )
       .populate("institutionId", "name email")
-      .select("-__v");
+      .select("-__v -password");
 
     res.status(200).json({
       success: true,
@@ -297,6 +307,51 @@ export const deleteStudent = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "Student deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Change student password (admin or institution only)
+export const changeStudentPassword = async (req, res, next) => {
+  try {
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({
+        success: false,
+        message: "Password is required",
+      });
+    }
+
+    const student = await Student.findById(req.params.id);
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student not found",
+      });
+    }
+
+    // Check if institution trying to update a student not from their institution
+    if (
+      req.user.userType === "Institution" &&
+      student.institutionId.toString() !== req.user._id.toString()
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to update this student's password",
+      });
+    }
+
+    // Update password
+    student.password = password;
+    await student.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Password updated successfully",
     });
   } catch (error) {
     next(error);

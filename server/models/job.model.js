@@ -16,7 +16,7 @@ const jobSchema = new mongoose.Schema(
       required: true,
     },
     requirements: {
-      type: String,
+      type: [String],
       required: true,
     },
     location: {
@@ -25,12 +25,23 @@ const jobSchema = new mongoose.Schema(
     },
     salary: {
       type: String,
-      required: false,
+      required: true,
     },
     status: {
       type: String,
       enum: ["open", "closed", "filled"],
       default: "open",
+    },
+    documentUrl: {
+      type: String,
+    },
+    documentPublicId: {
+      type: String,
+    },
+    certificateRequirements: {
+      type: [String],
+      enum: ["specialty", "profession", "all"],
+      default: ["all"],
     },
     hiredApplicant: {
       type: mongoose.Schema.Types.ObjectId,

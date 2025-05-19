@@ -48,15 +48,22 @@ export const createAdmin = async (req, res, next) => {
 // Register new student (public endpoint)
 export const registerStudent = async (req, res, next) => {
   try {
-    const { wallet, name, institutionId, roleNumber } = req.body;
+    const { name, email, password, institutionId, roleNumber, skills } =
+      req.body;
 
-    // Check if wallet already exists using case-insensitive search for wallet
-    const existingWallet = await User.findByWallet(wallet);
-
-    if (existingWallet) {
+    if (!name || !email || !password || !institutionId || !roleNumber) {
       return res.status(400).json({
         success: false,
-        message: "User with this wallet already exists",
+        message: "Please provide all required fields",
+      });
+    }
+
+    // Check if email is already registered
+    const existingEmail = await User.findOne({ email: email.toLowerCase() });
+    if (existingEmail) {
+      return res.status(400).json({
+        success: false,
+        message: "Student with this email already exists",
       });
     }
 
@@ -71,12 +78,15 @@ export const registerStudent = async (req, res, next) => {
 
     // Create student
     const student = await Student.create({
-      wallet,
       name,
+      email,
+      password,
       roleNumber,
       institutionId,
-      authMethod: "wallet",
+      skills: skills || [],
+      authMethod: "password",
       isVerifiedByInstitution: false,
+      wallet: null, // Explicitly set wallet to null for password auth
     });
 
     const token = jwt.sign(
@@ -93,10 +103,11 @@ export const registerStudent = async (req, res, next) => {
         user: {
           id: student._id,
           name: student.name,
-          wallet: student.wallet,
+          email: student.email,
           roleNumber: student.roleNumber,
           userType: student.userType,
           institutionId: student.institutionId,
+          skills: student.skills,
           isVerifiedByInstitution: student.isVerifiedByInstitution,
           authMethod: student.authMethod,
         },
@@ -176,10 +187,11 @@ export const createCompany = async (req, res, next) => {
   try {
     const { name, email, password, address, phone, website } = req.body;
 
-    if (!name || !email || !password || !website) {
+    if (!name || !email || !password || !website || !address || !phone) {
       return res.status(400).json({
         success: false,
-        message: "Please provide name, email, password, and website",
+        message:
+          "Please provide name, email, password, website, address, and phone",
       });
     }
 
@@ -236,7 +248,7 @@ export const createCompany = async (req, res, next) => {
   }
 };
 
-// Login user with wallet
+// Login user with wallet (admin only)
 export const loginWithWallet = async (req, res, next) => {
   try {
     const { wallet } = req.body;
@@ -259,11 +271,11 @@ export const loginWithWallet = async (req, res, next) => {
       });
     }
 
-    // Only allow students and admins to login with wallet
-    if (user.userType !== "Student" && user.userType !== "Admin") {
+    // Only allow admins to login with wallet
+    if (user.userType !== "Admin") {
       return res.status(403).json({
         success: false,
-        message: "Only students and admins can login with wallet",
+        message: "Only administrators can login with wallet",
       });
     }
 
@@ -275,24 +287,15 @@ export const loginWithWallet = async (req, res, next) => {
       }
     );
 
-    // Determine which fields to return based on user type
-    let userData = {
+    // Return admin data
+    const userData = {
       id: user._id,
+      name: user.name,
       wallet: user.wallet,
       userType: user.userType,
       isVerified: user.isVerified,
       authMethod: user.authMethod,
     };
-
-    // Add user type specific fields
-    if (user.userType === "Admin") {
-      userData.name = user.name;
-    } else if (user.userType === "Student") {
-      userData.name = user.name;
-      userData.roleNumber = user.roleNumber;
-      userData.institutionId = user.institutionId;
-      userData.isVerifiedByInstitution = user.isVerifiedByInstitution;
-    }
 
     res.status(200).json({
       success: true,
@@ -365,7 +368,12 @@ export const loginWithPassword = async (req, res, next) => {
     };
 
     // Add user type specific fields
-    if (user.userType === "Institution") {
+    if (user.userType === "Student") {
+      userData.name = user.name;
+      userData.roleNumber = user.roleNumber;
+      userData.institutionId = user.institutionId;
+      userData.isVerifiedByInstitution = user.isVerifiedByInstitution;
+    } else if (user.userType === "Institution") {
       userData.name = user.name;
       userData.isVerifiedByAdmin = user.isVerifiedByAdmin;
     } else if (user.userType === "Company") {

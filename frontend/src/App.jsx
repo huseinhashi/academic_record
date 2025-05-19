@@ -10,7 +10,10 @@ import { Toaster } from "@/components/ui/toaster";
 
 // Dashboard Pages
 import { AdminDashboard } from "@/pages/admin/Dashboard";
-import { AdminUsers } from "@/pages/admin/Users";
+import { AdminUsers } from "@/pages/admin/Admins";
+import { AdminStudents } from "@/pages/admin/Students";
+import { AdminInstitutions } from "@/pages/admin/Institutions";
+import { AdminCompanies } from "@/pages/admin/Companies";
 import { AdminRecords } from "@/pages/admin/Records";
 import { AdminJobs } from "@/pages/admin/Jobs";
 import { AdminApplications } from "@/pages/admin/Applications";
@@ -72,6 +75,50 @@ function App() {
               <ProtectedRoute requiredType="Admin">
                 <DashboardLayout>
                   <AdminUsers />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/admin/users/admins"
+            element={
+              <ProtectedRoute requiredType="Admin">
+                <DashboardLayout>
+                  <AdminUsers />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/admin/users/students"
+            element={
+              <ProtectedRoute requiredType="Admin">
+                <DashboardLayout>
+                  <AdminStudents />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/admin/users/institutions"
+            element={
+              <ProtectedRoute requiredType="Admin">
+                <DashboardLayout>
+                  <AdminInstitutions />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/admin/users/companies"
+            element={
+              <ProtectedRoute requiredType="Admin">
+                <DashboardLayout>
+                  <AdminCompanies />
                 </DashboardLayout>
               </ProtectedRoute>
             }

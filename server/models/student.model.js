@@ -26,6 +26,11 @@ const studentSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    authMethod: {
+      type: String,
+      enum: ["password"],
+      default: "password",
+    },
   },
   { _id: false }
 );
