@@ -5,6 +5,7 @@ import Admin from "../models/admin.model.js";
 import Student from "../models/student.model.js";
 import Institution from "../models/institution.model.js";
 import Company from "../models/company.model.js";
+import Notification from "../models/notification.model.js";
 
 // Create new admin (only callable by other admins)
 export const createAdmin = async (req, res, next) => {
@@ -419,21 +420,33 @@ export const registerInstitution = async (req, res, next) => {
     // Create institution with email in the base User schema
     const institution = await Institution.create({
       name,
-      email, // This will go to the User model
-      password, // This will go to the User model
+      email,
+      password,
       website,
       location,
       authMethod: "password",
       isVerifiedByAdmin: false,
-      wallet: null, // Explicitly set wallet to null for password auth
+      wallet: null,
     });
+
+    // Get all admin users to notify them
+    const admins = await Admin.find({}, "_id");
+
+    // Create notifications for all admins
+    await Promise.all(
+      admins.map((admin) =>
+        Notification.createNewUserRegistered(
+          admin._id,
+          "Institution",
+          institution._id
+        )
+      )
+    );
 
     const token = jwt.sign(
       { id: institution._id, userType: institution.userType },
       JWT_SECRET,
-      {
-        expiresIn: JWT_EXPIRES_IN,
-      }
+      { expiresIn: JWT_EXPIRES_IN }
     );
 
     res.status(201).json({
@@ -491,22 +504,30 @@ export const registerCompany = async (req, res, next) => {
     // Create company with email in the base User schema
     const company = await Company.create({
       name,
-      email, // This will go to the User model
-      password, // This will go to the User model
+      email,
+      password,
       address: address || "",
       phone: phone || "",
       website,
       authMethod: "password",
       isVerifiedByAdmin: false,
-      wallet: null, // Explicitly set wallet to null for password auth
+      wallet: null,
     });
+
+    // Get all admin users to notify them
+    const admins = await Admin.find({}, "_id");
+
+    // Create notifications for all admins
+    await Promise.all(
+      admins.map((admin) =>
+        Notification.createNewUserRegistered(admin._id, "Company", company._id)
+      )
+    );
 
     const token = jwt.sign(
       { id: company._id, userType: company.userType },
       JWT_SECRET,
-      {
-        expiresIn: JWT_EXPIRES_IN,
-      }
+      { expiresIn: JWT_EXPIRES_IN }
     );
 
     res.status(201).json({

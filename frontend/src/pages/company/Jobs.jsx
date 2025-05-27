@@ -73,7 +73,7 @@ export const CompanyJobs = () => {
     location: "",
     salary: "",
     certificateRequirements: ["all"],
-    document: null,
+    documents: [], // Array to store selected files
     status: "open",
   });
   
@@ -164,6 +164,15 @@ export const CompanyJobs = () => {
       });
       return;
     }
+
+    if (formData.documents.length === 0) {
+      toast({
+        title: "Missing Document",
+        description: "Please upload at least one document",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setSubmitting(true);
     
@@ -178,9 +187,10 @@ export const CompanyJobs = () => {
       formDataToSend.append("certificateRequirements", JSON.stringify(formData.certificateRequirements));
       formDataToSend.append("status", formData.status);
       
-      if (formData.document) {
-        formDataToSend.append("document", formData.document);
-      }
+      // Append all documents
+      formData.documents.forEach((file, index) => {
+        formDataToSend.append("documents", file);
+      });
       
       let response;
       
@@ -214,7 +224,7 @@ export const CompanyJobs = () => {
         location: "",
         salary: "",
         certificateRequirements: ["all"],
-        document: null,
+        documents: [],
         status: "open",
       });
       
@@ -332,6 +342,7 @@ export const CompanyJobs = () => {
       status: job.status || "open",
       salary: job.salary || "",
       certificateRequirements: job.certificateRequirements || ["all"],
+      documents: [], // Reset documents array when editing
     });
     setCurrentAction("edit");
     setShowJobDialog(true);
@@ -454,7 +465,7 @@ export const CompanyJobs = () => {
               status: "open",
               salary: "",
               certificateRequirements: ["all"],
-              document: null,
+              documents: [],
             });
             setShowJobDialog(true);
           }}>
@@ -786,29 +797,57 @@ export const CompanyJobs = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Certificates</SelectItem>
-                    <SelectItem value="specialty">Specialty Only</SelectItem>
+                    <SelectItem value="specialty">Specialty-Degree Only</SelectItem>
                     <SelectItem value="profession">Profession Only</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="document">Job Description Document (Optional)</Label>
-                <Input
-                  id="document"
-                  name="document"
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                      setFormData(prev => ({ ...prev, document: file }));
-                    }
-                  }}
-                />
-                <p className="text-sm text-muted-foreground">
-                  Upload a detailed job description document (PDF, DOC, or DOCX)
-                </p>
+                <Label htmlFor="documents">Job Documents</Label>
+                <div className="space-y-2">
+                  <Input
+                    id="documents"
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    multiple
+                    onChange={(e) => {
+                      const newFiles = Array.from(e.target.files);
+                      setFormData(prev => ({
+                        ...prev,
+                        documents: [...prev.documents, ...newFiles]
+                      }));
+                    }}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Upload job description documents (PDF, DOC, or DOCX). First document is required.
+                  </p>
+                  {formData.documents.length > 0 && (
+                    <div className="space-y-2 mt-2">
+                      <p className="text-sm font-medium">Selected files:</p>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        {formData.documents.map((file, index) => (
+                          <li key={index} className="flex items-center justify-between">
+                            <span>{file.name}</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2"
+                              onClick={() => {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  documents: prev.documents.filter((_, i) => i !== index)
+                                }));
+                              }}
+                            >
+                              <XCircle className="h-4 w-4" />
+                            </Button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
               </div>
               
               <div className="space-y-2">

@@ -16,8 +16,15 @@ export const PublicRoute = ({ children }) => {
     } else if (user?.userType === "Student") {
       return <Navigate to="/student/dashboard" replace />;
     } else if (user?.userType === "Institution") {
+      if (!user?.isVerifiedByAdmin) {
+        return <Navigate to="/institution/verification-pending" replace />;
+      }
       return <Navigate to="/institution/dashboard" replace />;
     } else if (user?.userType === "Company") {
+      // For companies, check verification status
+      if (!user?.isVerifiedByAdmin) {
+        return <Navigate to="/company/verification-pending" replace />;
+      }
       return <Navigate to="/company/dashboard" replace />;
     } else {
       return <Navigate to={from} replace />;

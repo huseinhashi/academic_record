@@ -16,7 +16,9 @@ import {
   Award, 
   Sparkles, 
   ArrowRight,
-  Share2
+  Share2,
+  Briefcase,
+  ClipboardList
 } from "lucide-react";
 // import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -27,8 +29,8 @@ export const StudentDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  const [totalRecords, setTotalRecords] = useState(0);
-  const [verifiedRecords, setVerifiedRecords] = useState(0);
+  const [totalCertificates, setTotalCertificates] = useState(0);
+  const [totalApplications, setTotalApplications] = useState(0);
   const [recentRecords, setRecentRecords] = useState([]);
   const [institutionsCount, setInstitutionsCount] = useState(0);
   const [jobsCount, setJobsCount] = useState(0);
@@ -47,8 +49,8 @@ export const StudentDashboard = () => {
         const applications = applicationsResponse.data.data || [];
         
         // Calculate stats
-        const total = records.length;
-        const verified = records.filter(record => record.status === "verified").length;
+        const certificates = records.length;
+        const totalApps = applications.length;
         
         // Get recent records (most recent 3)
         const recent = [...records]
@@ -73,8 +75,8 @@ export const StudentDashboard = () => {
         // Number of job applications
         const appliedJobs = applications.length;
         
-        setTotalRecords(total);
-        setVerifiedRecords(verified);
+        setTotalCertificates(certificates);
+        setTotalApplications(totalApps);
         setRecentRecords(recent);
         setInstitutionsCount(uniqueInstitutions.size);
         setJobsCount(appliedJobs);
@@ -95,7 +97,7 @@ export const StudentDashboard = () => {
   }, [toast]);
 
   // Calculate the verification rate as a percentage
-  const verificationRate = totalRecords ? Math.round((verifiedRecords / totalRecords) * 100) : 0;
+  const verificationRate = totalCertificates ? Math.round((totalCertificates / totalCertificates) * 100) : 0;
 
   return (
     <div className="space-y-6">
@@ -110,28 +112,28 @@ export const StudentDashboard = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Total Records
+              Total Certificates
             </CardTitle>
-            <FileCheck className="h-4 w-4 text-muted-foreground" />
+            <Award className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{loading ? "-" : totalRecords}</div>
+            <div className="text-2xl font-bold">{loading ? "-" : totalCertificates}</div>
             <p className="text-xs text-muted-foreground">
-              Academic records in your portfolio
+              Verified certificates in your portfolio
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Verified Records
+              Total Applications
             </CardTitle>
-            <Award className="h-4 w-4 text-muted-foreground" />
+            <ClipboardList className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{loading ? "-" : verifiedRecords}</div>
+            <div className="text-2xl font-bold">{loading ? "-" : totalApplications}</div>
             <p className="text-xs text-muted-foreground">
-              Blockchain-verified credentials
+              Job applications submitted
             </p>
           </CardContent>
         </Card>

@@ -9,11 +9,10 @@ import {
   getJobApplications,
   hireApplicant,
   deleteJob,
+  getAllJobsAdmin,
 } from "../controllers/job.controller.js";
 import { protect, authorize } from "../middlewares/auth.middleware.js";
 import { uploadMiddleware } from "../config/cloudinary.js";
-import Job from "../models/job.model.js";
-import { cloudinaryUtils } from "../config/cloudinary.js";
 
 const router = express.Router();
 
@@ -34,42 +33,6 @@ router.delete("/:id", authorize("Company"), deleteJob);
 router.get("/:id", getJobById);
 
 // Get all jobs (admin only)
-router.get("/admin/all", authorize("Admin"), async (req, res, next) => {
-  try {
-    const { status } = req.query;
-    const query = {};
-
-    if (status && ["open", "closed", "filled"].includes(status)) {
-      query.status = status;
-    }
-
-    const jobs = await Job.find(query)
-      .populate("companyId", "name email")
-      .populate("hiredApplicant", "name wallet roleNumber")
-      .sort({ createdAt: -1 });
-
-    // Add signed URLs to jobs with documents
-    const jobsWithUrls = await Promise.all(
-      jobs.map(async (job) => {
-        const jobObj = job.toObject();
-        if (jobObj.documentPublicId) {
-          jobObj.signedUrl = await cloudinaryUtils.generateSignedUrl(
-            jobObj.documentPublicId,
-            3600
-          );
-        }
-        return jobObj;
-      })
-    );
-
-    res.status(200).json({
-      success: true,
-      count: jobs.length,
-      data: jobsWithUrls,
-    });
-  } catch (error) {
-    next(error);
-  }
-});
+router.get("/admin/all", authorize("Admin"), getAllJobsAdmin);
 
 export default router;

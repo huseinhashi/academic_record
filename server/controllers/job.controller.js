@@ -13,10 +13,15 @@ const addSignedUrlsToJobs = async (jobs) => {
     const jobsWithUrls = await Promise.all(
       jobs.map(async (job) => {
         const jobObj = job.toObject ? job.toObject() : job;
-        if (jobObj.documentPublicId) {
-          jobObj.signedUrl = await cloudinaryUtils.generateSignedUrl(
-            jobObj.documentPublicId,
-            3600 // URL valid for 1 hour
+        if (jobObj.documents && jobObj.documents.length > 0) {
+          jobObj.documents = await Promise.all(
+            jobObj.documents.map(async (doc) => ({
+              ...doc,
+              signedUrl: await cloudinaryUtils.generateSignedUrl(
+                doc.documentPublicId,
+                3600 // URL valid for 1 hour
+              ),
+            }))
           );
         }
         return jobObj;
@@ -26,10 +31,15 @@ const addSignedUrlsToJobs = async (jobs) => {
   } else {
     // Handle single job
     const jobObj = jobs.toObject ? jobs.toObject() : jobs;
-    if (jobObj.documentPublicId) {
-      jobObj.signedUrl = await cloudinaryUtils.generateSignedUrl(
-        jobObj.documentPublicId,
-        3600 // URL valid for 1 hour
+    if (jobObj.documents && jobObj.documents.length > 0) {
+      jobObj.documents = await Promise.all(
+        jobObj.documents.map(async (doc) => ({
+          ...doc,
+          signedUrl: await cloudinaryUtils.generateSignedUrl(
+            doc.documentPublicId,
+            3600 // URL valid for 1 hour
+          ),
+        }))
       );
     }
     return jobObj;
@@ -58,6 +68,14 @@ export const createJob = async (req, res, next) => {
         success: false,
         message:
           "Your company account needs to be verified by an administrator before you can post jobs. Please contact support if you believe this is an error.",
+      });
+    }
+
+    // Validate that at least one document was uploaded
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "At least one document is required",
       });
     }
 
@@ -92,6 +110,15 @@ export const createJob = async (req, res, next) => {
       });
     }
 
+    // Process uploaded files
+    const documents = req.files.map((file) => ({
+      documentUrl: file.path,
+      documentPublicId: file.filename,
+      documentName: file.originalname,
+      documentType: file.mimetype,
+      uploadedAt: new Date(),
+    }));
+
     // Create the job
     const job = await Job.create({
       companyId,
@@ -101,30 +128,22 @@ export const createJob = async (req, res, next) => {
       location,
       salary,
       certificateRequirements: certificateRequirementsArray,
-      documentUrl: req.file?.path,
-      documentPublicId: req.file?.filename,
+      documents,
     });
 
-    // Generate a signed URL for the document if it exists
-    let signedUrl = null;
-    if (job.documentPublicId) {
-      signedUrl = await cloudinaryUtils.generateSignedUrl(
-        job.documentPublicId,
-        3600
-      );
-    }
+    // Generate signed URLs for all documents
+    const jobWithUrls = await addSignedUrlsToJobs(job);
 
     res.status(201).json({
       success: true,
-      data: {
-        ...job.toObject(),
-        signedUrl,
-      },
+      data: jobWithUrls,
     });
   } catch (error) {
-    // If there's an error, cleanup any uploaded file
-    if (req.file) {
-      await cloudinaryUtils.cleanupUpload(req.file);
+    // If there's an error, cleanup any uploaded files
+    if (req.files) {
+      await Promise.all(
+        req.files.map((file) => cloudinaryUtils.cleanupUpload(file))
+      );
     }
     next(error);
   }
@@ -304,19 +323,39 @@ export const updateJob = async (req, res, next) => {
         : JSON.parse(updates.requirements);
     }
 
+    // Handle new document uploads if present
+    if (req.files && req.files.length > 0) {
+      const newDocuments = req.files.map((file) => ({
+        documentUrl: file.path,
+        documentPublicId: file.filename,
+        documentName: file.originalname,
+        documentType: file.mimetype,
+        uploadedAt: new Date(),
+      }));
+
+      // Always append new documents to existing ones
+      updates.documents = [...(job.documents || []), ...newDocuments];
+    }
+
     const updatedJob = await Job.findByIdAndUpdate(id, updates, {
       new: true,
       runValidators: true,
     });
 
-    // Add signed URL to updated job
-    const jobWithUrl = await addSignedUrlsToJobs(updatedJob);
+    // Add signed URLs to updated job
+    const jobWithUrls = await addSignedUrlsToJobs(updatedJob);
 
     res.status(200).json({
       success: true,
-      data: jobWithUrl,
+      data: jobWithUrls,
     });
   } catch (error) {
+    // If there's an error, cleanup any uploaded files
+    if (req.files) {
+      await Promise.all(
+        req.files.map((file) => cloudinaryUtils.cleanupUpload(file))
+      );
+    }
     next(error);
   }
 };
@@ -539,10 +578,8 @@ export const getAllJobsAdmin = async (req, res, next) => {
       .populate("companyId", "name email")
       .populate("hiredApplicant", "name wallet roleNumber")
       .sort({ createdAt: -1 });
-
     // Add signed URLs to jobs
     const jobsWithUrls = await addSignedUrlsToJobs(jobs);
-
     res.status(200).json({
       success: true,
       count: jobs.length,

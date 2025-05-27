@@ -5,6 +5,7 @@ import crypto from "crypto";
 import multer from "multer";
 import cloudinary from "../config/cloudinary.js";
 import { cloudinaryUtils } from "../config/cloudinary.js";
+import Notification from "../models/notification.model.js";
 
 // Helper function to add signed URLs to records
 const addSignedUrlsToRecords = async (records) => {
@@ -163,6 +164,9 @@ export const verifyAcademicRecord = async (req, res, next) => {
     if (action === "verify") {
       record.status = "verified";
       record.rejectionReason = null;
+
+      // Create notification for verified record
+      await Notification.createRecordVerified(record.studentId, record._id);
     } else {
       if (!rejectionReason) {
         return res.status(400).json({
@@ -172,6 +176,16 @@ export const verifyAcademicRecord = async (req, res, next) => {
       }
       record.status = "rejected";
       record.rejectionReason = rejectionReason;
+
+      // Create notification for rejected record
+      await Notification.create({
+        recipient: record.studentId,
+        type: "RECORD_REJECTED",
+        title: "Academic Record Rejected",
+        message: `Your academic record has been rejected. Reason: ${rejectionReason}`,
+        data: { recordId: record._id },
+        priority: "high",
+      });
     }
 
     await record.save();

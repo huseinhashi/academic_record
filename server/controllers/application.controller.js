@@ -3,6 +3,8 @@ import Job from "../models/job.model.js";
 import AcademicRecord from "../models/academicRecord.model.js";
 import Student from "../models/student.model.js";
 import { cloudinaryUtils } from "../config/cloudinary.js";
+import Notification from "../models/notification.model.js";
+
 // Helper function to add signed URLs to records
 const addSignedUrlsToRecords = async (records) => {
   if (!records) return records;
@@ -162,6 +164,12 @@ export const applyToJob = async (req, res, next) => {
       academicRecords: academicRecordIds || [],
       status: "pending",
     });
+
+    // Create notification for the company
+    await Notification.createJobApplicationReceived(
+      job.companyId,
+      application._id
+    );
 
     res.status(201).json({
       success: true,
@@ -401,13 +409,43 @@ export const updateApplicationStatus = async (req, res, next) => {
     application.status = status;
     await application.save();
 
+    // Create appropriate notification based on status
+    if (status === "accepted") {
+      await Notification.create({
+        recipient: application.studentId._id,
+        type: "JOB_APPLICATION_APPROVED",
+        title: "Job Application Accepted",
+        message: `Your application for ${application.jobId.title} has been accepted!`,
+        data: { applicationId: application._id, jobId: application.jobId._id },
+        priority: "high",
+      });
+    } else if (status === "rejected") {
+      await Notification.create({
+        recipient: application.studentId._id,
+        type: "JOB_APPLICATION_REJECTED",
+        title: "Job Application Rejected",
+        message: `Your application for ${application.jobId.title} has been rejected.`,
+        data: { applicationId: application._id, jobId: application.jobId._id },
+        priority: "medium",
+      });
+    }
+
     // If accepting application and job is still open, consider updating job status
     if (status === "accepted" && application.jobId.status === "open") {
-      // Optional: You could mark the job as filled here if needed
       const job = await Job.findById(application.jobId._id);
       job.status = "filled";
       job.hiredApplicant = application.studentId._id;
       await job.save();
+
+      // Create notification for hiring
+      await Notification.create({
+        recipient: application.studentId._id,
+        type: "JOB_HIRED",
+        title: "Congratulations! You've Been Hired",
+        message: `You have been hired for the position: ${job.title}`,
+        data: { jobId: job._id, applicationId: application._id },
+        priority: "high",
+      });
     }
 
     // Add signed URLs to the academic records if they exist

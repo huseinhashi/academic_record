@@ -86,8 +86,8 @@ export const AdminJobs = () => {
   };
 
   // Handle viewing document
-  const handleViewDocument = (job) => {
-    if (!job?.signedUrl) {
+  const handleViewDocument = (doc) => {
+    if (!doc?.signedUrl) {
       toast({
         title: "Error",
         description: "Document is not available for viewing",
@@ -97,13 +97,13 @@ export const AdminJobs = () => {
     }
     
     // Try to open the file in a new tab
-    const newWindow = window.open(job.signedUrl, '_blank');
+    const newWindow = window.open(doc.signedUrl, '_blank');
     
     // If the window was blocked or failed to open
     if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
       // Create a temporary anchor element
       const link = document.createElement('a');
-      link.href = job.signedUrl;
+      link.href = doc.signedUrl;
       link.setAttribute('target', '_blank');
       document.body.appendChild(link);
       link.click();
@@ -111,7 +111,7 @@ export const AdminJobs = () => {
     }
   };
 
-  // Filter jobs based on search query
+  // Filter jobs
   const filteredJobs = jobs.filter(job => 
     job.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     job.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -216,6 +216,7 @@ export const AdminJobs = () => {
                       </th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Hired Student</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium">Documents</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Actions</th>
                     </tr>
                   </thead>
@@ -239,13 +240,19 @@ export const AdminJobs = () => {
                           )}
                         </td>
                         <td className="p-4 align-middle">
+                          <div className="flex items-center">
+                            <FileText className="h-4 w-4 mr-1" />
+                            {job.documents?.length || 0}
+                          </div>
+                        </td>
+                        <td className="p-4 align-middle">
                           <div className="flex items-center space-x-2">
-                            {job.documentUrl && (
+                            {job.documents && job.documents.length > 0 && (
                               <Button 
                                 variant="ghost" 
                                 size="icon"
-                                onClick={() => handleViewDocument(job)}
-                                title="View Job Document"
+                                onClick={() => handleViewDocument(job.documents[0])}
+                                title="View First Document"
                               >
                                 <FileText className="h-4 w-4" />
                               </Button>
@@ -321,17 +328,31 @@ export const AdminJobs = () => {
                 </div>
               </div>
 
-              {selectedJob.documentUrl && (
+              {selectedJob.documents && selectedJob.documents.length > 0 && (
                 <div className="space-y-2">
-                  <h4 className="font-medium">Job Terms Document</h4>
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => handleViewDocument(selectedJob)}
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    View Document
-                  </Button>
+                  <h4 className="font-medium">Job Documents</h4>
+                  <div className="space-y-2">
+                    {selectedJob.documents.map((doc, index) => (
+                      <div key={index} className="flex items-center justify-between bg-muted p-2 rounded-md">
+                        <div className="flex items-center space-x-2">
+                          <FileText className="h-4 w-4" />
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium">{doc.documentName}</span>
+                            <span className="text-xs text-muted-foreground">
+                              Uploaded: {formatDate(doc.uploadedAt)}
+                            </span>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleViewDocument(doc)}
+                        >
+                          View
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 

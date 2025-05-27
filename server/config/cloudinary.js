@@ -92,10 +92,10 @@ const upload = multer({
   storage,
   limits: {
     fileSize: MAX_FILE_SIZE,
-    files: 1, // Allow only 1 file
+    files: 5, // Allow up to 5 files
   },
   fileFilter,
-}).single("document"); // Match your frontend field name "document"
+}).array("documents", 5); // Match your frontend field name "documents" and allow up to 5 files
 
 // Wrapped upload middleware with error handling
 export const uploadMiddleware = (req, res, next) => {
@@ -155,4 +155,32 @@ export const cloudinaryUtils = {
     }
   },
 };
+
+// Update the addSignedUrlsToJobs function to handle multiple documents
+export const addSignedUrlsToJobs = async (jobs) => {
+  if (!jobs) return jobs;
+
+  const addSignedUrlsToJob = async (job) => {
+    const jobObj = job.toObject ? job.toObject() : job;
+    if (jobObj.documents && jobObj.documents.length > 0) {
+      jobObj.documents = await Promise.all(
+        jobObj.documents.map(async (doc) => ({
+          ...doc,
+          signedUrl: await cloudinaryUtils.generateSignedUrl(
+            doc.documentPublicId,
+            3600 // URL valid for 1 hour
+          ),
+        }))
+      );
+    }
+    return jobObj;
+  };
+
+  if (Array.isArray(jobs)) {
+    return Promise.all(jobs.map(addSignedUrlsToJob));
+  } else {
+    return addSignedUrlsToJob(jobs);
+  }
+};
+
 export default cloudinary;

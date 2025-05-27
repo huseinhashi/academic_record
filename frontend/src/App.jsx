@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LoginPage } from "@/pages/LoginPage";
 import { RegisterPage } from "@/pages/RegisterPage";
+import { TermsAndConditions } from "@/pages/TermsAndConditions";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PublicRoute } from "@/components/PublicRoute";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
@@ -29,6 +30,8 @@ import { InstitutionStudents } from "@/pages/institution/Students";
 import { InstitutionRecords } from "@/pages/institution/Records";
 import { CompanyDashboard } from "@/pages/company/Dashboard";
 import { CompanyJobs } from "@/pages/company/Jobs";
+import { VerificationPending } from "@/pages/company/VerificationPending";
+import { InstitutionVerificationPending } from "@/pages/institution/VerificationPending";
 
 function App() {
   return (
@@ -215,9 +218,18 @@ function App() {
           
           {/* Institution Routes */}
           <Route
-            path="/institution/dashboard"
+            path="/institution/verification-pending"
             element={
               <ProtectedRoute requiredType="Institution">
+                <InstitutionVerificationPending />
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/institution/dashboard"
+            element={
+              <ProtectedRoute requiredType="Institution" requireVerification>
                 <DashboardLayout>
                   <InstitutionDashboard />
                 </DashboardLayout>
@@ -228,7 +240,7 @@ function App() {
           <Route
             path="/institution/students"
             element={
-              <ProtectedRoute requiredType="Institution">
+              <ProtectedRoute requiredType="Institution" requireVerification>
                 <DashboardLayout>
                   <InstitutionStudents />
                 </DashboardLayout>
@@ -239,7 +251,7 @@ function App() {
           <Route
             path="/institution/records"
             element={
-              <ProtectedRoute requiredType="Institution">
+              <ProtectedRoute requiredType="Institution" requireVerification>
                 <DashboardLayout>
                   <InstitutionRecords />
                 </DashboardLayout>
@@ -249,9 +261,18 @@ function App() {
           
           {/* Company Routes */}
           <Route
-            path="/company/dashboard"
+            path="/company/verification-pending"
             element={
               <ProtectedRoute requiredType="Company">
+                <VerificationPending />
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/company/dashboard"
+            element={
+              <ProtectedRoute requiredType="Company" requireVerification>
                 <DashboardLayout>
                   <CompanyDashboard />
                 </DashboardLayout>
@@ -262,9 +283,21 @@ function App() {
           <Route
             path="/company/jobs"
             element={
-              <ProtectedRoute requiredType="Company">
+              <ProtectedRoute requiredType="Company" requireVerification>
                 <DashboardLayout>
                   <CompanyJobs />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* Terms and Conditions Route */}
+          <Route
+            path="/settings/terms"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <TermsAndConditions />
                 </DashboardLayout>
               </ProtectedRoute>
             }

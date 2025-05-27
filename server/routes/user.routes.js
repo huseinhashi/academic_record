@@ -32,6 +32,7 @@ import {
 
   // Public routes
   getPublicInstitutions,
+  changePassword,
 } from "../controllers/user.controller.js";
 import { protect, authorize } from "../middlewares/auth.middleware.js";
 
@@ -42,6 +43,9 @@ router.get("/public/institutions", getPublicInstitutions);
 
 // Protected routes - all require authentication
 router.use(protect);
+
+// Change password route (for all user types except admin)
+router.post("/change-password", changePassword);
 
 // Admin routes - admin access only
 router.get("/admins", authorize("Admin"), getAllAdmins);

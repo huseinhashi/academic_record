@@ -456,7 +456,7 @@ export const StudentRecords = () => {
                       <SelectValue placeholder="Select record type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="specialty">Specialty</SelectItem>
+                      <SelectItem value="specialty">Specialty-Degree</SelectItem>
                       <SelectItem value="profession">Profession</SelectItem>
                     </SelectContent>
                   </Select>

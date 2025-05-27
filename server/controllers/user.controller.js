@@ -3,6 +3,7 @@ import Admin from "../models/admin.model.js";
 import Student from "../models/student.model.js";
 import Institution from "../models/institution.model.js";
 import Company from "../models/company.model.js";
+import Notification from "../models/notification.model.js";
 import bcrypt from "bcrypt";
 
 // ============= Admin Management =============
@@ -281,6 +282,9 @@ export const verifyStudent = async (req, res, next) => {
 
     await student.save();
 
+    // Create notification for the student
+    await Notification.createAccountApproved(student._id, "Student");
+
     res.status(200).json({
       success: true,
       data: student,
@@ -475,6 +479,9 @@ export const verifyInstitution = async (req, res, next) => {
 
     await institution.save();
 
+    // Create notification for the institution
+    await Notification.createAccountApproved(institution._id, "Institution");
+
     res.status(200).json({
       success: true,
       data: institution,
@@ -668,6 +675,9 @@ export const verifyCompany = async (req, res, next) => {
 
     await company.save();
 
+    // Create notification for the company
+    await Notification.createAccountApproved(company._id, "Company");
+
     res.status(200).json({
       success: true,
       data: company,
@@ -746,6 +756,110 @@ export const getPublicInstitutions = async (req, res, next) => {
       success: true,
       count: institutions.length,
       data: institutions,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Change password for current user (all user types except admin)
+export const changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Current password and new password are required",
+      });
+    }
+
+    // Password validation
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 8 characters long",
+      });
+    }
+
+    if (!/(?=.*[a-z])/.test(newPassword)) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must contain at least one lowercase letter",
+      });
+    }
+
+    if (!/(?=.*[A-Z])/.test(newPassword)) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must contain at least one uppercase letter",
+      });
+    }
+
+    if (!/(?=.*\d)/.test(newPassword)) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must contain at least one number",
+      });
+    }
+
+    // Get user based on type and verify current password
+    let user;
+    let Model;
+    switch (req.user.userType) {
+      case "Student":
+        Model = Student;
+        break;
+      case "Institution":
+        Model = Institution;
+        break;
+      case "Company":
+        Model = Company;
+        break;
+      default:
+        return res.status(403).json({
+          success: false,
+          message: "Password change not allowed for this account type",
+        });
+    }
+
+    // Find user and verify current password
+    user = await Model.findById(req.user._id).select("+password");
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Verify current password
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(400).json({
+        success: false,
+        message: "Current password is incorrect",
+      });
+    }
+
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update password using findByIdAndUpdate to avoid validation
+    await Model.findByIdAndUpdate(
+      req.user._id,
+      {
+        password: hashedPassword,
+      },
+      {
+        runValidators: false, // Disable validation since we're only updating password
+        new: true,
+      }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Password updated successfully",
     });
   } catch (error) {
     next(error);

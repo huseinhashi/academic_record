@@ -622,6 +622,39 @@ export const StudentJobs = () => {
                 </div>
               )}
 
+              {selectedJob?.documents && selectedJob.documents.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-medium">Job Documents</h4>
+                  <div className="space-y-2">
+                    {selectedJob.documents.map((doc, index) => (
+                      <div key={index} className="flex items-center justify-between bg-muted p-2 rounded-md">
+                        <div className="flex items-center space-x-2">
+                          <FileText className="h-4 w-4" />
+                          <span className="text-sm">{doc.documentName}</span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            if (doc.signedUrl) {
+                              window.open(doc.signedUrl, '_blank');
+                            } else {
+                              toast({
+                                title: "Error",
+                                description: "Document is not available for viewing",
+                                variant: "destructive"
+                              });
+                            }
+                          }}
+                        >
+                          View
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <DialogFooter>
                 <Button
                   className="w-full"

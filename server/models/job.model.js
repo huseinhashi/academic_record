@@ -1,5 +1,28 @@
 import mongoose from "mongoose";
 
+const jobDocumentSchema = new mongoose.Schema({
+  documentUrl: {
+    type: String,
+    required: true,
+  },
+  documentPublicId: {
+    type: String,
+    required: true,
+  },
+  documentName: {
+    type: String,
+    required: true,
+  },
+  documentType: {
+    type: String,
+    required: true,
+  },
+  uploadedAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
 const jobSchema = new mongoose.Schema(
   {
     companyId: {
@@ -32,11 +55,14 @@ const jobSchema = new mongoose.Schema(
       enum: ["open", "closed", "filled"],
       default: "open",
     },
-    documentUrl: {
-      type: String,
-    },
-    documentPublicId: {
-      type: String,
+    documents: {
+      type: [jobDocumentSchema],
+      validate: {
+        validator: function (docs) {
+          return docs.length > 0; // At least one document is required
+        },
+        message: "At least one document is required",
+      },
     },
     certificateRequirements: {
       type: [String],

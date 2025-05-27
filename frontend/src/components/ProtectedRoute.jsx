@@ -2,7 +2,7 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
-export const ProtectedRoute = ({ children, requiredType }) => {
+export const ProtectedRoute = ({ children, requiredType, requireVerification }) => {
   const { isAuthenticated, user } = useAuth();
   const location = useLocation();
 
@@ -25,6 +25,16 @@ export const ProtectedRoute = ({ children, requiredType }) => {
     } else {
       return <Navigate to="/dashboard" replace />;
     }
+  }
+
+  // Handle company verification requirement
+  if (requireVerification && user?.userType === "Company" && !user?.isVerifiedByAdmin) {
+    return <Navigate to="/company/verification-pending" replace />;
+  }
+
+  // Handle institution verification requirement
+  if (requireVerification && user?.userType === "Institution" && !user?.isVerifiedByAdmin) {
+    return <Navigate to="/institution/verification-pending" replace />;
   }
 
   return children;

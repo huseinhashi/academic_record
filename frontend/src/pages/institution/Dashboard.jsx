@@ -1,18 +1,22 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, GraduationCap, CheckCircle, School } from "lucide-react";
+import { FileText, GraduationCap, CheckCircle, School, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 import api from "@/lib/axios";
 
 export const InstitutionDashboard = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [stats, setStats] = useState({
     totalStudents: 0,
     verifiedStudents: 0,
     totalRecords: 0,
-    verifiedRecords: 0
+    verifiedRecords: 0,
+    pendingRecords: 0,
+    rejectedRecords: 0
   });
   const [loading, setLoading] = useState(true);
 
@@ -20,29 +24,52 @@ export const InstitutionDashboard = () => {
     const fetchStats = async () => {
       setLoading(true);
       try {
-        // In a real app, you would make API calls to get the actual stats
-        // For now, we'll use placeholder data
+        // Fetch records for this institution
+        const recordsResponse = await api.get("/records/institution");
         
-        // Example API calls:
-        // const studentsResponse = await api.get("/users/students/institution/count");
-        // const recordsResponse = await api.get("/records/institution/count");
-        
-        // Simulating data
-        setStats({
-          totalStudents: 0,
-          verifiedStudents: 2,
-          totalRecords: 8,
-          verifiedRecords: 2
-        });
+        if (recordsResponse.data.success) {
+          const records = recordsResponse.data.data;
+          
+          // Calculate record statistics
+          const totalRecords = records.length;
+          const verifiedRecords = records.filter(record => record.status === "verified").length;
+          const pendingRecords = records.filter(record => record.status === "pending").length;
+          const rejectedRecords = records.filter(record => record.status === "rejected").length;
+
+          // Get unique students from records
+          const uniqueStudents = new Set(records.map(record => record.studentId._id));
+          const totalStudents = uniqueStudents.size;
+          
+          // Count verified students (students with at least one verified record)
+          const verifiedStudents = new Set(
+            records
+              .filter(record => record.status === "verified")
+              .map(record => record.studentId._id)
+          ).size;
+
+          setStats({
+            totalStudents,
+            verifiedStudents,
+            totalRecords,
+            verifiedRecords,
+            pendingRecords,
+            rejectedRecords
+          });
+        }
       } catch (error) {
         console.error("Error fetching dashboard stats:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load dashboard statistics",
+          variant: "destructive",
+        });
       } finally {
         setLoading(false);
       }
     };
 
     fetchStats();
-  }, []);
+  }, [toast]);
 
   if (loading) {
     return (
@@ -72,7 +99,7 @@ export const InstitutionDashboard = () => {
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalStudents}</div>
             <p className="text-xs text-muted-foreground">
-              Registered students
+              Students with academic records
             </p>
           </CardContent>
         </Card>
@@ -87,7 +114,7 @@ export const InstitutionDashboard = () => {
           <CardContent>
             <div className="text-2xl font-bold">{stats.verifiedStudents}</div>
             <p className="text-xs text-muted-foreground">
-              Verified by your institution
+              Students with verified records
             </p>
           </CardContent>
         </Card>
@@ -126,72 +153,77 @@ export const InstitutionDashboard = () => {
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Student Management</CardTitle>
+            <CardTitle>Academic Records Overview</CardTitle>
             <CardDescription>
-              Verify and manage students from your institution
+              Current status of academic records
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex justify-between items-center">
-            <div className="space-y-1">
-              <p>Review and verify student profiles</p>
-              <p className="text-sm text-muted-foreground">
-                {stats.totalStudents - stats.verifiedStudents} students pending verification
-              </p>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Pending Verification</p>
+                  <p className="text-2xl font-bold text-amber-600">{stats.pendingRecords}</p>
+                </div>
+                <AlertCircle className="h-8 w-8 text-amber-600" />
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Verified Records</p>
+                  <p className="text-2xl font-bold text-green-600">{stats.verifiedRecords}</p>
+                </div>
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Rejected Records</p>
+                  <p className="text-2xl font-bold text-red-600">{stats.rejectedRecords}</p>
+                </div>
+                <AlertCircle className="h-8 w-8 text-red-600" />
+              </div>
             </div>
-            <Link to="/institution/students">
-              <Button>
-                <GraduationCap className="mr-2 h-4 w-4" />
-                Manage Students
-              </Button>
-            </Link>
+            <div className="mt-4">
+              <Link to="/institution/records">
+                <Button className="w-full">
+                  <FileText className="mr-2 h-4 w-4" />
+                  Manage Records
+                </Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Academic Records</CardTitle>
+            <CardTitle>Verification Process</CardTitle>
             <CardDescription>
-              Issue and manage academic credentials
+              How academic records are verified on the blockchain
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex justify-between items-center">
-            <div className="space-y-1">
-              <p>Create and verify academic records</p>
+          <CardContent>
+            <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                {stats.totalRecords - stats.verifiedRecords} records pending verification
+                Your institution can verify student records on the blockchain, creating tamper-proof credentials that can be trusted by employers and other educational institutions.
               </p>
+              <ol className="list-decimal pl-5 space-y-2 text-sm">
+                <li>Review academic records submitted by students</li>
+                <li>Verify the authenticity of the records</li>
+                <li>Approve or reject records with appropriate feedback</li>
+                <li>Approved records are automatically submitted to the blockchain</li>
+                <li>Once verified, records become immutable and can be shared by students</li>
+              </ol>
+              <div className="mt-4">
+                <Link to="/institution/records">
+                  <Button variant="outline" className="w-full">
+                    <FileText className="mr-2 h-4 w-4" />
+                    View Records
+                  </Button>
+                </Link>
+              </div>
             </div>
-            <Link to="/institution/records">
-              <Button>
-                <FileText className="mr-2 h-4 w-4" />
-                Manage Records
-              </Button>
-            </Link>
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Verification Process</CardTitle>
-          <CardDescription>
-            How academic records are verified on the blockchain
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <p>
-              Your institution can verify student records on the blockchain, creating tamper-proof credentials that can be trusted by employers and other educational institutions.
-            </p>
-            <ol className="list-decimal pl-5 space-y-2">
-              <li>Verify registered students belong to your institution</li>
-              <li>Create academic records for verified students</li>
-              <li>Records are automatically submitted to the blockchain for verification</li>
-              <li>Once verified, records become immutable and can be shared by students</li>
-            </ol>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }; 
