@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Briefcase, School, Building2, FileText, CheckCircle, XCircle, Clock, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Users, Briefcase, School, Building2, FileText, CheckCircle, XCircle, Clock, TrendingUp, Bell, Trash2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import {
   LineChart,
   Line,
@@ -57,6 +61,7 @@ const CustomLegend = ({ payload }) => {
 
 export const AdminDashboard = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [stats, setStats] = useState({
     totalStudents: 0,
     totalInstitutions: 0,
@@ -74,6 +79,11 @@ export const AdminDashboard = () => {
   const [recordStats, setRecordStats] = useState([]);
   const [jobStats, setJobStats] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Notification testing state
+  const [notificationTestUserType, setNotificationTestUserType] = useState("all");
+  const [testingNotifications, setTestingNotifications] = useState(false);
+  const [clearingNotifications, setClearingNotifications] = useState(false);
 
   // Custom colors for different charts
   const CHART_COLORS = {
@@ -205,6 +215,55 @@ export const AdminDashboard = () => {
       status: status.charAt(0).toUpperCase() + status.slice(1),
       count
     })));
+  };
+
+  // Notification testing functions
+  const handleCreateTestNotifications = async () => {
+    setTestingNotifications(true);
+    try {
+      const response = await api.post("/notifications/test", {
+        userType: notificationTestUserType === "all" ? undefined : notificationTestUserType
+      });
+      
+      toast({
+        title: "Test Notifications Created",
+        description: `Created ${response.data.count} test notifications for ${response.data.userCount} users`,
+      });
+    } catch (error) {
+      console.error("Error creating test notifications:", error);
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to create test notifications",
+        variant: "destructive",
+      });
+    } finally {
+      setTestingNotifications(false);
+    }
+  };
+
+  const handleClearTestNotifications = async () => {
+    setClearingNotifications(true);
+    try {
+      const response = await api.delete("/notifications/test", {
+        data: {
+          userType: notificationTestUserType === "all" ? undefined : notificationTestUserType
+        }
+      });
+      
+      toast({
+        title: "Test Notifications Cleared",
+        description: `Cleared ${response.data.deletedCount} test notifications`,
+      });
+    } catch (error) {
+      console.error("Error clearing test notifications:", error);
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to clear test notifications",
+        variant: "destructive",
+      });
+    } finally {
+      setClearingNotifications(false);
+    }
   };
 
   if (loading) {
@@ -346,6 +405,86 @@ export const AdminDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Notification Testing Section */}
+      {/* <Card className="mb-6">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5" />
+              Notification Testing
+            </CardTitle>
+            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+              Admin Only
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">User Type:</span>
+                <Select value={notificationTestUserType} onValueChange={setNotificationTestUserType}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select user type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Users</SelectItem>
+                    <SelectItem value="Student">Students Only</SelectItem>
+                    <SelectItem value="Institution">Institutions Only</SelectItem>
+                    <SelectItem value="Company">Companies Only</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <Button
+                onClick={handleCreateTestNotifications}
+                disabled={testingNotifications}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {testingNotifications ? (
+                  <>
+                    <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2"></div>
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Bell className="h-4 w-4 mr-2" />
+                    Create Test Notifications
+                  </>
+                )}
+              </Button>
+              
+              <Button
+                variant="outline"
+                onClick={handleClearTestNotifications}
+                disabled={clearingNotifications}
+                className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+              >
+                {clearingNotifications ? (
+                  <>
+                    <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2"></div>
+                    Clearing...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Clear Test Notifications
+                  </>
+                )}
+              </Button>
+            </div>
+            
+            <div className="text-sm text-muted-foreground">
+              <p>• Creates test notifications for selected user types</p>
+              <p>• Students: Account approval, record verification, system update</p>
+              <p>• Institutions: Account approval, system update</p>
+              <p>• Companies: Account approval, job application, system update</p>
+              <p>• All notifications are prefixed with "Test:" for easy identification</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card> */}
 
       {/* Enhanced Charts Section */}
       <div className="grid gap-6 md:grid-cols-2">

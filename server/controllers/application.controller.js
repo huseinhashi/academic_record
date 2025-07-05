@@ -377,10 +377,21 @@ export const updateApplicationStatus = async (req, res, next) => {
     const { status } = req.body;
 
     // Validate status
-    if (!status || !["pending", "accepted", "rejected"].includes(status)) {
+    if (
+      !status ||
+      ![
+        "pending",
+        "interviewing",
+        "interviewed",
+        "accepted",
+        "rejected",
+        "hired",
+      ].includes(status)
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Invalid status. Must be 'pending', 'accepted', or 'rejected'",
+        message:
+          "Invalid status. Must be 'pending', 'interviewing', 'interviewed', 'accepted', 'rejected', or 'hired'",
       });
     }
 
@@ -430,20 +441,47 @@ export const updateApplicationStatus = async (req, res, next) => {
       });
     }
 
-    // If accepting application and job is still open, consider updating job status
-    if (status === "accepted" && application.jobId.status === "open") {
-      const job = await Job.findById(application.jobId._id);
-      job.status = "filled";
-      job.hiredApplicant = application.studentId._id;
-      await job.save();
+    // If hiring, check that the applicant has passed interviews
+    if (status === "hired") {
+      // Check if applicant has passed interviews
+      const Interview = (await import("../models/interview.model.js")).default;
+      const interviews = await Interview.find({
+        applicationId: application._id,
+      });
+
+      if (interviews.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Cannot hire applicant without conducting interviews first",
+        });
+      }
+
+      // Check if all interviews are passed
+      const hasPassedInterviews = interviews.some(
+        (interview) => interview.result === "pass"
+      );
+      if (!hasPassedInterviews) {
+        return res.status(400).json({
+          success: false,
+          message: "Cannot hire applicant who has not passed any interviews",
+        });
+      }
+
+      // Update job status to filled
+      if (application.jobId.status === "open") {
+        const job = await Job.findById(application.jobId._id);
+        job.status = "filled";
+        job.hiredApplicant = application.studentId._id;
+        await job.save();
+      }
 
       // Create notification for hiring
       await Notification.create({
         recipient: application.studentId._id,
         type: "JOB_HIRED",
         title: "Congratulations! You've Been Hired",
-        message: `You have been hired for the position: ${job.title}`,
-        data: { jobId: job._id, applicationId: application._id },
+        message: `You have been hired for the position: ${application.jobId.title}`,
+        data: { jobId: application.jobId._id, applicationId: application._id },
         priority: "high",
       });
     }

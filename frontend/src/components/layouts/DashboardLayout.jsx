@@ -29,7 +29,12 @@ import {
   AlertCircle,
   CheckCircle2,
   Eye,
-  EyeOff
+  EyeOff,
+  Calendar,
+  Clock,
+  History,
+  UserCircle,
+  HelpCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -204,6 +209,18 @@ export const DashboardLayout = ({ children }) => {
           icon: BarChart3,
           href: `${basePath}/reports`,
           description: "View and export system reports",
+        },
+        {
+          title: "Profile",
+          icon: UserCircle,
+          href: "/profile",
+          description: "Manage your account profile",
+        },
+        {
+          title: "Help & Support",
+          icon: HelpCircle,
+          href: "/help-support",
+          description: "Get help and contact support",
         }
       );
     } 
@@ -227,6 +244,24 @@ export const DashboardLayout = ({ children }) => {
           icon: Briefcase,
           href: `${basePath}/jobs`,
           description: "Find and apply to job opportunities",
+        },
+        {
+          title: "Notifications",
+          icon: Bell,
+          href: `${basePath}/notifications`,
+          description: "View and manage your notifications",
+        },
+        {
+          title: "Profile",
+          icon: UserCircle,
+          href: "/profile",
+          description: "Manage your account profile",
+        },
+        {
+          title: "Help & Support",
+          icon: HelpCircle,
+          href: "/help-support",
+          description: "Get help and contact support",
         }
       );
     }
@@ -244,6 +279,24 @@ export const DashboardLayout = ({ children }) => {
           icon: FileText,
           href: `${basePath}/records`,
           description: "Manage academic records",
+        },
+        {
+          title: "Notifications",
+          icon: Bell,
+          href: `${basePath}/notifications`,
+          description: "View and manage your notifications",
+        },
+        {
+          title: "Profile",
+          icon: UserCircle,
+          href: "/profile",
+          description: "Manage your account profile",
+        },
+        {
+          title: "Help & Support",
+          icon: HelpCircle,
+          href: "/help-support",
+          description: "Get help and contact support",
         }
       );
     }
@@ -255,6 +308,50 @@ export const DashboardLayout = ({ children }) => {
           icon: Briefcase,
           href: `${basePath}/jobs`,
           description: "Manage job postings and applications",
+        },
+        {
+          title: "Interviews",
+          icon: Calendar,
+          href: `${basePath}/interviews/schedule`,
+          description: "Manage interview process",
+          subItems: [
+            {
+              title: "Schedule Interview",
+              icon: Calendar,
+              href: `${basePath}/interviews/schedule`,
+              description: "Schedule new interviews",
+            },
+            {
+              title: "Upcoming Interviews",
+              icon: Clock,
+              href: `${basePath}/interviews/upcoming`,
+              description: "View and manage upcoming interviews",
+            },
+            {
+              title: "Past Interviews",
+              icon: History,
+              href: `${basePath}/interviews/past`,
+              description: "View completed interviews",
+            },
+          ],
+        },
+        {
+          title: "Notifications",
+          icon: Bell,
+          href: `${basePath}/notifications`,
+          description: "View and manage your notifications",
+        },
+        {
+          title: "Profile",
+          icon: UserCircle,
+          href: "/profile",
+          description: "Manage your account profile",
+        },
+        {
+          title: "Help & Support",
+          icon: HelpCircle,
+          href: "/help-support",
+          description: "Get help and contact support",
         }
       );
     }
@@ -460,39 +557,78 @@ export const DashboardLayout = ({ children }) => {
           <TooltipProvider delayDuration={isSidebarOpen ? 700 : 0}>
             <nav className="px-3 space-y-1">
               {navItems.map((item) => {
-                const isActive = location.pathname === item.href;
+                const isActive = location.pathname === item.href || 
+                  (item.subItems && item.subItems.some(subItem => location.pathname === subItem.href));
+                
                 return (
-                  <Tooltip key={item.href}>
-                    <TooltipTrigger asChild>
-                      <Link
-                        to={item.href}
-                        className={cn(
-                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all relative group",
-                          isActive
-                            ? "bg-primary text-primary-foreground"
-                            : "text-muted-foreground hover:bg-muted"
-                        )}
-                      >
-                        <item.icon className={cn(
-                          "flex-shrink-0",
-                          isSidebarOpen ? "h-5 w-5" : "h-6 w-6"
-                        )} />
-                        {isSidebarOpen && (
-                          <span className="truncate">{item.title}</span>
-                        )}
-                      </Link>
-                    </TooltipTrigger>
-                    {!isSidebarOpen && (
-                      <TooltipContent side="right" className="max-w-xs">
-                        <div>
-                          <p className="font-medium">{item.title}</p>
-                          {item.description && (
-                            <p className="text-xs text-muted-foreground">{item.description}</p>
+                  <div key={item.href}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Link
+                          to={item.href}
+                          className={cn(
+                            "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all relative group",
+                            isActive
+                              ? "bg-primary text-primary-foreground"
+                              : "text-muted-foreground hover:bg-muted"
                           )}
-                        </div>
-                      </TooltipContent>
+                        >
+                          <item.icon className={cn(
+                            "flex-shrink-0",
+                            isSidebarOpen ? "h-5 w-5" : "h-6 w-6"
+                          )} />
+                          {isSidebarOpen && (
+                            <span className="truncate">{item.title}</span>
+                          )}
+                        </Link>
+                      </TooltipTrigger>
+                      {!isSidebarOpen && (
+                        <TooltipContent side="right" className="max-w-xs">
+                          <div>
+                            <p className="font-medium">{item.title}</p>
+                            {item.description && (
+                              <p className="text-xs text-muted-foreground">{item.description}</p>
+                            )}
+                          </div>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                    
+                    {/* Render sub-items if they exist */}
+                    {item.subItems && isSidebarOpen && (
+                      <div className="ml-4 mt-1 space-y-1">
+                        {item.subItems.map((subItem) => {
+                          const isSubActive = location.pathname === subItem.href;
+                          return (
+                            <Tooltip key={subItem.href}>
+                              <TooltipTrigger asChild>
+                                <Link
+                                  to={subItem.href}
+                                  className={cn(
+                                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all relative group",
+                                    isSubActive
+                                      ? "bg-primary/20 text-primary"
+                                      : "text-muted-foreground hover:bg-muted/50"
+                                  )}
+                                >
+                                  <subItem.icon className="h-4 w-4 flex-shrink-0" />
+                                  <span className="truncate">{subItem.title}</span>
+                                </Link>
+                              </TooltipTrigger>
+                              <TooltipContent side="right" className="max-w-xs">
+                                <div>
+                                  <p className="font-medium">{subItem.title}</p>
+                                  {subItem.description && (
+                                    <p className="text-xs text-muted-foreground">{subItem.description}</p>
+                                  )}
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          );
+                        })}
+                      </div>
                     )}
-                  </Tooltip>
+                  </div>
                 );
               })}
             </nav>
@@ -662,7 +798,7 @@ export const DashboardLayout = ({ children }) => {
                       )}
                     </>
                   )}
-                </div>
+              </div>
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -732,7 +868,7 @@ export const DashboardLayout = ({ children }) => {
                   onClick={() => setShowLogoutAlert(true)}
                 >
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Logout</span>
+              <span>Logout</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

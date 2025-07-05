@@ -865,3 +865,91 @@ export const changePassword = async (req, res, next) => {
     next(error);
   }
 };
+
+// Update profile for current user (all user types)
+export const updateProfile = async (req, res, next) => {
+  try {
+    const {
+      name,
+      email,
+      companyName,
+      industry,
+      website,
+      description,
+      institutionName,
+      institutionType,
+      accreditation,
+      firstName,
+      lastName,
+      roleNumber,
+      skills,
+      graduationYear,
+      major,
+    } = req.body;
+
+    // Get the user based on their type
+    let user;
+    let Model;
+    switch (req.user.userType) {
+      case "Admin":
+        Model = Admin;
+        break;
+      case "Student":
+        Model = Student;
+        break;
+      case "Institution":
+        Model = Institution;
+        break;
+      case "Company":
+        Model = Company;
+        break;
+      default:
+        return res.status(400).json({
+          success: false,
+          message: "Invalid user type",
+        });
+    }
+
+    // Find user
+    user = await Model.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Update common fields
+    if (name) user.name = name;
+    if (email) user.email = email;
+
+    // Update type-specific fields
+    if (req.user.userType === "Company") {
+      if (companyName) user.companyName = companyName;
+      if (industry) user.industry = industry;
+      if (website) user.website = website;
+      if (description) user.description = description;
+    } else if (req.user.userType === "Institution") {
+      if (institutionName) user.institutionName = institutionName;
+      if (institutionType) user.institutionType = institutionType;
+      if (accreditation) user.accreditation = accreditation;
+    } else if (req.user.userType === "Student") {
+      if (firstName) user.firstName = firstName;
+      if (lastName) user.lastName = lastName;
+      if (roleNumber) user.roleNumber = roleNumber;
+      if (skills) user.skills = skills;
+      if (graduationYear) user.graduationYear = graduationYear;
+      if (major) user.major = major;
+    }
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      data: user,
+      message: "Profile updated successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};

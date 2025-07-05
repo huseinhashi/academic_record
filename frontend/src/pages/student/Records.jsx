@@ -256,7 +256,7 @@ export const StudentRecords = () => {
       formData.append("recordType", recordType);
       formData.append("institutionId", institutionId);
       formData.append("gpa", gpa);
-      formData.append("document", document);
+      formData.append("documents", document);
       
       // Submit record
       const response = await api.post("/records", formData, {
@@ -336,7 +336,7 @@ export const StudentRecords = () => {
     try {
       // Create form data
       const formData = new FormData();
-      formData.append("document", document);
+      formData.append("documents", document);
       
       // Update record
       const response = await api.put(`/records/${selectedRecord._id}`, formData, {

@@ -42,14 +42,16 @@ const addSignedUrlsToRecords = async (records) => {
 // Create a new academic record (by student)
 export const createAcademicRecord = async (req, res, next) => {
   try {
-    // File is available as req.file thanks to multer middleware
-    if (!req.file) {
+    // File is available as req.files[0] thanks to multer middleware
+    if (!req.files || req.files.length === 0) {
       return res.status(400).json({
         success: false,
         message: "No file was uploaded",
       });
     }
 
+    // For academic records, we only use the first file
+    const file = req.files[0];
     const { recordType, title, institutionId, gpa } = req.body;
 
     // Validate GPA
@@ -89,7 +91,7 @@ export const createAcademicRecord = async (req, res, next) => {
       .substring(2, 15)}`;
     const hash = crypto.createHash("sha256").update(uniqueStr).digest("hex");
 
-    const filePublicId = req.file.filename;
+    const filePublicId = file.filename;
 
     // Generate a temporary signed URL (valid for 1 hour) to return to the client
     const signedUrl = await cloudinaryUtils.generateSignedUrl(
@@ -104,7 +106,7 @@ export const createAcademicRecord = async (req, res, next) => {
       recordType,
       title,
       gpa: gpaValue,
-      fileUrl: req.file.path,
+      fileUrl: file.path,
       filePublicId: filePublicId,
       hash,
       status: "pending", // Initially pending until institution verifies
@@ -119,9 +121,11 @@ export const createAcademicRecord = async (req, res, next) => {
       },
     });
   } catch (error) {
-    // If there's an error, cleanup any uploaded file
-    if (req.file) {
-      await cloudinaryUtils.cleanupUpload(req.file);
+    // If there's an error, cleanup any uploaded files
+    if (req.files) {
+      await Promise.all(
+        req.files.map((file) => cloudinaryUtils.cleanupUpload(file))
+      );
     }
     console.error("Error in createAcademicRecord:", error);
     next(error);
@@ -396,78 +400,89 @@ export const getAcademicRecordById = async (req, res, next) => {
 export const updateAcademicRecord = async (req, res, next) => {
   try {
     const { id } = req.params;
+
+    // File is available as req.files[0] thanks to multer middleware
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No file was uploaded",
+      });
+    }
+
+    // For academic records, we only use the first file
+    const file = req.files[0];
+
     const record = await AcademicRecord.findById(id);
 
     if (!record) {
+      // Cleanup uploaded file if record not found
+      await Promise.all(
+        req.files.map((file) => cloudinaryUtils.cleanupUpload(file))
+      );
       return res.status(404).json({
         success: false,
         message: "Academic record not found",
       });
     }
 
-    // Check authorization
-    const isStudent =
-      req.user.userType === "Student" &&
-      record.studentId.toString() === req.user._id.toString();
-
-    // Students can only update rejected records with a new file
-    if (isStudent) {
-      if (record.status !== "rejected") {
-        return res.status(403).json({
-          success: false,
-          message: "Can only update records that have been rejected",
-        });
-      }
-
-      if (!req.file) {
-        return res.status(400).json({
-          success: false,
-          message: "No file was uploaded",
-        });
-      }
-
-      // Delete the old file from Cloudinary
-      if (record.filePublicId) {
-        await cloudinaryUtils.deleteFile(record.filePublicId);
-      }
-
-      // Generate a new unique hash for this updated record
-      const uniqueStr = `${record.studentId}_${record.institutionId}_${
-        record.title
-      }_${record.recordType}_${new Date().getTime()}_${Math.random()
-        .toString(36)
-        .substring(2, 15)}`;
-      const hash = crypto.createHash("sha256").update(uniqueStr).digest("hex");
-
-      // Update record with new file info
-      record.fileUrl = req.file.path;
-      record.filePublicId = req.file.filename;
-      record.hash = hash; // Set the new hash
-      record.status = "pending"; // Reset to pending for re-verification
-      record.rejectionReason = null;
-
-      await record.save();
-
-      // Generate a signed URL for the new file
-      const signedUrl = await cloudinaryUtils.generateSignedUrl(
-        record.filePublicId,
-        3600
+    // Check if the student owns this record
+    if (record.studentId.toString() !== req.user._id.toString()) {
+      // Cleanup uploaded file if not authorized
+      await Promise.all(
+        req.files.map((file) => cloudinaryUtils.cleanupUpload(file))
       );
-
-      return res.status(200).json({
-        success: true,
-        data: {
-          ...record.toObject(),
-          signedUrl,
-        },
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to update this record",
       });
     }
 
-    return res.status(403).json({
-      success: false,
-      message: "Not authorized to update this record",
+    // Check if the record is rejected
+    if (record.status !== "rejected") {
+      // Cleanup uploaded file if record not rejected
+      await Promise.all(
+        req.files.map((file) => cloudinaryUtils.cleanupUpload(file))
+      );
+      return res.status(400).json({
+        success: false,
+        message: "Only rejected records can be updated",
+      });
+    }
+
+    // Delete the old file from Cloudinary
+    if (record.filePublicId) {
+      await cloudinaryUtils.deleteFile(record.filePublicId);
+    }
+
+    // Update the record with new file information
+    record.fileUrl = file.path;
+    record.filePublicId = file.filename;
+    record.status = "pending"; // Reset status to pending for new verification
+    record.rejectionReason = null; // Clear rejection reason
+
+    await record.save();
+
+    // Generate a new signed URL
+    const signedUrl = await cloudinaryUtils.generateSignedUrl(
+      record.filePublicId,
+      3600
+    );
+
+    res.status(200).json({
+      success: true,
+      data: {
+        ...record.toObject(),
+        signedUrl,
+      },
     });
   } catch (error) {
+    // If there's an error, cleanup any uploaded files
+    if (req.files) {
+      await Promise.all(
+        req.files.map((file) => cloudinaryUtils.cleanupUpload(file))
+      );
+    }
+    console.error("Error in updateAcademicRecord:", error);
     next(error);
   }
 };

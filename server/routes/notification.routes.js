@@ -8,6 +8,9 @@ import {
   deleteAllNotifications,
   createNotification,
   createSystemNotification,
+  createTestNotifications,
+  createTestNotificationForUser,
+  clearTestNotifications,
 } from "../controllers/notification.controller.js";
 import { protect, authorize } from "../middlewares/auth.middleware.js";
 
@@ -31,5 +34,14 @@ router.delete("/", deleteAllNotifications);
 // Admin only routes
 router.post("/", authorize("Admin"), createNotification);
 router.post("/system", authorize("Admin"), createSystemNotification);
+
+// Test notification routes (admin only)
+router.post("/test", authorize("Admin"), createTestNotifications);
+router.post(
+  "/test/user/:userId",
+  authorize("Admin"),
+  createTestNotificationForUser
+);
+router.delete("/test", authorize("Admin"), clearTestNotifications);
 
 export default router;

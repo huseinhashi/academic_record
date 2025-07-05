@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -52,6 +53,7 @@ import { SkillsSelect } from "@/components/SkillsSelect";
 export const CompanyJobs = () => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   const [loading, setLoading] = useState(true);
   const [loadingApplications, setLoadingApplications] = useState(true);
@@ -309,9 +311,27 @@ export const CompanyJobs = () => {
     try {
       await api.put(`/applications/${selectedApplication._id}/status`, { status });
       
+      let message = "";
+      switch (status) {
+        case "interviewing":
+          message = "Application moved to interview stage";
+          break;
+        case "interviewed":
+          message = "Interview process completed";
+          break;
+        case "rejected":
+          message = "Application rejected";
+          break;
+        case "hired":
+          message = "Applicant hired successfully";
+          break;
+        default:
+          message = `Application status updated to ${status}`;
+      }
+      
       toast({
         title: "Application Processed",
-        description: `The application has been ${status === "accepted" ? "accepted" : "rejected"}`,
+        description: message,
       });
       
       setShowApplicationDetailsDialog(false);
@@ -395,11 +415,32 @@ export const CompanyJobs = () => {
   // Get application status badge
   const getApplicationStatusBadge = (status) => {
     switch (status) {
+      case 'hired':
+        return (
+          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+            <CheckCircle2 className="h-3 w-3 mr-1" />
+            Hired
+          </Badge>
+        );
       case 'accepted':
         return (
           <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
             <CheckCircle2 className="h-3 w-3 mr-1" />
             Accepted
+          </Badge>
+        );
+      case 'interviewing':
+        return (
+          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+            <Clock className="h-3 w-3 mr-1" />
+            Interviewing
+          </Badge>
+        );
+      case 'interviewed':
+        return (
+          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+            <Clock className="h-3 w-3 mr-1" />
+            Interviewed
           </Badge>
         );
       case 'rejected':
@@ -596,6 +637,14 @@ export const CompanyJobs = () => {
                           </td>
                           <td className="p-4 align-middle">
                             <div className="flex items-center space-x-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => navigate(`/company/jobs/${job._id}`)}
+                              >
+                                <Eye className="h-4 w-4 mr-1" />
+                                View Details
+                              </Button>
                               {job.documentUrl && (
                                 <Button 
                                   variant="ghost" 
@@ -806,22 +855,22 @@ export const CompanyJobs = () => {
               <div className="space-y-2">
                 <Label htmlFor="documents">Job Documents</Label>
                 <div className="space-y-2">
-                  <Input
+                <Input
                     id="documents"
-                    type="file"
-                    accept=".pdf,.doc,.docx"
+                  type="file"
+                  accept=".pdf,.doc,.docx"
                     multiple
-                    onChange={(e) => {
+                  onChange={(e) => {
                       const newFiles = Array.from(e.target.files);
                       setFormData(prev => ({
                         ...prev,
                         documents: [...prev.documents, ...newFiles]
                       }));
-                    }}
-                  />
-                  <p className="text-sm text-muted-foreground">
+                  }}
+                />
+                <p className="text-sm text-muted-foreground">
                     Upload job description documents (PDF, DOC, or DOCX). First document is required.
-                  </p>
+                </p>
                   {formData.documents.length > 0 && (
                     <div className="space-y-2 mt-2">
                       <p className="text-sm font-medium">Selected files:</p>
@@ -1024,14 +1073,44 @@ export const CompanyJobs = () => {
                   <Button 
                     className="w-full"
                     disabled={processingApplication}
-                    onClick={() => handleProcessApplication("accepted")}
+                    onClick={() => handleProcessApplication("interviewing")}
+                  >
+                    {processingApplication ? (
+                      <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></div>
+                    ) : (
+                      <Clock className="h-4 w-4 mr-2" />
+                    )}
+                    Start Interview Process
+                  </Button>
+                </div>
+              )}
+              
+              {selectedApplication.status === "interviewing" && (
+                <div className="flex gap-4 pt-4">
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    disabled={processingApplication}
+                    onClick={() => handleProcessApplication("rejected")}
+                  >
+                    {processingApplication ? (
+                      <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></div>
+                    ) : (
+                      <XCircle className="h-4 w-4 mr-2" />
+                    )}
+                    Reject
+                  </Button>
+                  <Button 
+                    className="w-full"
+                    disabled={processingApplication}
+                    onClick={() => handleProcessApplication("interviewed")}
                   >
                     {processingApplication ? (
                       <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></div>
                     ) : (
                       <CheckCircle2 className="h-4 w-4 mr-2" />
                     )}
-                    Accept
+                    Complete Interview Process
                   </Button>
                 </div>
               )}

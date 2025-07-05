@@ -7,6 +7,7 @@ import {
   getHiredStudents,
   getCompanyApplications,
   getAllApplicationsAdmin,
+  updateApplicationStatus,
 } from "../controllers/application.controller.js";
 import { protect, authorize } from "../middlewares/auth.middleware.js";
 
@@ -34,6 +35,8 @@ router.get(
   authorize("Student", "Company", "Admin"),
   getApplicationById
 );
+// Update application status (company only)
+router.put("/:id/status", authorize("Company"), updateApplicationStatus);
 // Get all applications (admin only)
 router.get("/admin/all", authorize("Admin"), getAllApplicationsAdmin);
 

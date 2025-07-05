@@ -178,3 +178,161 @@ export const createSystemNotification = asyncHandler(async (req, res) => {
     message: "System notification created for all users",
   });
 });
+
+// @desc    Create test notifications for all users (admin only)
+// @route   POST /api/notifications/test
+// @access  Private/Admin
+export const createTestNotifications = asyncHandler(async (req, res) => {
+  const { userType } = req.body; // Optional: specify user type to test
+
+  let users;
+  if (userType) {
+    // Get users of specific type
+    users = await User.find({ userType }, "_id userType");
+  } else {
+    // Get all users
+    users = await User.find({}, "_id userType");
+  }
+
+  if (users.length === 0) {
+    throw new ErrorResponse("No users found", 404);
+  }
+
+  const testNotifications = [];
+
+  // Create different types of test notifications for each user
+  for (const user of users) {
+    const notifications = [];
+
+    // Account related notifications
+    if (user.userType === "Student") {
+      notifications.push({
+        recipient: user._id,
+        type: "ACCOUNT_APPROVED",
+        title: "Test: Account Approved",
+        message: "This is a test notification for account approval.",
+        priority: "high",
+      });
+
+      notifications.push({
+        recipient: user._id,
+        type: "RECORD_VERIFIED",
+        title: "Test: Academic Record Verified",
+        message: "This is a test notification for record verification.",
+        data: { recordId: "test-record-id" },
+        priority: "high",
+      });
+    }
+
+    if (user.userType === "Institution") {
+      notifications.push({
+        recipient: user._id,
+        type: "ACCOUNT_APPROVED",
+        title: "Test: Institution Account Approved",
+        message: "This is a test notification for institution approval.",
+        priority: "high",
+      });
+    }
+
+    if (user.userType === "Company") {
+      notifications.push({
+        recipient: user._id,
+        type: "ACCOUNT_APPROVED",
+        title: "Test: Company Account Approved",
+        message: "This is a test notification for company approval.",
+        priority: "high",
+      });
+
+      notifications.push({
+        recipient: user._id,
+        type: "JOB_APPLICATION_RECEIVED",
+        title: "Test: New Job Application",
+        message: "This is a test notification for new job application.",
+        data: { applicationId: "test-application-id" },
+        priority: "medium",
+      });
+    }
+
+    // System notification for all users
+    notifications.push({
+      recipient: user._id,
+      type: "SYSTEM_UPDATE",
+      title: "Test: System Update",
+      message: "This is a test system notification for all users.",
+      priority: "medium",
+    });
+
+    // Create all notifications for this user
+    const createdNotifications = await Promise.all(
+      notifications.map((notification) => Notification.create(notification))
+    );
+
+    testNotifications.push(...createdNotifications);
+  }
+
+  res.status(201).json({
+    success: true,
+    count: testNotifications.length,
+    userCount: users.length,
+    message: `Test notifications created for ${users.length} users`,
+    data: {
+      userTypes: [...new Set(users.map((u) => u.userType))],
+      notificationTypes: [...new Set(testNotifications.map((n) => n.type))],
+    },
+  });
+});
+
+// @desc    Create test notification for specific user (admin only)
+// @route   POST /api/notifications/test/user/:userId
+// @access  Private/Admin
+export const createTestNotificationForUser = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const { type, title, message, data } = req.body;
+
+  // Verify user exists
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new ErrorResponse("User not found", 404);
+  }
+
+  const notification = await Notification.create({
+    recipient: userId,
+    type: type || "SYSTEM_UPDATE",
+    title: title || "Test Notification",
+    message: message || "This is a test notification.",
+    data: data || {},
+    priority: "medium",
+  });
+
+  res.status(201).json({
+    success: true,
+    data: notification,
+    message: `Test notification created for user: ${user.name}`,
+  });
+});
+
+// @desc    Clear all test notifications (admin only)
+// @route   DELETE /api/notifications/test
+// @access  Private/Admin
+export const clearTestNotifications = asyncHandler(async (req, res) => {
+  const { userType } = req.body; // Optional: specify user type
+
+  let query = {};
+  if (userType) {
+    // Get users of specific type
+    const users = await User.find({ userType }, "_id");
+    query.recipient = { $in: users.map((u) => u._id) };
+  }
+
+  // Delete notifications with "Test:" in the title
+  const result = await Notification.deleteMany({
+    ...query,
+    title: { $regex: /^Test:/, $options: "i" },
+  });
+
+  res.status(200).json({
+    success: true,
+    deletedCount: result.deletedCount,
+    message: `Cleared ${result.deletedCount} test notifications`,
+  });
+});

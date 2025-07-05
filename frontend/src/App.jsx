@@ -25,13 +25,22 @@ import {
   StudentAcademic,
   StudentJobs 
 } from "@/pages/student";
+import { StudentNotifications } from "@/pages/student/Notifications";
 import { InstitutionDashboard } from "@/pages/institution/Dashboard";
 import { InstitutionStudents } from "@/pages/institution/Students";
 import { InstitutionRecords } from "@/pages/institution/Records";
+import { InstitutionNotifications } from "@/pages/institution/Notifications";
 import { CompanyDashboard } from "@/pages/company/Dashboard";
 import { CompanyJobs } from "@/pages/company/Jobs";
+import { JobDetails as CompanyJobDetails } from "@/pages/company/JobDetails";
+import { CompanyNotifications } from "@/pages/company/Notifications";
 import { VerificationPending } from "@/pages/company/VerificationPending";
 import { InstitutionVerificationPending } from "@/pages/institution/VerificationPending";
+import { ScheduleInterview } from "@/pages/company/ScheduleInterview";
+import { UpcomingInterviews } from "@/pages/company/UpcomingInterviews";
+import { PastInterviews } from "@/pages/company/PastInterviews";
+import { Profile } from "@/pages/Profile";
+import { HelpSupport } from "@/pages/HelpSupport";
 
 function App() {
   return (
@@ -216,6 +225,17 @@ function App() {
             }
           />
           
+          <Route
+            path="/student/notifications"
+            element={
+              <ProtectedRoute requiredType="Student">
+                <DashboardLayout>
+                  <StudentNotifications />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
           {/* Institution Routes */}
           <Route
             path="/institution/verification-pending"
@@ -259,6 +279,17 @@ function App() {
             }
           />
           
+          <Route
+            path="/institution/notifications"
+            element={
+              <ProtectedRoute requiredType="Institution" requireVerification>
+                <DashboardLayout>
+                  <InstitutionNotifications />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
           {/* Company Routes */}
           <Route
             path="/company/verification-pending"
@@ -286,6 +317,85 @@ function App() {
               <ProtectedRoute requiredType="Company" requireVerification>
                 <DashboardLayout>
                   <CompanyJobs />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/company/jobs/:jobId"
+            element={
+              <ProtectedRoute requiredType="Company" requireVerification>
+                <DashboardLayout>
+                  <CompanyJobDetails />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/company/interviews/schedule"
+            element={
+              <ProtectedRoute requiredType="Company" requireVerification>
+                <DashboardLayout>
+                  <ScheduleInterview />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/company/interviews/upcoming"
+            element={
+              <ProtectedRoute requiredType="Company" requireVerification>
+                <DashboardLayout>
+                  <UpcomingInterviews />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/company/interviews/past"
+            element={
+              <ProtectedRoute requiredType="Company" requireVerification>
+                <DashboardLayout>
+                  <PastInterviews />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/company/notifications"
+            element={
+              <ProtectedRoute requiredType="Company" requireVerification>
+                <DashboardLayout>
+                  <CompanyNotifications />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* Profile Route */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <Profile />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* Help & Support Route */}
+          <Route
+            path="/help-support"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <HelpSupport />
                 </DashboardLayout>
               </ProtectedRoute>
             }

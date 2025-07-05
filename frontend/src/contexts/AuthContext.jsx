@@ -243,6 +243,11 @@ export const AuthProvider = ({ children }) => {
     delete api.defaults.headers.common["Authorization"];
   };
 
+  const updateUser = (newUserData) => {
+    setUser(newUserData);
+    localStorage.setItem("user", JSON.stringify(newUserData));
+  };
+
   return (
     <AuthContext.Provider 
       value={{ 
@@ -256,7 +261,8 @@ export const AuthProvider = ({ children }) => {
         loginWithWallet,
         loginWithPassword,
         connectWallet,
-        logout 
+        logout,
+        updateUser
       }}
     >
       {children}
