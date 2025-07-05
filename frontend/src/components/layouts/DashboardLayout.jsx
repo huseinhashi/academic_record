@@ -34,7 +34,8 @@ import {
   Clock,
   History,
   UserCircle,
-  HelpCircle
+  HelpCircle,
+  Clock1
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -279,7 +280,22 @@ export const DashboardLayout = ({ children }) => {
           icon: FileText,
           href: `${basePath}/records`,
           description: "Manage academic records",
+          subItems: [
+            {
+              title: "Pending Records",
+              icon: Clock1,
+              href: `${basePath}/records`,
+              description: "View your pending academic records",
+            },
+            {
+              title: "Verified Records",
+              icon: FileText,
+              href: `${basePath}/records`,
+              description: "View your verified academic records",
+            },
+          ],
         },
+
         {
           title: "Notifications",
           icon: Bell,
