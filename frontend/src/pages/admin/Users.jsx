@@ -35,7 +35,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle, User, School, Building2, Shield, Key, PlusCircle } from "lucide-react";
+import { CheckCircle, XCircle, User, School, Building2, Shield, PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import api from "@/lib/axios";
 import { LoaderCircle } from "@/components/LoaderCircle";
@@ -54,24 +54,13 @@ export const AdminUsers = () => {
   const [createType, setCreateType] = useState("institution");
   const [createFormData, setCreateFormData] = useState({
     name: "",
-    email: "",
-    password: "",
+    wallet: "",
     address: "",
     phone: "",
     website: "",
     location: "",
   });
   const [creatingUser, setCreatingUser] = useState(false);
-  
-  // Reset password dialog state
-  const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
-  const [resetPasswordData, setResetPasswordData] = useState({
-    id: "",
-    type: "",
-    name: "",
-    password: "",
-  });
-  const [resettingPassword, setResettingPassword] = useState(false);
 
   // Verify user function
   const handleVerify = async (id, type) => {
@@ -152,11 +141,11 @@ export const AdminUsers = () => {
   const handleCreateUser = async (e) => {
     e.preventDefault();
     
-    const { name, email, password, address, phone, website, location } = createFormData;
+    const { name, wallet, address, phone, website, location } = createFormData;
     
     // Validate form based on user type
     if (createType === 'institution') {
-      if (!name || !email || !password || !website || !location) {
+      if (!name || !wallet || !website || !location) {
         toast({
           title: "Missing fields",
           description: "Please fill in all required fields",
@@ -165,7 +154,7 @@ export const AdminUsers = () => {
         return;
       }
     } else if (createType === 'company') {
-      if (!name || !email || !password || !website || !address || !phone) {
+      if (!name || !wallet || !website || !address || !phone) {
         toast({
           title: "Missing fields",
           description: "Please fill in all required fields",
@@ -173,6 +162,16 @@ export const AdminUsers = () => {
         });
         return;
       }
+    }
+    
+    // Validate wallet address
+    if (!/^0x[a-fA-F0-9]{40}$/.test(wallet)) {
+      toast({
+        title: "Invalid wallet address",
+        description: "Please enter a valid Ethereum wallet address",
+        variant: "destructive",
+      });
+      return;
     }
     
     setCreatingUser(true);
@@ -182,24 +181,23 @@ export const AdminUsers = () => {
       
       if (createType === 'institution') {
         endpoint = '/auth/institution/create';
-        data = { name, email, password, website, location };
+        data = { name, wallet, website, location };
       } else {
         endpoint = '/auth/company/create';
-        data = { name, email, password, website, address, phone };
+        data = { name, wallet, website, address, phone };
       }
       
       await api.post(endpoint, data);
       
       toast({
         title: `${createType === 'institution' ? 'Institution' : 'Company'} Created`,
-        description: `The ${createType} has been created successfully with password authentication`,
+        description: `The ${createType} has been created successfully with wallet authentication`,
       });
       
       // Reset form and close dialog
       setCreateFormData({
         name: "",
-        email: "",
-        password: "",
+        wallet: "",
         address: "",
         phone: "",
         website: "",
@@ -207,83 +205,25 @@ export const AdminUsers = () => {
       });
       setShowCreateDialog(false);
       
-      // Refresh user list
+      // Refresh users list
       fetchUsers();
     } catch (error) {
-      console.error(`Error creating ${createType}:`, error);
+      console.error("Error creating user:", error);
       toast({
         title: "Creation Failed",
-        description: error.response?.data?.message || `Failed to create ${createType}`,
+        description: error.response?.data?.message || "Failed to create user",
         variant: "destructive",
       });
     } finally {
       setCreatingUser(false);
     }
   };
-  
-  // Handle resetting a user's password
-  const handleResetPassword = async (e) => {
-    e.preventDefault();
-    
-    const { id, type, password } = resetPasswordData;
-    
-    if (!password) {
-      toast({
-        title: "Missing password",
-        description: "Please enter a new password",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setResettingPassword(true);
-    try {
-      const endpoint = `/users/${type}s/${id}/password`;
-      await api.patch(endpoint, { password });
-      
-      toast({
-        title: "Password Reset",
-        description: "The password has been reset successfully",
-      });
-      
-      // Reset form and close dialog
-      setResetPasswordData({
-        id: "",
-        type: "",
-        name: "",
-        password: "",
-      });
-      setShowResetPasswordDialog(false);
-    } catch (error) {
-      console.error("Error resetting password:", error);
-      toast({
-        title: "Password Reset Failed",
-        description: error.response?.data?.message || "Failed to reset password",
-        variant: "destructive",
-      });
-    } finally {
-      setResettingPassword(false);
-    }
-  };
-  
-  // Open reset password dialog for a user
-  const openResetPasswordDialog = (id, type, name) => {
-    setResetPasswordData({
-      id,
-      type,
-      name,
-      password: "",
-    });
-    setShowResetPasswordDialog(true);
-  };
-  
-  // Open create dialog for institution or company
+
   const openCreateDialog = (type) => {
     setCreateType(type);
     setCreateFormData({
       name: "",
-      email: "",
-      password: "",
+      wallet: "",
       address: "",
       phone: "",
       website: "",
@@ -291,8 +231,7 @@ export const AdminUsers = () => {
     });
     setShowCreateDialog(true);
   };
-  
-  // Handle input change for create form
+
   const handleCreateFormChange = (e) => {
     const { name, value } = e.target;
     setCreateFormData(prev => ({ ...prev, [name]: value }));
@@ -300,97 +239,35 @@ export const AdminUsers = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
-        <p className="text-muted-foreground">
-          Manage and verify users in the system
-        </p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
+          <p className="text-muted-foreground">
+            Manage all users in the system
+          </p>
+        </div>
       </div>
 
-      <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="admins" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            <span>Admins</span>
-          </TabsTrigger>
-          <TabsTrigger value="students" className="flex items-center gap-2">
-            <User className="h-4 w-4" />
-            <span>Graduates</span>
-          </TabsTrigger>
-          <TabsTrigger value="institutions" className="flex items-center gap-2">
-            <School className="h-4 w-4" />
-            <span>Institutions</span>
-          </TabsTrigger>
-          <TabsTrigger value="companies" className="flex items-center gap-2">
-            <Building2 className="h-4 w-4" />
-            <span>Companies</span>
-          </TabsTrigger>
+          <TabsTrigger value="students">Students</TabsTrigger>
+          <TabsTrigger value="institutions">Institutions</TabsTrigger>
+          <TabsTrigger value="companies">Companies</TabsTrigger>
+          <TabsTrigger value="admins">Admins</TabsTrigger>
         </TabsList>
 
-        {/* Admins Tab */}
-        <TabsContent value="admins">
+        <TabsContent value="students" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Administrators</CardTitle>
+              <CardTitle>Students</CardTitle>
               <CardDescription>
-                View system administrators
+                View and manage student accounts
               </CardDescription>
             </CardHeader>
             <CardContent>
               {loading ? (
                 <div className="flex justify-center py-8">
-                  <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full"></div>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Wallet</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {admins.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={3} className="text-center">
-                          No administrators found
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      admins.map((admin) => (
-                        <TableRow key={admin._id}>
-                          <TableCell>{admin.name}</TableCell>
-                          <TableCell className="font-mono">{shortenWallet(admin.wallet)}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Administrator
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Students Tab */}
-        <TabsContent value="students">
-          <Card>
-            <CardHeader>
-              <CardTitle>Graduates</CardTitle>
-              <CardDescription>
-                View and manage Graduates accounts
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="flex justify-center py-8">
-                  <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full"></div>
+                  <LoaderCircle className="h-8 w-8 animate-spin" />
                 </div>
               ) : (
                 <Table>
@@ -406,14 +283,18 @@ export const AdminUsers = () => {
                     {students.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={4} className="text-center">
-                          No Graduates found
+                          No students found
                         </TableCell>
                       </TableRow>
                     ) : (
                       students.map((student) => (
                         <TableRow key={student._id}>
                           <TableCell>{student.name}</TableCell>
-                          <TableCell className="font-mono">{shortenWallet(student.wallet)}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                              {shortenWallet(student.wallet)}
+                            </Badge>
+                          </TableCell>
                           <TableCell>{student.institutionId?.name || 'Unknown'}</TableCell>
                           <TableCell>
                             {student.isVerifiedByInstitution ? (
@@ -438,35 +319,35 @@ export const AdminUsers = () => {
           </Card>
         </TabsContent>
 
-        {/* Institutions Tab */}
-        <TabsContent value="institutions">
+        <TabsContent value="institutions" className="space-y-4">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Institutions</CardTitle>
-                <CardDescription>
-                  View and verify educational institutions
-                </CardDescription>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Institutions</CardTitle>
+                  <CardDescription>
+                    View and manage educational institutions
+                  </CardDescription>
+                </div>
+                <Button onClick={() => openCreateDialog('institution')}>
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Add Institution
+                </Button>
               </div>
-              <Button onClick={() => openCreateDialog('institution')}>
-                <PlusCircle className="h-4 w-4 mr-2" />
-                Add Institution
-              </Button>
             </CardHeader>
             <CardContent>
               {loading ? (
                 <div className="flex justify-center py-8">
-                  <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full"></div>
+                  <LoaderCircle className="h-8 w-8 animate-spin" />
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
+                      <TableHead>Wallet</TableHead>
                       <TableHead>Website</TableHead>
                       <TableHead>Location</TableHead>
-                      <TableHead>Authentication</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
@@ -474,7 +355,7 @@ export const AdminUsers = () => {
                   <TableBody>
                     {institutions.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center">
+                        <TableCell colSpan={6} className="text-center">
                           No institutions found
                         </TableCell>
                       </TableRow>
@@ -482,7 +363,11 @@ export const AdminUsers = () => {
                       institutions.map((institution) => (
                         <TableRow key={institution._id}>
                           <TableCell>{institution.name}</TableCell>
-                          <TableCell>{institution.email}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                              {shortenWallet(institution.wallet)}
+                            </Badge>
+                          </TableCell>
                           <TableCell>
                             <a 
                               href={institution.website} 
@@ -494,17 +379,6 @@ export const AdminUsers = () => {
                             </a>
                           </TableCell>
                           <TableCell>{institution.location}</TableCell>
-                          <TableCell>
-                            {institution.authMethod === "password" ? (
-                              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                                Password
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-                                Wallet ({shortenWallet(institution.wallet)})
-                              </Badge>
-                            )}
-                          </TableCell>
                           <TableCell>
                             {institution.isVerifiedByAdmin ? (
                               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
@@ -519,28 +393,16 @@ export const AdminUsers = () => {
                             )}
                           </TableCell>
                           <TableCell>
-                            <div className="flex space-x-2">
-                              {!institution.isVerifiedByAdmin && (
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => handleVerify(institution._id, 'institution')}
-                                >
-                                  <CheckCircle className="h-3 w-3 mr-1" />
-                                  Verify
-                                </Button>
-                              )}
-                              {institution.authMethod === "password" && (
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => openResetPasswordDialog(institution._id, 'institution', institution.name)}
-                                >
-                                  <Key className="h-3 w-3 mr-1" />
-                                  Reset Password
-                                </Button>
-                              )}
-                            </div>
+                            {!institution.isVerifiedByAdmin && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleVerify(institution._id, 'institution')}
+                              >
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Verify
+                              </Button>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))
@@ -552,36 +414,36 @@ export const AdminUsers = () => {
           </Card>
         </TabsContent>
 
-        {/* Companies Tab */}
-        <TabsContent value="companies">
+        <TabsContent value="companies" className="space-y-4">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Companies</CardTitle>
-                <CardDescription>
-                  View and verify companies
-                </CardDescription>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Companies</CardTitle>
+                  <CardDescription>
+                    View and manage company accounts
+                  </CardDescription>
+                </div>
+                <Button onClick={() => openCreateDialog('company')}>
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Add Company
+                </Button>
               </div>
-              <Button onClick={() => openCreateDialog('company')}>
-                <PlusCircle className="h-4 w-4 mr-2" />
-                Add Company
-              </Button>
             </CardHeader>
             <CardContent>
               {loading ? (
                 <div className="flex justify-center py-8">
-                  <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full"></div>
+                  <LoaderCircle className="h-8 w-8 animate-spin" />
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
+                      <TableHead>Wallet</TableHead>
                       <TableHead>Website</TableHead>
                       <TableHead>Address</TableHead>
                       <TableHead>Phone</TableHead>
-                      <TableHead>Authentication</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
@@ -589,7 +451,7 @@ export const AdminUsers = () => {
                   <TableBody>
                     {companies.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center">
+                        <TableCell colSpan={7} className="text-center">
                           No companies found
                         </TableCell>
                       </TableRow>
@@ -597,7 +459,11 @@ export const AdminUsers = () => {
                       companies.map((company) => (
                         <TableRow key={company._id}>
                           <TableCell>{company.name}</TableCell>
-                          <TableCell>{company.email}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                              {shortenWallet(company.wallet)}
+                            </Badge>
+                          </TableCell>
                           <TableCell>
                             <a 
                               href={company.website} 
@@ -610,17 +476,6 @@ export const AdminUsers = () => {
                           </TableCell>
                           <TableCell>{company.address}</TableCell>
                           <TableCell>{company.phone}</TableCell>
-                          <TableCell>
-                            {company.authMethod === "password" ? (
-                              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                                Password
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-                                Wallet ({shortenWallet(company.wallet)})
-                              </Badge>
-                            )}
-                          </TableCell>
                           <TableCell>
                             {company.isVerifiedByAdmin ? (
                               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
@@ -635,28 +490,70 @@ export const AdminUsers = () => {
                             )}
                           </TableCell>
                           <TableCell>
-                            <div className="flex space-x-2">
-                              {!company.isVerifiedByAdmin && (
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => handleVerify(company._id, 'company')}
-                                >
-                                  <CheckCircle className="h-3 w-3 mr-1" />
-                                  Verify
-                                </Button>
-                              )}
-                              {company.authMethod === "password" && (
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => openResetPasswordDialog(company._id, 'company', company.name)}
-                                >
-                                  <Key className="h-3 w-3 mr-1" />
-                                  Reset Password
-                                </Button>
-                              )}
-                            </div>
+                            {!company.isVerifiedByAdmin && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleVerify(company._id, 'company')}
+                              >
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Verify
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="admins" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Administrators</CardTitle>
+              <CardDescription>
+                View system administrators
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <LoaderCircle className="h-8 w-8 animate-spin" />
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Wallet</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {admins.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center">
+                          No administrators found
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      admins.map((admin) => (
+                        <TableRow key={admin._id}>
+                          <TableCell>{admin.name}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                              {shortenWallet(admin.wallet)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Active
+                            </Badge>
                           </TableCell>
                         </TableRow>
                       ))
@@ -669,23 +566,23 @@ export const AdminUsers = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Create Institution/Company Dialog */}
+      {/* Create User Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {createType === 'institution' ? 'Create Institution' : 'Create Company'}
+              Create {createType === 'institution' ? 'Institution' : 'Company'}
             </DialogTitle>
             <DialogDescription>
               {createType === 'institution' 
-                ? 'Create a new educational institution with email and password authentication' 
-                : 'Create a new company with email and password authentication'}
+                ? 'Create a new educational institution with wallet authentication'
+                : 'Create a new company with wallet authentication'}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreateUser} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">
-                {createType === 'institution' ? 'Institution Name' : 'Company Name'}
+                {createType === 'institution' ? 'Institution' : 'Company'} Name <span className="text-red-500">*</span>
               </Label>
               <Input 
                 id="name" 
@@ -698,47 +595,35 @@ export const AdminUsers = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="wallet">
+                Wallet Address <span className="text-red-500">*</span>
+              </Label>
               <Input 
-                id="email" 
-                name="email" 
-                type="email"
-                value={createFormData.email}
+                id="wallet" 
+                name="wallet" 
+                value={createFormData.wallet}
                 onChange={handleCreateFormChange}
-                placeholder={createType === 'institution' ? 'admin@university.edu' : 'contact@company.com'}
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input 
-                id="password" 
-                name="password" 
-                type="password"
-                value={createFormData.password}
-                onChange={handleCreateFormChange}
-                placeholder="••••••••"
+                placeholder="0x..."
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="website">Website</Label>
+              <Label htmlFor="website">Website <span className="text-red-500">*</span></Label>
               <Input 
                 id="website" 
                 name="website" 
                 type="url"
                 value={createFormData.website}
                 onChange={handleCreateFormChange}
-                placeholder={createType === 'institution' ? 'https://university.edu' : 'https://company.com'}
+                placeholder="https://example.com"
                 required
               />
             </div>
             
             {createType === 'institution' ? (
               <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
+                <Label htmlFor="location">Location <span className="text-red-500">*</span></Label>
                 <Input 
                   id="location" 
                   name="location" 
@@ -751,25 +636,25 @@ export const AdminUsers = () => {
             ) : (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="address">Address</Label>
+                  <Label htmlFor="address">Address <span className="text-red-500">*</span></Label>
                   <Input 
                     id="address" 
                     name="address" 
                     value={createFormData.address}
                     onChange={handleCreateFormChange}
-                    placeholder="123 Company Street, City"
+                    placeholder="Company address"
                     required
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
+                  <Label htmlFor="phone">Phone <span className="text-red-500">*</span></Label>
                   <Input 
                     id="phone" 
                     name="phone" 
                     value={createFormData.phone}
                     onChange={handleCreateFormChange}
-                    placeholder="+1 (555) 123-4567"
+                    placeholder="+1234567890"
                     required
                   />
                 </div>
@@ -785,44 +670,6 @@ export const AdminUsers = () => {
                   </>
                 ) : (
                   'Create'
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Reset Password Dialog */}
-      <Dialog open={showResetPasswordDialog} onOpenChange={setShowResetPasswordDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Reset Password</DialogTitle>
-            <DialogDescription>
-              Reset password for {resetPasswordData.name}
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleResetPassword} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="reset-password">New Password</Label>
-              <Input 
-                id="reset-password" 
-                type="password"
-                value={resetPasswordData.password}
-                onChange={(e) => setResetPasswordData(prev => ({ ...prev, password: e.target.value }))}
-                placeholder="Enter new password"
-                required
-              />
-            </div>
-            
-            <DialogFooter>
-              <Button type="submit" disabled={resettingPassword}>
-                {resettingPassword ? (
-                  <>
-                    <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                    Resetting...
-                  </>
-                ) : (
-                  'Reset Password'
                 )}
               </Button>
             </DialogFooter>

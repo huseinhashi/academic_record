@@ -16,39 +16,40 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Download, FileDown, FileText } from "lucide-react";
+import { Calendar as CalendarIcon, FileText, FileDown, BarChart3, Users, GraduationCap, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import api from "@/lib/axios";
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 
-export const AdminReports = () => {
+export const InstitutionReports = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [reportType, setReportType] = useState("users");
+  const [reportType, setReportType] = useState("students");
   const [dateRange, setDateRange] = useState({
     from: new Date(new Date().setMonth(new Date().getMonth() - 1)),
     to: new Date()
   });
   const [reportData, setReportData] = useState([]);
+  const [summaryStats, setSummaryStats] = useState({});
 
   const reportTypes = [
-    { value: "users", label: "User Registration Report" },
-    { value: "records", label: "Academic Records Report" },
-    { value: "applications", label: "Job Applications Report" },
-    { value: "jobs", label: "Job Postings Report" },
-    { value: "verifications", label: "Verification Status Report" }
+    { value: "students", label: "Student Registration Report", icon: Users },
+    { value: "records", label: "Academic Records Report", icon: FileText },
+    { value: "verifications", label: "Verification Status Report", icon: CheckCircle },
+    { value: "graduations", label: "Graduation Analytics Report", icon: GraduationCap }
   ];
 
   useEffect(() => {
     fetchReportData();
+    fetchSummaryStats();
   }, [reportType, dateRange]);
 
   const fetchReportData = async () => {
     setLoading(true);
     try {
-      const response = await api.get(`/reports/${reportType}`, {
+      const response = await api.get(`/reports/institution/${reportType}`, {
         params: {
           startDate: format(dateRange.from, 'yyyy-MM-dd'),
           endDate: format(dateRange.to, 'yyyy-MM-dd')
@@ -56,7 +57,7 @@ export const AdminReports = () => {
       });
       
       if (response.data.success) {
-        setReportData(response.data.data || []);
+        setReportData(response.data.data);
       } else {
         console.error("Failed to fetch report data");
       }
@@ -70,8 +71,28 @@ export const AdminReports = () => {
     }
   };
 
+  const fetchSummaryStats = async () => {
+    try {
+      const response = await api.get(`/reports/institution/summary`, {
+        params: {
+          startDate: format(dateRange.from, 'yyyy-MM-dd'),
+          endDate: format(dateRange.to, 'yyyy-MM-dd')
+        }
+      });
+      
+      if (response.data.success) {
+        setSummaryStats(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching summary stats:", error);
+      if (error.response?.data?.message) {
+        console.error("Server error:", error.response.data.message);
+      }
+    }
+  };
+
   const exportToExcel = () => {
-    if (!reportData || !reportData.length) return;
+    if (!reportData.length) return;
 
     const worksheet = XLSX.utils.json_to_sheet(reportData);
     const workbook = XLSX.utils.book_new();
@@ -80,27 +101,30 @@ export const AdminReports = () => {
   };
 
   const exportToPDF = () => {
-    if (!reportData || !reportData.length) return;
+    if (!reportData.length) return;
 
     const doc = new jsPDF();
     
     // Add title
     doc.setFontSize(16);
-    const reportTypeLabel = reportTypes.find(r => r.value === reportType)?.label || "Report";
-    doc.text(reportTypeLabel, 14, 15);
+    doc.text(`${reportTypes.find(r => r.value === reportType).label}`, 14, 15);
+    
+    // Add institution name
+    doc.setFontSize(12);
+    doc.text(`Institution: ${user.name}`, 14, 25);
     
     // Add date range
     doc.setFontSize(10);
-    doc.text(`Period: ${format(dateRange.from, 'MMM dd, yyyy')} - ${format(dateRange.to, 'MMM dd, yyyy')}`, 14, 25);
+    doc.text(`Period: ${format(dateRange.from, 'MMM dd, yyyy')} - ${format(dateRange.to, 'MMM dd, yyyy')}`, 14, 35);
     
     // Add table
     const tableColumn = Object.keys(reportData[0] || {});
-    const tableRows = reportData.map(item => Object.values(item || {}));
+    const tableRows = reportData.map(item => Object.values(item));
     
     doc.autoTable({
       head: [tableColumn],
       body: tableRows,
-      startY: 35,
+      startY: 45,
       theme: 'grid',
       styles: { fontSize: 8 },
       headStyles: { fillColor: [41, 128, 185] }
@@ -111,16 +135,71 @@ export const AdminReports = () => {
 
   // Compute all unique headers from the data
   const allHeaders = Array.from(
-    new Set(reportData?.flatMap(row => Object.keys(row || {})) || [])
+    new Set(reportData.flatMap(row => Object.keys(row || {})))
   );
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Reports</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Institution Reports</h1>
         <p className="text-muted-foreground">
-          Generate and export system reports
+          Generate and export institution-specific reports and analytics
         </p>
+      </div>
+
+      {/* Summary Statistics */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Students</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{summaryStats.totalStudents || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              {summaryStats.newStudents || 0} new this period
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Academic Records</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{summaryStats.totalRecords || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              {summaryStats.pendingRecords || 0} pending verification
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Verification Rate</CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{summaryStats.verificationRate || 0}%</div>
+            <p className="text-xs text-muted-foreground">
+              {summaryStats.verifiedRecords || 0} records verified
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Graduation Rate</CardTitle>
+            <GraduationCap className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{summaryStats.graduationRate || 0}%</div>
+            <p className="text-xs text-muted-foreground">
+              {summaryStats.graduatedStudents || 0} students graduated
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
@@ -138,7 +217,10 @@ export const AdminReports = () => {
                 <SelectContent>
                   {reportTypes.map((type) => (
                     <SelectItem key={type.value} value={type.value}>
-                      {type.label}
+                      <div className="flex items-center gap-2">
+                        <type.icon className="h-4 w-4" />
+                        {type.label}
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -232,7 +314,7 @@ export const AdminReports = () => {
             <div className="flex justify-center items-center h-64">
               <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full"></div>
             </div>
-          ) : reportData && reportData.length > 0 ? (
+          ) : reportData.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
@@ -249,7 +331,7 @@ export const AdminReports = () => {
                     <tr key={index} className="border-b">
                       {allHeaders.map((header) => (
                         <td key={header} className="p-2">
-                          {row?.[header] ?? "N/A"}
+                          {row[header] ?? ""}
                         </td>
                       ))}
                     </tr>

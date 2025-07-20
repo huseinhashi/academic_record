@@ -28,8 +28,8 @@ const studentSchema = new mongoose.Schema(
     },
     authMethod: {
       type: String,
-      enum: ["password"],
-      default: "password",
+      enum: ["wallet", "password"],
+      default: "wallet",
     },
   },
   { _id: false }

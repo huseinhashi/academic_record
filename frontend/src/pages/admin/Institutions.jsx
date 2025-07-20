@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle, XCircle, School, Key, PlusCircle, Eye, EyeOff } from "lucide-react";
+import { CheckCircle, XCircle, School, PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import api from "@/lib/axios";
 
@@ -39,23 +39,11 @@ export const AdminInstitutions = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [createFormData, setCreateFormData] = useState({
     name: "",
-    email: "",
-    password: "",
+    wallet: "",
     website: "",
     location: "",
   });
   const [creatingUser, setCreatingUser] = useState(false);
-  const [showCreatePassword, setShowCreatePassword] = useState(false);
-  
-  // Reset password dialog state
-  const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
-  const [resetPasswordData, setResetPasswordData] = useState({
-    id: "",
-    name: "",
-    password: "",
-  });
-  const [resettingPassword, setResettingPassword] = useState(false);
-  const [showResetPassword, setShowResetPassword] = useState(false);
 
   const fetchInstitutions = async () => {
     setLoading(true);
@@ -105,7 +93,7 @@ export const AdminInstitutions = () => {
 
   // Add validation function
   const validateInstitutionForm = () => {
-    const { name, email, password, website, location } = createFormData;
+    const { name, wallet, website, location } = createFormData;
     
     // Name validation
     if (!name.trim()) {
@@ -116,38 +104,13 @@ export const AdminInstitutions = () => {
       return { isValid: false, errorMessage: "Institution name must start with a letter and contain only letters and spaces" };
     }
     
-    // Email validation
-    if (!email.trim()) {
-      return { isValid: false, errorMessage: "Email is required" };
+    // Wallet validation
+    if (!wallet.trim()) {
+      return { isValid: false, errorMessage: "Wallet address is required" };
     }
     
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return { isValid: false, errorMessage: "Please enter a valid email address" };
-    }
-    
-    // Password validation
-    if (!password) {
-      return { isValid: false, errorMessage: "Password is required" };
-    }
-    
-    if (password.length < 8) {
-      return { isValid: false, errorMessage: "Password must be at least 8 characters long" };
-    }
-    
-    if (!/(?=.*[a-z])/.test(password)) {
-      return { isValid: false, errorMessage: "Password must contain at least one lowercase letter" };
-    }
-    
-    if (!/(?=.*[A-Z])/.test(password)) {
-      return { isValid: false, errorMessage: "Password must contain at least one uppercase letter" };
-    }
-    
-    if (!/(?=.*\d)/.test(password)) {
-      return { isValid: false, errorMessage: "Password must contain at least one number" };
-    }
-    
-    if (!/(?=.*[!@#$%^&*])/.test(password)) {
-      return { isValid: false, errorMessage: "Password must contain at least one special character (!@#$%^&*)" };
+    if (!/^0x[a-fA-F0-9]{40}$/.test(wallet)) {
+      return { isValid: false, errorMessage: "Please enter a valid Ethereum wallet address" };
     }
     
     // Website validation
@@ -198,8 +161,7 @@ export const AdminInstitutions = () => {
       // Reset form and close dialog
       setCreateFormData({
         name: "",
-        email: "",
-        password: "",
+        wallet: "",
         website: "",
         location: "",
       });
@@ -216,49 +178,6 @@ export const AdminInstitutions = () => {
       });
     } finally {
       setCreatingUser(false);
-    }
-  };
-  
-  // Handle resetting a user's password
-  const handleResetPassword = async (e) => {
-    e.preventDefault();
-    
-    const { id, password } = resetPasswordData;
-    
-    if (!password) {
-      toast({
-        title: "Missing password",
-        description: "Please enter a new password",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setResettingPassword(true);
-    try {
-      await api.patch(`/users/institutions/${id}/password`, { password });
-      
-      toast({
-        title: "Password Reset",
-        description: "The password has been reset successfully",
-      });
-      
-      // Reset form and close dialog
-      setResetPasswordData({
-        id: "",
-        name: "",
-        password: "",
-      });
-      setShowResetPasswordDialog(false);
-    } catch (error) {
-      console.error("Error resetting password:", error);
-      toast({
-        title: "Password Reset Failed",
-        description: error.response?.data?.message || "Failed to reset password",
-        variant: "destructive",
-      });
-    } finally {
-      setResettingPassword(false);
     }
   };
 
@@ -294,10 +213,9 @@ export const AdminInstitutions = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
+                  <TableHead>Wallet</TableHead>
                   <TableHead>Website</TableHead>
                   <TableHead>Location</TableHead>
-                  <TableHead>Authentication</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -305,7 +223,7 @@ export const AdminInstitutions = () => {
               <TableBody>
                 {institutions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center">
+                    <TableCell colSpan={6} className="text-center">
                       No institutions found
                     </TableCell>
                   </TableRow>
@@ -313,7 +231,11 @@ export const AdminInstitutions = () => {
                   institutions.map((institution) => (
                     <TableRow key={institution._id}>
                       <TableCell>{institution.name}</TableCell>
-                      <TableCell>{institution.email}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                          {shortenWallet(institution.wallet)}
+                        </Badge>
+                      </TableCell>
                       <TableCell>
                         <a 
                           href={institution.website} 
@@ -325,17 +247,6 @@ export const AdminInstitutions = () => {
                         </a>
                       </TableCell>
                       <TableCell>{institution.location}</TableCell>
-                      <TableCell>
-                        {institution.authMethod === "password" ? (
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                            Password
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-                            Wallet ({shortenWallet(institution.wallet)})
-                          </Badge>
-                        )}
-                      </TableCell>
                       <TableCell>
                         {institution.isVerifiedByAdmin ? (
                           <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
@@ -361,23 +272,6 @@ export const AdminInstitutions = () => {
                               Verify
                             </Button>
                           )}
-                          {institution.authMethod === "password" && (
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => {
-                                setResetPasswordData({
-                                  id: institution._id,
-                                  name: institution.name,
-                                  password: "",
-                                });
-                                setShowResetPasswordDialog(true);
-                              }}
-                            >
-                              <Key className="h-3 w-3 mr-1" />
-                              Reset Password
-                            </Button>
-                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -395,7 +289,7 @@ export const AdminInstitutions = () => {
           <DialogHeader>
             <DialogTitle>Create Institution</DialogTitle>
             <DialogDescription>
-              Create a new educational institution with email and password authentication
+              Create a new educational institution with wallet authentication
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreateUser} className="space-y-4">
@@ -414,43 +308,17 @@ export const AdminInstitutions = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="email">
-                Email <span className="text-red-500">*</span>
+              <Label htmlFor="wallet">
+                Wallet Address <span className="text-red-500">*</span>
               </Label>
               <Input 
-                id="email" 
-                name="email" 
-                type="email"
-                value={createFormData.email}
-                onChange={(e) => setCreateFormData(prev => ({ ...prev, email: e.target.value }))}
-                placeholder="admin@university.edu"
+                id="wallet" 
+                name="wallet" 
+                value={createFormData.wallet}
+                onChange={(e) => setCreateFormData(prev => ({ ...prev, wallet: e.target.value }))}
+                placeholder="0x..."
                 required
               />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="password">
-                Password <span className="text-red-500">*</span>
-              </Label>
-              <div className="relative">
-                <Input 
-                  id="password" 
-                  name="password" 
-                  type={showCreatePassword ? "text" : "password"}
-                  value={createFormData.password}
-                  onChange={(e) => setCreateFormData(prev => ({ ...prev, password: e.target.value }))}
-                  placeholder="••••••••"
-                  required
-                  className="pr-12"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowCreatePassword(!showCreatePassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
-                >
-                  {showCreatePassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
             </div>
 
             <div className="space-y-2">
@@ -491,54 +359,6 @@ export const AdminInstitutions = () => {
                   </>
                 ) : (
                   'Create'
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Reset Password Dialog */}
-      <Dialog open={showResetPasswordDialog} onOpenChange={setShowResetPasswordDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Reset Password</DialogTitle>
-            <DialogDescription>
-              Reset password for {resetPasswordData.name}
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleResetPassword} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="reset-password">New Password</Label>
-              <div className="relative">
-                <Input 
-                  id="reset-password" 
-                  type={showResetPassword ? "text" : "password"}
-                  value={resetPasswordData.password}
-                  onChange={(e) => setResetPasswordData(prev => ({ ...prev, password: e.target.value }))}
-                  placeholder="Enter new password"
-                  required
-                  className="pr-12"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowResetPassword(!showResetPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
-                >
-                  {showResetPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button type="submit" disabled={resettingPassword}>
-                {resettingPassword ? (
-                  <>
-                    <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2"></div>
-                    Resetting...
-                  </>
-                ) : (
-                  'Reset Password'
                 )}
               </Button>
             </DialogFooter>

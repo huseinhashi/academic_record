@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserPlus, Wallet,  X, Eye, EyeOff } from "lucide-react";
+import { UserPlus, Wallet, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -29,35 +29,26 @@ export const RegisterPage = () => {
   // Student form data
   const [studentData, setStudentData] = useState({
     name: "",
-    email: "",
-    password: "",
     institutionId: "",
     roleNumber: "",
     skills: [],
   });
   const [skillInput, setSkillInput] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
 
   // Institution form data
   const [institutionData, setInstitutionData] = useState({
     name: "",
-    email: "",
-    password: "",
     website: "",
     location: "",
   });
-  const [showInstitutionPassword, setShowInstitutionPassword] = useState(false);
 
   // Company form data
   const [companyData, setCompanyData] = useState({
     name: "",
-    email: "",
-    password: "",
     website: "",
     address: "",
     phone: "",
   });
-  const [showCompanyPassword, setShowCompanyPassword] = useState(false);
   
   // Fetch institutions for student registration
   useEffect(() => {
@@ -145,7 +136,7 @@ export const RegisterPage = () => {
   };
 
   const validateStudentForm = () => {
-    const { name, email, password, institutionId, roleNumber, skills } = studentData;
+    const { name, institutionId, roleNumber, skills } = studentData;
     
     // Name validation
     if (!name.trim()) {
@@ -155,37 +146,6 @@ export const RegisterPage = () => {
     if (!/^[a-zA-Z][a-zA-Z\s]*$/.test(name)) {
       return { isValid: false, errorMessage: "Name must start with a letter and contain only letters and spaces" };
     }
-    
-    // Email validation
-    if (!email.trim()) {
-      return { isValid: false, errorMessage: "Email is required" };
-    }
-    
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return { isValid: false, errorMessage: "Please enter a valid email address" };
-    }
-    
-    // Password validation
-    if (!password) {
-      return { isValid: false, errorMessage: "Password is required" };
-    }
-    
-    if (password.length < 8) {
-      return { isValid: false, errorMessage: "Password must be at least 8 characters long" };
-    }
-    
-    if (!/(?=.*[a-z])/.test(password)) {
-      return { isValid: false, errorMessage: "Password must contain at least one lowercase letter" };
-    }
-    
-    if (!/(?=.*[A-Z])/.test(password)) {
-      return { isValid: false, errorMessage: "Password must contain at least one uppercase letter" };
-    }
-    
-    if (!/(?=.*\d)/.test(password)) {
-      return { isValid: false, errorMessage: "Password must contain at least one number" };
-    }
-  
     
     // Role number validation
     if (!roleNumber.trim()) {
@@ -200,15 +160,15 @@ export const RegisterPage = () => {
       return { isValid: false, errorMessage: "Please select an institution" };
     }
     
-    if (!skills || skills.length === 0) {
-      return { isValid: false, errorMessage: "Please select at least one skill" };
+    if (skills.length === 0) {
+      return { isValid: false, errorMessage: "Please add at least one skill" };
     }
     
     return { isValid: true };
   };
 
   const validateInstitutionForm = () => {
-    const { name, email, password, website, location } = institutionData;
+    const { name, website, location } = institutionData;
     
     // Name validation
     if (!name.trim()) {
@@ -218,37 +178,6 @@ export const RegisterPage = () => {
     if (!/^[a-zA-Z][a-zA-Z\s]*$/.test(name)) {
       return { isValid: false, errorMessage: "Institution name must start with a letter and contain only letters and spaces" };
     }
-    
-    // Email validation
-    if (!email.trim()) {
-      return { isValid: false, errorMessage: "Email is required" };
-    }
-    
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return { isValid: false, errorMessage: "Please enter a valid email address" };
-    }
-    
-    // Password validation
-    if (!password) {
-      return { isValid: false, errorMessage: "Password is required" };
-    }
-    
-    if (password.length < 8) {
-      return { isValid: false, errorMessage: "Password must be at least 8 characters long" };
-    }
-    
-    if (!/(?=.*[a-z])/.test(password)) {
-      return { isValid: false, errorMessage: "Password must contain at least one lowercase letter" };
-    }
-    
-    if (!/(?=.*[A-Z])/.test(password)) {
-      return { isValid: false, errorMessage: "Password must contain at least one uppercase letter" };
-    }
-    
-    if (!/(?=.*\d)/.test(password)) {
-      return { isValid: false, errorMessage: "Password must contain at least one number" };
-    }
-    
    
     // Website validation
     if (!website.trim()) {
@@ -272,7 +201,7 @@ export const RegisterPage = () => {
   };
 
   const validateCompanyForm = () => {
-    const { name, email, password, website, address, phone } = companyData;
+    const { name, website, address, phone } = companyData;
     
     // Name validation
     if (!name.trim()) {
@@ -282,37 +211,6 @@ export const RegisterPage = () => {
     if (!/^[a-zA-Z][a-zA-Z\s]*$/.test(name)) {
       return { isValid: false, errorMessage: "Company name must start with a letter and contain only letters and spaces" };
     }
-    
-    // Email validation
-    if (!email.trim()) {
-      return { isValid: false, errorMessage: "Email is required" };
-    }
-    
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return { isValid: false, errorMessage: "Please enter a valid email address" };
-    }
-    
-    // Password validation
-    if (!password) {
-      return { isValid: false, errorMessage: "Password is required" };
-    }
-    
-    if (password.length < 8) {
-      return { isValid: false, errorMessage: "Password must be at least 8 characters long" };
-    }
-    
-    if (!/(?=.*[a-z])/.test(password)) {
-      return { isValid: false, errorMessage: "Password must contain at least one lowercase letter" };
-    }
-    
-    if (!/(?=.*[A-Z])/.test(password)) {
-      return { isValid: false, errorMessage: "Password must contain at least one uppercase letter" };
-    }
-    
-    if (!/(?=.*\d)/.test(password)) {
-      return { isValid: false, errorMessage: "Password must contain at least one number" };
-    }
- 
     
     // Website validation
     if (!website.trim()) {
@@ -328,17 +226,13 @@ export const RegisterPage = () => {
       return { isValid: false, errorMessage: "Address is required" };
     }
     
-    if (!/^[a-zA-Z0-9][a-zA-Z0-9\s,.-]*$/.test(address)) {
-      return { isValid: false, errorMessage: "Address must start with a letter or number and contain only letters, numbers, spaces, and basic punctuation" };
-    }
-    
     // Phone validation
     if (!phone.trim()) {
       return { isValid: false, errorMessage: "Phone number is required" };
     }
     
-    if (!/^\d{10,15}$/.test(phone.replace(/[\s-]/g, ''))) {
-      return { isValid: false, errorMessage: "Phone number must contain only numbers and be between 10-15 digits" };
+    if (!/^[\+]?[1-9][\d]{0,15}$/.test(phone.replace(/[\s\-\(\)]/g, ''))) {
+      return { isValid: false, errorMessage: "Please enter a valid phone number" };
     }
     
     return { isValid: true };
@@ -346,13 +240,21 @@ export const RegisterPage = () => {
 
   const handleStudentSubmit = async (e) => {
     e.preventDefault();
-    if (loading) return;
+    
+    if (!walletConnected) {
+      toast({
+        title: "Wallet not connected",
+        description: "Please connect your wallet first",
+        variant: "destructive",
+      });
+      return;
+    }
     
     const { isValid, errorMessage } = validateStudentForm();
     
     if (!isValid) {
       toast({
-        title: "Missing information",
+        title: "Validation Error",
         description: errorMessage,
         variant: "destructive",
       });
@@ -361,7 +263,10 @@ export const RegisterPage = () => {
 
     setLoading(true);
     try {
-      await registerStudent(studentData);
+      await registerStudent({
+        ...studentData,
+        wallet: walletAddress,
+      });
       
       toast({
         title: "Registration successful",
@@ -383,13 +288,21 @@ export const RegisterPage = () => {
 
   const handleInstitutionSubmit = async (e) => {
     e.preventDefault();
-    if (loading) return;
+    
+    if (!walletConnected) {
+      toast({
+        title: "Wallet not connected",
+        description: "Please connect your wallet first",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const { isValid, errorMessage } = validateInstitutionForm();
     
     if (!isValid) {
       toast({
-        title: "Missing information",
+        title: "Validation Error",
         description: errorMessage,
         variant: "destructive",
       });
@@ -398,11 +311,14 @@ export const RegisterPage = () => {
 
     setLoading(true);
     try {
-      await registerInstitution(institutionData);
+      await registerInstitution({
+        ...institutionData,
+        wallet: walletAddress,
+      });
       
       toast({
         title: "Registration successful",
-        description: "Your institution account has been created successfully. Please wait for admin verification.",
+        description: "Your institution account has been created successfully",
       });
       
       navigate("/institution/dashboard");
@@ -420,13 +336,21 @@ export const RegisterPage = () => {
 
   const handleCompanySubmit = async (e) => {
     e.preventDefault();
-    if (loading) return;
+    
+    if (!walletConnected) {
+      toast({
+        title: "Wallet not connected",
+        description: "Please connect your wallet first",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const { isValid, errorMessage } = validateCompanyForm();
     
     if (!isValid) {
       toast({
-        title: "Missing information",
+        title: "Validation Error",
         description: errorMessage,
         variant: "destructive",
       });
@@ -435,11 +359,14 @@ export const RegisterPage = () => {
 
     setLoading(true);
     try {
-      await registerCompany(companyData);
+      await registerCompany({
+        ...companyData,
+        wallet: walletAddress,
+      });
       
       toast({
         title: "Registration successful",
-        description: "Your company account has been created successfully. Please wait for admin verification.",
+        description: "Your company account has been created successfully",
       });
       
       navigate("/company/dashboard");
@@ -459,6 +386,43 @@ export const RegisterPage = () => {
     if (activeTab === "student") {
       return (
         <form onSubmit={handleStudentSubmit} className="space-y-4">
+          {/* Wallet Connection Section */}
+          <div className="bg-muted/30 p-4 rounded-lg border">
+            <div className="flex items-center justify-between mb-2">
+              <Label className="text-sm font-medium">Wallet Connection</Label>
+              {walletConnected && (
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                  Connected
+                </Badge>
+              )}
+            </div>
+            {walletConnected ? (
+              <div className="text-sm text-muted-foreground">
+                <p>Connected: {walletAddress}</p>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleConnectWallet}
+                disabled={isConnecting}
+                className="w-full"
+              >
+                {isConnecting ? (
+                  <>
+                    <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                    Connecting...
+                  </>
+                ) : (
+                  <>
+                    <Wallet className="mr-2 h-4 w-4" />
+                    Connect MetaMask
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+
           <div className="space-y-4">
             <div>
               <Label htmlFor="name" className="mb-2 block">
@@ -481,57 +445,8 @@ export const RegisterPage = () => {
             </div>
             
             <div>
-              <Label htmlFor="email" className="mb-2 block">
-                Email <span className="text-red-500">*</span>
-              </Label>
-              <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
-                  <UserPlus size={20} />
-                </div>
-                <Input 
-                  id="email" 
-                  name="email" 
-                  type="email"
-                  placeholder="Enter your email" 
-                  value={studentData.email}
-                  onChange={(e) => handleInputChange(e, "student")}
-                  required
-                  className="h-12 pl-12"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <Label htmlFor="password" className="mb-2 block">
-                Password <span className="text-red-500">*</span>
-              </Label>
-              <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
-                  <UserPlus size={20} />
-                </div>
-                <Input 
-                  id="password" 
-                  name="password" 
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password" 
-                  value={studentData.password}
-                  onChange={(e) => handleInputChange(e, "student")}
-                  required
-                  className="h-12 pl-12 pr-12"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
-                >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
-            </div>
-            
-            <div>
               <Label htmlFor="roleNumber" className="mb-2 block">
-                Role Number / Student ID <span className="text-red-500">*</span>
+                Role Number <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
@@ -556,16 +471,14 @@ export const RegisterPage = () => {
               <Select 
                 value={studentData.institutionId} 
                 onValueChange={(value) => handleSelectChange(value, "institutionId")}
-                required
               >
                 <SelectTrigger className="h-12">
                   <SelectValue placeholder="Select your institution" />
                 </SelectTrigger>
                 <SelectContent>
                   {loadingInstitutions ? (
-                    <div className="flex items-center justify-center p-2">
-                      <LoaderCircle className="h-4 w-4 animate-spin mr-2" />
-                      <span>Loading...</span>
+                    <div className="p-2 text-center text-sm">
+                      Loading institutions...
                     </div>
                   ) : institutions.length > 0 ? (
                     institutions.map((institution) => (
@@ -601,7 +514,7 @@ export const RegisterPage = () => {
           <Button 
             type="submit" 
             className="w-full font-semibold h-12 mt-6" 
-            disabled={loading}
+            disabled={loading || !walletConnected}
           >
             {loading ? (
               <>
@@ -623,6 +536,43 @@ export const RegisterPage = () => {
     } else if (activeTab === "institution") {
       return (
         <form onSubmit={handleInstitutionSubmit} className="space-y-4">
+          {/* Wallet Connection Section */}
+          <div className="bg-muted/30 p-4 rounded-lg border">
+            <div className="flex items-center justify-between mb-2">
+              <Label className="text-sm font-medium">Wallet Connection</Label>
+              {walletConnected && (
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                  Connected
+                </Badge>
+              )}
+            </div>
+            {walletConnected ? (
+              <div className="text-sm text-muted-foreground">
+                <p>Connected: {walletAddress}</p>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleConnectWallet}
+                disabled={isConnecting}
+                className="w-full"
+              >
+                {isConnecting ? (
+                  <>
+                    <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                    Connecting...
+                  </>
+                ) : (
+                  <>
+                    <Wallet className="mr-2 h-4 w-4" />
+                    Connect MetaMask
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+
           <div className="space-y-4">
             <div>
               <Label htmlFor="institution-name" className="mb-2 block">
@@ -641,55 +591,6 @@ export const RegisterPage = () => {
                   required
                   className="h-12 pl-12"
                 />
-              </div>
-            </div>
-            
-            <div>
-              <Label htmlFor="institution-email" className="mb-2 block">
-                Email <span className="text-red-500">*</span>
-              </Label>
-              <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
-                  <UserPlus size={20} />
-                </div>
-                <Input 
-                  id="institution-email" 
-                  name="email" 
-                  type="email"
-                  placeholder="Enter email" 
-                  value={institutionData.email}
-                  onChange={(e) => handleInputChange(e, "institution")}
-                  required
-                  className="h-12 pl-12"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <Label htmlFor="institution-password" className="mb-2 block">
-                Password <span className="text-red-500">*</span>
-              </Label>
-              <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
-                  <UserPlus size={20} />
-                </div>
-                <Input 
-                  id="institution-password" 
-                  name="password" 
-                  type={showInstitutionPassword ? "text" : "password"}
-                  placeholder="Enter password" 
-                  value={institutionData.password}
-                  onChange={(e) => handleInputChange(e, "institution")}
-                  required
-                  className="h-12 pl-12 pr-12"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowInstitutionPassword(!showInstitutionPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
-                >
-                  {showInstitutionPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
               </div>
             </div>
 
@@ -738,7 +639,7 @@ export const RegisterPage = () => {
           <Button 
             type="submit" 
             className="w-full font-semibold h-12 mt-6" 
-            disabled={loading}
+            disabled={loading || !walletConnected}
           >
             {loading ? (
               <>
@@ -760,6 +661,43 @@ export const RegisterPage = () => {
     } else {
       return (
         <form onSubmit={handleCompanySubmit} className="space-y-4">
+          {/* Wallet Connection Section */}
+          <div className="bg-muted/30 p-4 rounded-lg border">
+            <div className="flex items-center justify-between mb-2">
+              <Label className="text-sm font-medium">Wallet Connection</Label>
+              {walletConnected && (
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                  Connected
+                </Badge>
+              )}
+            </div>
+            {walletConnected ? (
+              <div className="text-sm text-muted-foreground">
+                <p>Connected: {walletAddress}</p>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleConnectWallet}
+                disabled={isConnecting}
+                className="w-full"
+              >
+                {isConnecting ? (
+                  <>
+                    <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                    Connecting...
+                  </>
+                ) : (
+                  <>
+                    <Wallet className="mr-2 h-4 w-4" />
+                    Connect MetaMask
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+
           <div className="space-y-4">
             <div>
               <Label htmlFor="company-name" className="mb-2 block">
@@ -778,55 +716,6 @@ export const RegisterPage = () => {
                   required
                   className="h-12 pl-12"
                 />
-              </div>
-            </div>
-            
-            <div>
-              <Label htmlFor="company-email" className="mb-2 block">
-                Email <span className="text-red-500">*</span>
-              </Label>
-              <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
-                  <UserPlus size={20} />
-                </div>
-                <Input 
-                  id="company-email" 
-                  name="email" 
-                  type="email"
-                  placeholder="Enter email" 
-                  value={companyData.email}
-                  onChange={(e) => handleInputChange(e, "company")}
-                  required
-                  className="h-12 pl-12"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <Label htmlFor="company-password" className="mb-2 block">
-                Password <span className="text-red-500">*</span>
-              </Label>
-              <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
-                  <UserPlus size={20} />
-                </div>
-                <Input 
-                  id="company-password" 
-                  name="password" 
-                  type={showCompanyPassword ? "text" : "password"}
-                  placeholder="Enter password" 
-                  value={companyData.password}
-                  onChange={(e) => handleInputChange(e, "company")}
-                  required
-                  className="h-12 pl-12 pr-12"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowCompanyPassword(!showCompanyPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
-                >
-                  {showCompanyPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
               </div>
             </div>
 
@@ -895,7 +784,7 @@ export const RegisterPage = () => {
           <Button 
             type="submit" 
             className="w-full font-semibold h-12 mt-6" 
-            disabled={loading}
+            disabled={loading || !walletConnected}
           >
             {loading ? (
               <>
@@ -951,8 +840,8 @@ export const RegisterPage = () => {
           {renderForm()}
           
           <div className="mt-6 text-center">
-            <Link to="/forgot-password" className="text-primary hover:underline text-sm">
-              Forgot password?
+            <Link to="/login" className="text-primary hover:underline text-sm">
+              Already have an account? Login
             </Link>
           </div>
         </CardContent>

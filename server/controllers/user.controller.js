@@ -317,51 +317,6 @@ export const deleteStudent = async (req, res, next) => {
   }
 };
 
-// Change student password (admin or institution only)
-export const changeStudentPassword = async (req, res, next) => {
-  try {
-    const { password } = req.body;
-
-    if (!password) {
-      return res.status(400).json({
-        success: false,
-        message: "Password is required",
-      });
-    }
-
-    const student = await Student.findById(req.params.id);
-
-    if (!student) {
-      return res.status(404).json({
-        success: false,
-        message: "Student not found",
-      });
-    }
-
-    // Check if institution trying to update a student not from their institution
-    if (
-      req.user.userType === "Institution" &&
-      student.institutionId.toString() !== req.user._id.toString()
-    ) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to update this student's password",
-      });
-    }
-
-    // Update password
-    student.password = password;
-    await student.save();
-
-    res.status(200).json({
-      success: true,
-      message: "Password updated successfully",
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
 // ============= Institution Management =============
 
 // Get all institutions (admin only)
@@ -526,40 +481,6 @@ export const deleteInstitution = async (req, res, next) => {
   }
 };
 
-// Change institution password (admin only)
-export const changeInstitutionPassword = async (req, res, next) => {
-  try {
-    const { password } = req.body;
-
-    if (!password) {
-      return res.status(400).json({
-        success: false,
-        message: "Password is required",
-      });
-    }
-
-    const institution = await Institution.findById(req.params.id);
-
-    if (!institution) {
-      return res.status(404).json({
-        success: false,
-        message: "Institution not found",
-      });
-    }
-
-    // Update password
-    institution.password = password;
-    await institution.save();
-
-    res.status(200).json({
-      success: true,
-      message: "Password updated successfully",
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
 // ============= Company Management =============
 
 // Get all companies (admin only)
@@ -710,40 +631,6 @@ export const deleteCompany = async (req, res, next) => {
   }
 };
 
-// Change company password (admin only)
-export const changeCompanyPassword = async (req, res, next) => {
-  try {
-    const { password } = req.body;
-
-    if (!password) {
-      return res.status(400).json({
-        success: false,
-        message: "Password is required",
-      });
-    }
-
-    const company = await Company.findById(req.params.id);
-
-    if (!company) {
-      return res.status(404).json({
-        success: false,
-        message: "Company not found",
-      });
-    }
-
-    // Update password
-    company.password = password;
-    await company.save();
-
-    res.status(200).json({
-      success: true,
-      message: "Password updated successfully",
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
 // Get all verified public institutions (for student registration)
 export const getPublicInstitutions = async (req, res, next) => {
   try {
@@ -762,48 +649,39 @@ export const getPublicInstitutions = async (req, res, next) => {
   }
 };
 
-// Change password for current user (all user types except admin)
+// Change password for current user (all user types except admin) - Updated for wallet authentication
 export const changePassword = async (req, res, next) => {
   try {
-    const { currentPassword, newPassword } = req.body;
+    const { newWallet } = req.body;
 
-    if (!currentPassword || !newPassword) {
+    if (!newWallet) {
       return res.status(400).json({
         success: false,
-        message: "Current password and new password are required",
+        message: "New wallet address is required",
       });
     }
 
-    // Password validation
-    if (newPassword.length < 8) {
+    // Validate wallet address format
+    if (!/^0x[a-fA-F0-9]{40}$/.test(newWallet)) {
       return res.status(400).json({
         success: false,
-        message: "Password must be at least 8 characters long",
+        message: "Please provide a valid Ethereum wallet address",
       });
     }
 
-    if (!/(?=.*[a-z])/.test(newPassword)) {
+    // Check if wallet is already in use
+    const existingUser = await User.findByWallet(newWallet);
+    if (
+      existingUser &&
+      existingUser._id.toString() !== req.user._id.toString()
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Password must contain at least one lowercase letter",
+        message: "This wallet address is already in use by another account",
       });
     }
 
-    if (!/(?=.*[A-Z])/.test(newPassword)) {
-      return res.status(400).json({
-        success: false,
-        message: "Password must contain at least one uppercase letter",
-      });
-    }
-
-    if (!/(?=.*\d)/.test(newPassword)) {
-      return res.status(400).json({
-        success: false,
-        message: "Password must contain at least one number",
-      });
-    }
-
-    // Get user based on type and verify current password
+    // Get user based on type
     let user;
     let Model;
     switch (req.user.userType) {
@@ -819,12 +697,12 @@ export const changePassword = async (req, res, next) => {
       default:
         return res.status(403).json({
           success: false,
-          message: "Password change not allowed for this account type",
+          message: "Wallet change not allowed for this account type",
         });
     }
 
-    // Find user and verify current password
-    user = await Model.findById(req.user._id).select("+password");
+    // Find user
+    user = await Model.findById(req.user._id);
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -832,34 +710,13 @@ export const changePassword = async (req, res, next) => {
       });
     }
 
-    // Verify current password
-    const isMatch = await user.comparePassword(currentPassword);
-    if (!isMatch) {
-      return res.status(400).json({
-        success: false,
-        message: "Current password is incorrect",
-      });
-    }
-
-    // Hash the new password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-    // Update password using findByIdAndUpdate to avoid validation
-    await Model.findByIdAndUpdate(
-      req.user._id,
-      {
-        password: hashedPassword,
-      },
-      {
-        runValidators: false, // Disable validation since we're only updating password
-        new: true,
-      }
-    );
+    // Update wallet address
+    user.wallet = newWallet;
+    await user.save();
 
     res.status(200).json({
       success: true,
-      message: "Password updated successfully",
+      message: "Wallet address updated successfully",
     });
   } catch (error) {
     next(error);

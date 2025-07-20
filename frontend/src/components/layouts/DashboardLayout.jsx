@@ -78,6 +78,7 @@ import api from "@/lib/axios";
 import { LoaderCircle } from "@/components/LoaderCircle";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { ThemeToggle } from "../theme/ThemeToggle";
 
 export const DashboardLayout = ({ children }) => {
   const { user, logout } = useAuth();
@@ -89,16 +90,6 @@ export const DashboardLayout = ({ children }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showLogoutAlert, setShowLogoutAlert] = useState(false);
   const [showAllNotifications, setShowAllNotifications] = useState(false);
-  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
-  const [changePasswordData, setChangePasswordData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [changingPassword, setChangingPassword] = useState(false);
   const { 
     notifications, 
     allNotifications,
@@ -234,12 +225,6 @@ export const DashboardLayout = ({ children }) => {
           href: `${basePath}/records`,
           description: "View your academic records",
         },
-        // {
-        //   title: "Academic Details",
-        //   icon: BookOpen,
-        //   href: `${basePath}/academic`,
-        //   description: "View detailed academic credentials",
-        // },
         {
           title: "Job Opportunities",
           icon: Briefcase,
@@ -251,6 +236,12 @@ export const DashboardLayout = ({ children }) => {
           icon: Bell,
           href: `${basePath}/notifications`,
           description: "View and manage your notifications",
+        },
+        {
+          title: "Reports",
+          icon: BarChart3,
+          href: `${basePath}/reports`,
+          description: "Generate and export reports",
         },
         {
           title: "Profile",
@@ -269,12 +260,6 @@ export const DashboardLayout = ({ children }) => {
     // Institution-specific items
     else if (user?.userType === "Institution") {
       items.push(
-        // {
-        //   title: "Students",
-        //   icon: GraduationCap,
-        //   href: `${basePath}/students`,
-        //   description: "Manage your students",
-        // },
         {
           title: "Academic Records",
           icon: FileText,
@@ -295,12 +280,17 @@ export const DashboardLayout = ({ children }) => {
             },
           ],
         },
-
         {
           title: "Notifications",
           icon: Bell,
           href: `${basePath}/notifications`,
           description: "View and manage your notifications",
+        },
+        {
+          title: "Reports",
+          icon: BarChart3,
+          href: `${basePath}/reports`,
+          description: "Generate and export reports",
         },
         {
           title: "Profile",
@@ -356,6 +346,12 @@ export const DashboardLayout = ({ children }) => {
           icon: Bell,
           href: `${basePath}/notifications`,
           description: "View and manage your notifications",
+        },
+        {
+          title: "Reports",
+          icon: BarChart3,
+          href: `${basePath}/reports`,
+          description: "Generate and export reports",
         },
         {
           title: "Profile",
@@ -438,87 +434,6 @@ export const DashboardLayout = ({ children }) => {
   const handleViewAllNotifications = async () => {
     setShowAllNotifications(true);
     await fetchAllNotifications();
-  };
-
-  const validatePassword = (password) => {
-    if (password.length < 8) {
-      return "Password must be at least 8 characters long";
-    }
-    if (!/(?=.*[a-z])/.test(password)) {
-      return "Password must contain at least one lowercase letter";
-    }
-    if (!/(?=.*[A-Z])/.test(password)) {
-      return "Password must contain at least one uppercase letter";
-    }
-    if (!/(?=.*\d)/.test(password)) {
-      return "Password must contain at least one number";
-    }
-    return null;
-  };
-
-  const handleChangePassword = async (e) => {
-    e.preventDefault();
-    if (changingPassword) return;
-
-    // Validate passwords
-    const { currentPassword, newPassword, confirmPassword } = changePasswordData;
-
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      toast({
-        title: "Missing information",
-        description: "All password fields are required",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const passwordError = validatePassword(newPassword);
-    if (passwordError) {
-      toast({
-        title: "Invalid password",
-        description: passwordError,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      toast({
-        title: "Password mismatch",
-        description: "New password and confirm password do not match",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setChangingPassword(true);
-    try {
-      await api.post("/users/change-password", {
-        currentPassword,
-        newPassword,
-      });
-
-      toast({
-        title: "Success",
-        description: "Password updated successfully",
-      });
-
-      setShowChangePasswordModal(false);
-      setChangePasswordData({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
-    } catch (error) {
-      console.error("Password change error:", error);
-      toast({
-        title: "Error",
-        description: error.response?.data?.message || "Failed to change password",
-        variant: "destructive",
-      });
-    } finally {
-      setChangingPassword(false);
-    }
   };
 
   return (
@@ -707,6 +622,7 @@ export const DashboardLayout = ({ children }) => {
           </div>
           
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             {/* Notification Button */}
             <DropdownMenu open={showNotifications} onOpenChange={setShowNotifications}>
               <DropdownMenuTrigger asChild>
@@ -828,26 +744,12 @@ export const DashboardLayout = ({ children }) => {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Settings</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-              
-               
                 <DropdownMenuItem onClick={() => navigate("/settings/terms")}>
                   <KeyRound className="mr-2 h-4 w-4" />
                   <span>Terms and Conditions</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            {/* Change Password Button - Only show for non-admin users */}
-            {user?.userType !== "Admin" && (
-              <Button 
-                variant="ghost" 
-                size="icon"
-                onClick={() => setShowChangePasswordModal(true)}
-                title="Change Password"
-              >
-                <KeyRound className="h-5 w-5" />
-              </Button>
-            )}
 
             {/* User Dropdown */}
             <DropdownMenu>
@@ -877,14 +779,13 @@ export const DashboardLayout = ({ children }) => {
                   <KeyRound className="mr-2 h-4 w-4" />
                   <span>Terms and Conditions</span>
                 </DropdownMenuItem>
-               
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-destructive focus:text-destructive"
                   onClick={() => setShowLogoutAlert(true)}
                 >
                   <LogOut className="mr-2 h-4 w-4" />
-              <span>Logout</span>
+                  <span>Logout</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -1013,109 +914,6 @@ export const DashboardLayout = ({ children }) => {
               </div>
             )}
           </ScrollArea>
-        </DialogContent>
-      </Dialog>
-
-      {/* Change Password Modal */}
-      <Dialog open={showChangePasswordModal} onOpenChange={setShowChangePasswordModal}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Change Password</DialogTitle>
-            <DialogDescription>
-              Enter your current password and choose a new password.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleChangePassword} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="currentPassword">Current Password</Label>
-              <div className="relative">
-                <Input
-                  id="currentPassword"
-                  type={showCurrentPassword ? "text" : "password"}
-                  value={changePasswordData.currentPassword}
-                  onChange={(e) => setChangePasswordData(prev => ({
-                    ...prev,
-                    currentPassword: e.target.value
-                  }))}
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
-                >
-                  {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="newPassword">New Password</Label>
-              <div className="relative">
-                <Input
-                  id="newPassword"
-                  type={showNewPassword ? "text" : "password"}
-                  value={changePasswordData.newPassword}
-                  onChange={(e) => setChangePasswordData(prev => ({
-                    ...prev,
-                    newPassword: e.target.value
-                  }))}
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
-                >
-                  {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm New Password</Label>
-              <div className="relative">
-                <Input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  value={changePasswordData.confirmPassword}
-                  onChange={(e) => setChangePasswordData(prev => ({
-                    ...prev,
-                    confirmPassword: e.target.value
-                  }))}
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
-                >
-                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowChangePasswordModal(false)}
-                disabled={changingPassword}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={changingPassword}>
-                {changingPassword ? (
-                  <>
-                    <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                    Changing...
-                  </>
-                ) : (
-                  "Change Password"
-                )}
-              </Button>
-            </div>
-          </form>
         </DialogContent>
       </Dialog>
     </div>

@@ -15,18 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { CheckCircle, XCircle, User, Mail, Key } from "lucide-react";
+import { CheckCircle, XCircle, User, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import api from "@/lib/axios";
 
@@ -34,15 +23,6 @@ export const AdminStudents = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [students, setStudents] = useState([]);
-  
-  // Reset password dialog state
-  const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
-  const [resetPasswordData, setResetPasswordData] = useState({
-    id: "",
-    name: "",
-    password: "",
-  });
-  const [resettingPassword, setResettingPassword] = useState(false);
 
   const fetchStudents = async () => {
     setLoading(true);
@@ -65,47 +45,11 @@ export const AdminStudents = () => {
     fetchStudents();
   }, []);
 
-  // Handle resetting a student's password
-  const handleResetPassword = async (e) => {
-    e.preventDefault();
-    
-    const { id, password } = resetPasswordData;
-    
-    if (!password) {
-      toast({
-        title: "Missing password",
-        description: "Please enter a new password",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setResettingPassword(true);
-    try {
-      await api.patch(`/users/students/${id}/password`, { password });
-      
-      toast({
-        title: "Password Reset",
-        description: "The password has been reset successfully",
-      });
-      
-      // Reset form and close dialog
-      setResetPasswordData({
-        id: "",
-        name: "",
-        password: "",
-      });
-      setShowResetPasswordDialog(false);
-    } catch (error) {
-      console.error("Error resetting password:", error);
-      toast({
-        title: "Password Reset Failed",
-        description: error.response?.data?.message || "Failed to reset password",
-        variant: "destructive",
-      });
-    } finally {
-      setResettingPassword(false);
-    }
+  const shortenWallet = (wallet) => {
+    if (!wallet) return '';
+    const prefix = wallet.substring(0, 6);
+    const suffix = wallet.substring(wallet.length - 4);
+    return `${prefix}...${suffix}`;
   };
 
   return (
@@ -134,16 +78,15 @@ export const AdminStudents = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
+                  <TableHead>Wallet</TableHead>
                   <TableHead>Institution</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {students.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center">
+                    <TableCell colSpan={4} className="text-center">
                       No graduates found
                     </TableCell>
                   </TableRow>
@@ -151,9 +94,10 @@ export const AdminStudents = () => {
                   students.map((student) => (
                     <TableRow key={student._id}>
                       <TableCell>{student.name}</TableCell>
-                      <TableCell className="flex items-center">
-                        <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                        {student.email}
+                      <TableCell>
+                        <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                          {shortenWallet(student.wallet)}
+                        </Badge>
                       </TableCell>
                       <TableCell>{student.institutionId?.name || 'Unknown'}</TableCell>
                       <TableCell>
@@ -169,23 +113,6 @@ export const AdminStudents = () => {
                           </Badge>
                         )}
                       </TableCell>
-                      <TableCell>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => {
-                            setResetPasswordData({
-                              id: student._id,
-                              name: student.name,
-                              password: "",
-                            });
-                            setShowResetPasswordDialog(true);
-                          }}
-                        >
-                          <Key className="h-3 w-3 mr-1" />
-                          Reset Password
-                        </Button>
-                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -194,44 +121,6 @@ export const AdminStudents = () => {
           )}
         </CardContent>
       </Card>
-
-      {/* Reset Password Dialog */}
-      <Dialog open={showResetPasswordDialog} onOpenChange={setShowResetPasswordDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Reset Password</DialogTitle>
-            <DialogDescription>
-              Reset password for {resetPasswordData.name}
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleResetPassword} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="reset-password">New Password</Label>
-              <Input 
-                id="reset-password" 
-                type="password"
-                value={resetPasswordData.password}
-                onChange={(e) => setResetPasswordData(prev => ({ ...prev, password: e.target.value }))}
-                placeholder="Enter new password"
-                required
-              />
-            </div>
-            
-            <DialogFooter>
-              <Button type="submit" disabled={resettingPassword}>
-                {resettingPassword ? (
-                  <>
-                    <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2"></div>
-                    Resetting...
-                  </>
-                ) : (
-                  'Reset Password'
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }; 

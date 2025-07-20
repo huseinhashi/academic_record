@@ -23,6 +23,11 @@ const companySchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    authMethod: {
+      type: String,
+      enum: ["wallet", "password"],
+      default: "wallet",
+    },
   },
   { _id: false }
 );

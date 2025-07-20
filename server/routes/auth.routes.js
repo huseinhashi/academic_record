@@ -7,7 +7,6 @@ import {
   createInstitution,
   createCompany,
   loginWithWallet,
-  loginWithPassword,
 } from "../controllers/auth.controller.js";
 import { protect, authorize } from "../middlewares/auth.middleware.js";
 
@@ -18,7 +17,6 @@ router.post("/register/student", registerStudent);
 router.post("/register/institution", registerInstitution);
 router.post("/register/company", registerCompany);
 router.post("/login/wallet", loginWithWallet);
-router.post("/login/password", loginWithPassword);
 
 // Protected routes - admin only
 router.post("/admin/create", protect, authorize("Admin"), createAdmin);

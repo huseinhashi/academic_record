@@ -26,14 +26,17 @@ import {
   StudentJobs 
 } from "@/pages/student";
 import { StudentNotifications } from "@/pages/student/Notifications";
+import { StudentReports } from "@/pages/student/Reports";
 import { InstitutionDashboard } from "@/pages/institution/Dashboard";
 import { InstitutionStudents } from "@/pages/institution/Students";
 import { InstitutionRecords } from "@/pages/institution/Records";
 import { InstitutionNotifications } from "@/pages/institution/Notifications";
+import { InstitutionReports } from "@/pages/institution/Reports";
 import { CompanyDashboard } from "@/pages/company/Dashboard";
 import { CompanyJobs } from "@/pages/company/Jobs";
 import { JobDetails as CompanyJobDetails } from "@/pages/company/JobDetails";
 import { CompanyNotifications } from "@/pages/company/Notifications";
+import { CompanyReports } from "@/pages/company/Reports";
 import { VerificationPending } from "@/pages/company/VerificationPending";
 import { InstitutionVerificationPending } from "@/pages/institution/VerificationPending";
 import { ScheduleInterview } from "@/pages/company/ScheduleInterview";
@@ -236,6 +239,17 @@ function App() {
             }
           />
           
+          <Route
+            path="/student/reports"
+            element={
+              <ProtectedRoute requiredType="Student">
+                <DashboardLayout>
+                  <StudentReports />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
           {/* Institution Routes */}
           <Route
             path="/institution/verification-pending"
@@ -285,6 +299,17 @@ function App() {
               <ProtectedRoute requiredType="Institution" requireVerification>
                 <DashboardLayout>
                   <InstitutionNotifications />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/institution/reports"
+            element={
+              <ProtectedRoute requiredType="Institution" requireVerification>
+                <DashboardLayout>
+                  <InstitutionReports />
                 </DashboardLayout>
               </ProtectedRoute>
             }
@@ -372,6 +397,17 @@ function App() {
               <ProtectedRoute requiredType="Company" requireVerification>
                 <DashboardLayout>
                   <CompanyNotifications />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/company/reports"
+            element={
+              <ProtectedRoute requiredType="Company" requireVerification>
+                <DashboardLayout>
+                  <CompanyReports />
                 </DashboardLayout>
               </ProtectedRoute>
             }

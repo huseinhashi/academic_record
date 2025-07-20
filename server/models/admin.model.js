@@ -7,6 +7,11 @@ const adminSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    authMethod: {
+      type: String,
+      enum: ["wallet", "password"],
+      default: "wallet",
+    },
   },
   { _id: false }
 );

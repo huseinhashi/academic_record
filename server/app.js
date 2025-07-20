@@ -6,7 +6,6 @@ import { fileURLToPath } from "url";
 import { PORT } from "./config/env.js";
 import { connectDB } from "./database/db.js";
 import { seedAdmin } from "./database/seed.js";
-
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import academicRecordRoutes from "./routes/academicRecord.routes.js";

@@ -46,25 +46,24 @@ export const createAdmin = async (req, res, next) => {
   }
 };
 
-// Register new student (public endpoint)
+// Register new student with wallet (public endpoint)
 export const registerStudent = async (req, res, next) => {
   try {
-    const { name, email, password, institutionId, roleNumber, skills } =
-      req.body;
+    const { name, wallet, institutionId, roleNumber, skills } = req.body;
 
-    if (!name || !email || !password || !institutionId || !roleNumber) {
+    if (!name || !wallet || !institutionId || !roleNumber) {
       return res.status(400).json({
         success: false,
         message: "Please provide all required fields",
       });
     }
 
-    // Check if email is already registered
-    const existingEmail = await User.findOne({ email: email.toLowerCase() });
-    if (existingEmail) {
+    // Check if wallet is already registered
+    const existingWallet = await User.findByWallet(wallet);
+    if (existingWallet) {
       return res.status(400).json({
         success: false,
-        message: "Student with this email already exists",
+        message: "User with this wallet already exists",
       });
     }
 
@@ -80,14 +79,12 @@ export const registerStudent = async (req, res, next) => {
     // Create student
     const student = await Student.create({
       name,
-      email,
-      password,
+      wallet,
       roleNumber,
       institutionId,
       skills: skills || [],
-      authMethod: "password",
+      authMethod: "wallet",
       isVerifiedByInstitution: false,
-      wallet: null, // Explicitly set wallet to null for password auth
     });
 
     const token = jwt.sign(
@@ -104,7 +101,7 @@ export const registerStudent = async (req, res, next) => {
         user: {
           id: student._id,
           name: student.name,
-          email: student.email,
+          wallet: student.wallet,
           roleNumber: student.roleNumber,
           userType: student.userType,
           institutionId: student.institutionId,
@@ -120,313 +117,35 @@ export const registerStudent = async (req, res, next) => {
   }
 };
 
-// Create new institution (only callable by admin)
-export const createInstitution = async (req, res, next) => {
-  try {
-    const { name, email, password, website, location } = req.body;
-
-    if (!name || !email || !password || !website || !location) {
-      return res.status(400).json({
-        success: false,
-        message: "Please provide name, email, password, website, and location",
-      });
-    }
-
-    // Check if email is already registered
-    const existingEmail = await User.findOne({ email: email.toLowerCase() });
-    if (existingEmail) {
-      return res.status(400).json({
-        success: false,
-        message: "Institution with this email already exists",
-      });
-    }
-
-    // Create institution with email in the base User schema
-    const institution = await Institution.create({
-      name,
-      email, // This will go to the User model
-      password, // This will go to the User model
-      website,
-      location,
-      authMethod: "password",
-      isVerifiedByAdmin: false,
-      wallet: null, // Explicitly set wallet to null for password auth
-    });
-
-    res.status(201).json({
-      success: true,
-      data: {
-        user: {
-          id: institution._id,
-          name: institution.name,
-          email: institution.email,
-          website: institution.website,
-          location: institution.location,
-          userType: institution.userType,
-          isVerifiedByAdmin: institution.isVerifiedByAdmin,
-          authMethod: institution.authMethod,
-        },
-      },
-    });
-  } catch (error) {
-    console.error("Institution creation error:", error);
-
-    // Handle MongoDB duplicate key errors
-    if (error.code === 11000) {
-      return res.status(400).json({
-        success: false,
-        message: "An institution with this email already exists",
-      });
-    }
-
-    next(error);
-  }
-};
-
-// Create new company (only callable by admin)
-export const createCompany = async (req, res, next) => {
-  try {
-    const { name, email, password, address, phone, website } = req.body;
-
-    if (!name || !email || !password || !website || !address || !phone) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Please provide name, email, password, website, address, and phone",
-      });
-    }
-
-    // Check if email is already registered
-    const existingEmail = await User.findOne({ email: email.toLowerCase() });
-    if (existingEmail) {
-      return res.status(400).json({
-        success: false,
-        message: "Company with this email already exists",
-      });
-    }
-
-    // Create company with email in the base User schema
-    const company = await Company.create({
-      name,
-      email, // This will go to the User model
-      password, // This will go to the User model
-      address: address || "",
-      phone: phone || "",
-      website,
-      authMethod: "password",
-      isVerifiedByAdmin: false,
-      wallet: null, // Explicitly set wallet to null for password auth
-    });
-
-    res.status(201).json({
-      success: true,
-      data: {
-        user: {
-          id: company._id,
-          name: company.name,
-          email: company.email,
-          address: company.address,
-          phone: company.phone,
-          website: company.website,
-          userType: company.userType,
-          isVerifiedByAdmin: company.isVerifiedByAdmin,
-          authMethod: company.authMethod,
-        },
-      },
-    });
-  } catch (error) {
-    console.error("Company creation error:", error);
-
-    // Handle MongoDB duplicate key errors
-    if (error.code === 11000) {
-      return res.status(400).json({
-        success: false,
-        message: "A company with this email already exists",
-      });
-    }
-
-    next(error);
-  }
-};
-
-// Login user with wallet (admin only)
-export const loginWithWallet = async (req, res, next) => {
-  try {
-    const { wallet } = req.body;
-
-    // Use the custom findByWallet method for case-insensitive matching
-    const user = await User.findByWallet(wallet);
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    // Check if user is wallet-based
-    if (user.authMethod !== "wallet") {
-      return res.status(400).json({
-        success: false,
-        message: "This account doesn't use wallet authentication",
-      });
-    }
-
-    // Only allow admins to login with wallet
-    if (user.userType !== "Admin") {
-      return res.status(403).json({
-        success: false,
-        message: "Only administrators can login with wallet",
-      });
-    }
-
-    const token = jwt.sign(
-      { id: user._id, userType: user.userType },
-      JWT_SECRET,
-      {
-        expiresIn: JWT_EXPIRES_IN,
-      }
-    );
-
-    // Return admin data
-    const userData = {
-      id: user._id,
-      name: user.name,
-      wallet: user.wallet,
-      userType: user.userType,
-      isVerified: user.isVerified,
-      authMethod: user.authMethod,
-    };
-
-    res.status(200).json({
-      success: true,
-      data: {
-        user: userData,
-        token,
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Login user with email and password
-export const loginWithPassword = async (req, res, next) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "Please provide email and password",
-      });
-    }
-
-    // Find user by email and include the password field for verification
-    const user = await User.findOne({ email: email.toLowerCase() }).select(
-      "+password"
-    );
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "Invalid credentials",
-      });
-    }
-
-    // Check if user is password-based
-    if (user.authMethod !== "password") {
-      return res.status(400).json({
-        success: false,
-        message: "This account doesn't use password authentication",
-      });
-    }
-
-    // Verify password
-    const isPasswordValid = await user.comparePassword(password);
-    if (!isPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid credentials",
-      });
-    }
-
-    const token = jwt.sign(
-      { id: user._id, userType: user.userType },
-      JWT_SECRET,
-      {
-        expiresIn: JWT_EXPIRES_IN,
-      }
-    );
-
-    // Determine which fields to return based on user type
-    let userData = {
-      id: user._id,
-      email: user.email,
-      userType: user.userType,
-      isVerified: user.isVerified,
-      authMethod: user.authMethod,
-    };
-
-    // Add user type specific fields
-    if (user.userType === "Student") {
-      userData.name = user.name;
-      userData.roleNumber = user.roleNumber;
-      userData.institutionId = user.institutionId;
-      userData.isVerifiedByInstitution = user.isVerifiedByInstitution;
-    } else if (user.userType === "Institution") {
-      userData.name = user.name;
-      userData.isVerifiedByAdmin = user.isVerifiedByAdmin;
-    } else if (user.userType === "Company") {
-      userData.name = user.name;
-      userData.address = user.address;
-      userData.phone = user.phone;
-      userData.isVerifiedByAdmin = user.isVerifiedByAdmin;
-    }
-
-    res.status(200).json({
-      success: true,
-      data: {
-        user: userData,
-        token,
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Register new institution (public endpoint)
+// Register new institution with wallet (public endpoint)
 export const registerInstitution = async (req, res, next) => {
   try {
-    const { name, email, password, website, location } = req.body;
+    const { name, wallet, website, location } = req.body;
 
-    if (!name || !email || !password || !website || !location) {
+    if (!name || !wallet || !website || !location) {
       return res.status(400).json({
         success: false,
-        message: "Please provide name, email, password, website, and location",
+        message: "Please provide name, wallet, website, and location",
       });
     }
 
-    // Check if email is already registered
-    const existingEmail = await User.findOne({ email: email.toLowerCase() });
-    if (existingEmail) {
+    // Check if wallet is already registered
+    const existingWallet = await User.findByWallet(wallet);
+    if (existingWallet) {
       return res.status(400).json({
         success: false,
-        message: "Institution with this email already exists",
+        message: "User with this wallet already exists",
       });
     }
 
-    // Create institution with email in the base User schema
+    // Create institution
     const institution = await Institution.create({
       name,
-      email,
-      password,
+      wallet,
       website,
       location,
-      authMethod: "password",
+      authMethod: "wallet",
       isVerifiedByAdmin: false,
-      wallet: null,
     });
 
     // Get all admin users to notify them
@@ -455,7 +174,7 @@ export const registerInstitution = async (req, res, next) => {
         user: {
           id: institution._id,
           name: institution.name,
-          email: institution.email,
+          wallet: institution.wallet,
           website: institution.website,
           location: institution.location,
           userType: institution.userType,
@@ -466,52 +185,40 @@ export const registerInstitution = async (req, res, next) => {
       },
     });
   } catch (error) {
-    console.error("Institution registration error:", error);
-
-    // Handle MongoDB duplicate key errors
-    if (error.code === 11000) {
-      return res.status(400).json({
-        success: false,
-        message: "An institution with this email already exists",
-      });
-    }
-
     next(error);
   }
 };
 
-// Register new company (public endpoint)
+// Register new company with wallet (public endpoint)
 export const registerCompany = async (req, res, next) => {
   try {
-    const { name, email, password, address, phone, website } = req.body;
+    const { name, wallet, address, phone, website } = req.body;
 
-    if (!name || !email || !password || !website) {
+    if (!name || !wallet || !website || !address || !phone) {
       return res.status(400).json({
         success: false,
-        message: "Please provide name, email, password, and website",
+        message: "Please provide name, wallet, website, address, and phone",
       });
     }
 
-    // Check if email is already registered
-    const existingEmail = await User.findOne({ email: email.toLowerCase() });
-    if (existingEmail) {
+    // Check if wallet is already registered
+    const existingWallet = await User.findByWallet(wallet);
+    if (existingWallet) {
       return res.status(400).json({
         success: false,
-        message: "Company with this email already exists",
+        message: "User with this wallet already exists",
       });
     }
 
-    // Create company with email in the base User schema
+    // Create company
     const company = await Company.create({
       name,
-      email,
-      password,
-      address: address || "",
-      phone: phone || "",
+      wallet,
+      address,
+      phone,
       website,
-      authMethod: "password",
+      authMethod: "wallet",
       isVerifiedByAdmin: false,
-      wallet: null,
     });
 
     // Get all admin users to notify them
@@ -536,7 +243,7 @@ export const registerCompany = async (req, res, next) => {
         user: {
           id: company._id,
           name: company.name,
-          email: company.email,
+          wallet: company.wallet,
           address: company.address,
           phone: company.phone,
           website: company.website,
@@ -548,16 +255,224 @@ export const registerCompany = async (req, res, next) => {
       },
     });
   } catch (error) {
-    console.error("Company registration error:", error);
+    next(error);
+  }
+};
+
+// Create new institution (admin only - for wallet auth)
+export const createInstitution = async (req, res, next) => {
+  try {
+    const { name, wallet, website, location } = req.body;
+
+    if (!name || !wallet || !website || !location) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide name, wallet address, website, and location",
+      });
+    }
+
+    // Validate wallet address format
+    if (!/^0x[a-fA-F0-9]{40}$/.test(wallet)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a valid Ethereum wallet address",
+      });
+    }
+
+    // Check if wallet is already registered
+    const existingWallet = await User.findByWallet(wallet);
+    if (existingWallet) {
+      return res.status(400).json({
+        success: false,
+        message: "Institution with this wallet address already exists",
+      });
+    }
+
+    // Create institution with wallet authentication
+    const institution = await Institution.create({
+      name,
+      wallet,
+      website,
+      location,
+      authMethod: "wallet",
+      isVerifiedByAdmin: false,
+    });
+
+    res.status(201).json({
+      success: true,
+      data: {
+        user: {
+          id: institution._id,
+          name: institution.name,
+          wallet: institution.wallet,
+          website: institution.website,
+          location: institution.location,
+          userType: institution.userType,
+          isVerifiedByAdmin: institution.isVerifiedByAdmin,
+          authMethod: institution.authMethod,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Institution creation error:", error);
 
     // Handle MongoDB duplicate key errors
     if (error.code === 11000) {
       return res.status(400).json({
         success: false,
-        message: "A company with this email already exists",
+        message: "An institution with this wallet address already exists",
       });
     }
 
+    next(error);
+  }
+};
+
+// Create new company (admin only - for wallet auth)
+export const createCompany = async (req, res, next) => {
+  try {
+    const { name, wallet, address, phone, website } = req.body;
+
+    if (!name || !wallet || !website || !address || !phone) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Please provide name, wallet address, website, address, and phone",
+      });
+    }
+
+    // Validate wallet address format
+    if (!/^0x[a-fA-F0-9]{40}$/.test(wallet)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a valid Ethereum wallet address",
+      });
+    }
+
+    // Check if wallet is already registered
+    const existingWallet = await User.findByWallet(wallet);
+    if (existingWallet) {
+      return res.status(400).json({
+        success: false,
+        message: "Company with this wallet address already exists",
+      });
+    }
+
+    // Create company with wallet authentication
+    const company = await Company.create({
+      name,
+      wallet,
+      address,
+      phone,
+      website,
+      authMethod: "wallet",
+      isVerifiedByAdmin: false,
+    });
+
+    res.status(201).json({
+      success: true,
+      data: {
+        user: {
+          id: company._id,
+          name: company.name,
+          wallet: company.wallet,
+          address: company.address,
+          phone: company.phone,
+          website: company.website,
+          userType: company.userType,
+          isVerifiedByAdmin: company.isVerifiedByAdmin,
+          authMethod: company.authMethod,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Company creation error:", error);
+
+    // Handle MongoDB duplicate key errors
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "A company with this wallet address already exists",
+      });
+    }
+
+    next(error);
+  }
+};
+
+// Login user with wallet (all user types)
+export const loginWithWallet = async (req, res, next) => {
+  try {
+    const { wallet } = req.body;
+
+    if (!wallet) {
+      return res.status(400).json({
+        success: false,
+        message: "Wallet address is required",
+      });
+    }
+
+    // Use the custom findByWallet method for case-insensitive matching
+    const user = await User.findByWallet(wallet);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Check if user is wallet-based
+    if (user.authMethod !== "wallet") {
+      return res.status(400).json({
+        success: false,
+        message: "This account doesn't use wallet authentication",
+      });
+    }
+
+    const token = jwt.sign(
+      { id: user._id, userType: user.userType },
+      JWT_SECRET,
+      {
+        expiresIn: JWT_EXPIRES_IN,
+      }
+    );
+
+    // Return user data based on type
+    let userData = {
+      id: user._id,
+      name: user.name,
+      wallet: user.wallet,
+      userType: user.userType,
+      isVerified: user.isVerified,
+      authMethod: user.authMethod,
+    };
+
+    // Add user type specific fields
+    if (user.userType === "Student") {
+      userData.roleNumber = user.roleNumber;
+      userData.institutionId = user.institutionId;
+      userData.skills = user.skills;
+      userData.isVerifiedByInstitution = user.isVerifiedByInstitution;
+    } else if (user.userType === "Institution") {
+      userData.website = user.website;
+      userData.location = user.location;
+      userData.isVerifiedByAdmin = user.isVerifiedByAdmin;
+    } else if (user.userType === "Company") {
+      userData.address = user.address;
+      userData.phone = user.phone;
+      userData.website = user.website;
+      userData.isVerifiedByAdmin = user.isVerifiedByAdmin;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        user: userData,
+        token,
+      },
+    });
+  } catch (error) {
     next(error);
   }
 };

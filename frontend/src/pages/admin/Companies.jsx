@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle, XCircle, Building2, Key, PlusCircle, Eye, EyeOff } from "lucide-react";
+import { CheckCircle, XCircle, Building2, PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import api from "@/lib/axios";
 
@@ -39,23 +39,12 @@ export const AdminCompanies = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [createFormData, setCreateFormData] = useState({
     name: "",
-    email: "",
-    password: "",
+    wallet: "",
     website: "",
-    location: "",
+    address: "",
+    phone: "",
   });
   const [creatingUser, setCreatingUser] = useState(false);
-  const [showCreatePassword, setShowCreatePassword] = useState(false);
-  
-  // Reset password dialog state
-  const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
-  const [resetPasswordData, setResetPasswordData] = useState({
-    id: "",
-    name: "",
-    password: "",
-  });
-  const [resettingPassword, setResettingPassword] = useState(false);
-  const [showResetPassword, setShowResetPassword] = useState(false);
 
   const fetchCompanies = async () => {
     setLoading(true);
@@ -105,7 +94,7 @@ export const AdminCompanies = () => {
 
   // Add validation function
   const validateCompanyForm = () => {
-    const { name, email, password, website, location } = createFormData;
+    const { name, wallet, website, address, phone } = createFormData;
     
     // Name validation
     if (!name.trim()) {
@@ -116,38 +105,13 @@ export const AdminCompanies = () => {
       return { isValid: false, errorMessage: "Company name must start with a letter and contain only letters and spaces" };
     }
     
-    // Email validation
-    if (!email.trim()) {
-      return { isValid: false, errorMessage: "Email is required" };
+    // Wallet validation
+    if (!wallet.trim()) {
+      return { isValid: false, errorMessage: "Wallet address is required" };
     }
     
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return { isValid: false, errorMessage: "Please enter a valid email address" };
-    }
-    
-    // Password validation
-    if (!password) {
-      return { isValid: false, errorMessage: "Password is required" };
-    }
-    
-    if (password.length < 8) {
-      return { isValid: false, errorMessage: "Password must be at least 8 characters long" };
-    }
-    
-    if (!/(?=.*[a-z])/.test(password)) {
-      return { isValid: false, errorMessage: "Password must contain at least one lowercase letter" };
-    }
-    
-    if (!/(?=.*[A-Z])/.test(password)) {
-      return { isValid: false, errorMessage: "Password must contain at least one uppercase letter" };
-    }
-    
-    if (!/(?=.*\d)/.test(password)) {
-      return { isValid: false, errorMessage: "Password must contain at least one number" };
-    }
-    
-    if (!/(?=.*[!@#$%^&*])/.test(password)) {
-      return { isValid: false, errorMessage: "Password must contain at least one special character (!@#$%^&*)" };
+    if (!/^0x[a-fA-F0-9]{40}$/.test(wallet)) {
+      return { isValid: false, errorMessage: "Please enter a valid Ethereum wallet address" };
     }
     
     // Website validation
@@ -159,13 +123,18 @@ export const AdminCompanies = () => {
       return { isValid: false, errorMessage: "Please enter a valid website URL starting with http:// or https://" };
     }
     
-    // Location validation
-    if (!location.trim()) {
-      return { isValid: false, errorMessage: "Location is required" };
+    // Address validation
+    if (!address.trim()) {
+      return { isValid: false, errorMessage: "Address is required" };
     }
     
-    if (!/^[a-zA-Z][a-zA-Z\s,]*$/.test(location)) {
-      return { isValid: false, errorMessage: "Location must start with a letter and contain only letters, spaces, and commas" };
+    // Phone validation
+    if (!phone.trim()) {
+      return { isValid: false, errorMessage: "Phone number is required" };
+    }
+    
+    if (!/^[\+]?[1-9][\d]{0,15}$/.test(phone.replace(/[\s\-\(\)]/g, ''))) {
+      return { isValid: false, errorMessage: "Please enter a valid phone number" };
     }
     
     return { isValid: true };
@@ -198,10 +167,10 @@ export const AdminCompanies = () => {
       // Reset form and close dialog
       setCreateFormData({
         name: "",
-        email: "",
-        password: "",
+        wallet: "",
         website: "",
-        location: "",
+        address: "",
+        phone: "",
       });
       setShowCreateDialog(false);
       
@@ -216,49 +185,6 @@ export const AdminCompanies = () => {
       });
     } finally {
       setCreatingUser(false);
-    }
-  };
-  
-  // Handle resetting a user's password
-  const handleResetPassword = async (e) => {
-    e.preventDefault();
-    
-    const { id, password } = resetPasswordData;
-    
-    if (!password) {
-      toast({
-        title: "Missing password",
-        description: "Please enter a new password",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setResettingPassword(true);
-    try {
-      await api.patch(`/users/companies/${id}/password`, { password });
-      
-      toast({
-        title: "Password Reset",
-        description: "The password has been reset successfully",
-      });
-      
-      // Reset form and close dialog
-      setResetPasswordData({
-        id: "",
-        name: "",
-        password: "",
-      });
-      setShowResetPasswordDialog(false);
-    } catch (error) {
-      console.error("Error resetting password:", error);
-      toast({
-        title: "Password Reset Failed",
-        description: error.response?.data?.message || "Failed to reset password",
-        variant: "destructive",
-      });
-    } finally {
-      setResettingPassword(false);
     }
   };
 
@@ -294,10 +220,10 @@ export const AdminCompanies = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
+                  <TableHead>Wallet</TableHead>
                   <TableHead>Website</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Authentication</TableHead>
+                  <TableHead>Address</TableHead>
+                  <TableHead>Phone</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -313,7 +239,11 @@ export const AdminCompanies = () => {
                   companies.map((company) => (
                     <TableRow key={company._id}>
                       <TableCell>{company.name}</TableCell>
-                      <TableCell>{company.email}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                          {shortenWallet(company.wallet)}
+                        </Badge>
+                      </TableCell>
                       <TableCell>
                         <a 
                           href={company.website} 
@@ -324,18 +254,8 @@ export const AdminCompanies = () => {
                           {company.website}
                         </a>
                       </TableCell>
-                      <TableCell>{company.location}</TableCell>
-                      <TableCell>
-                        {company.authMethod === "password" ? (
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                            Password
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-                            Wallet ({shortenWallet(company.wallet)})
-                          </Badge>
-                        )}
-                      </TableCell>
+                      <TableCell>{company.address}</TableCell>
+                      <TableCell>{company.phone}</TableCell>
                       <TableCell>
                         {company.isVerifiedByAdmin ? (
                           <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
@@ -361,23 +281,6 @@ export const AdminCompanies = () => {
                               Verify
                             </Button>
                           )}
-                          {company.authMethod === "password" && (
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => {
-                                setResetPasswordData({
-                                  id: company._id,
-                                  name: company.name,
-                                  password: "",
-                                });
-                                setShowResetPasswordDialog(true);
-                              }}
-                            >
-                              <Key className="h-3 w-3 mr-1" />
-                              Reset Password
-                            </Button>
-                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -395,7 +298,7 @@ export const AdminCompanies = () => {
           <DialogHeader>
             <DialogTitle>Create Company</DialogTitle>
             <DialogDescription>
-              Create a new company with email and password authentication
+              Create a new company with wallet authentication
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreateUser} className="space-y-4">
@@ -414,43 +317,17 @@ export const AdminCompanies = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="email">
-                Email <span className="text-red-500">*</span>
+              <Label htmlFor="wallet">
+                Wallet Address <span className="text-red-500">*</span>
               </Label>
               <Input 
-                id="email" 
-                name="email" 
-                type="email"
-                value={createFormData.email}
-                onChange={(e) => setCreateFormData(prev => ({ ...prev, email: e.target.value }))}
-                placeholder="admin@example.com"
+                id="wallet" 
+                name="wallet" 
+                value={createFormData.wallet}
+                onChange={(e) => setCreateFormData(prev => ({ ...prev, wallet: e.target.value }))}
+                placeholder="0x..."
                 required
               />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="password">
-                Password <span className="text-red-500">*</span>
-              </Label>
-              <div className="relative">
-                <Input 
-                  id="password" 
-                  name="password" 
-                  type={showCreatePassword ? "text" : "password"}
-                  value={createFormData.password}
-                  onChange={(e) => setCreateFormData(prev => ({ ...prev, password: e.target.value }))}
-                  placeholder="••••••••"
-                  required
-                  className="pr-12"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowCreatePassword(!showCreatePassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
-                >
-                  {showCreatePassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
             </div>
 
             <div className="space-y-2">
@@ -467,13 +344,25 @@ export const AdminCompanies = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
+              <Label htmlFor="address">Address</Label>
               <Input 
-                id="location" 
-                name="location" 
-                value={createFormData.location}
-                onChange={(e) => setCreateFormData(prev => ({ ...prev, location: e.target.value }))}
-                placeholder="City, Country"
+                id="address" 
+                name="address" 
+                value={createFormData.address}
+                onChange={(e) => setCreateFormData(prev => ({ ...prev, address: e.target.value }))}
+                placeholder="Company address"
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone</Label>
+              <Input 
+                id="phone" 
+                name="phone" 
+                value={createFormData.phone}
+                onChange={(e) => setCreateFormData(prev => ({ ...prev, phone: e.target.value }))}
+                placeholder="+1234567890"
                 required
               />
             </div>
@@ -487,54 +376,6 @@ export const AdminCompanies = () => {
                   </>
                 ) : (
                   'Create'
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Reset Password Dialog */}
-      <Dialog open={showResetPasswordDialog} onOpenChange={setShowResetPasswordDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Reset Password</DialogTitle>
-            <DialogDescription>
-              Reset password for {resetPasswordData.name}
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleResetPassword} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="reset-password">New Password</Label>
-              <div className="relative">
-                <Input 
-                  id="reset-password" 
-                  type={showResetPassword ? "text" : "password"}
-                  value={resetPasswordData.password}
-                  onChange={(e) => setResetPasswordData(prev => ({ ...prev, password: e.target.value }))}
-                  placeholder="Enter new password"
-                  required
-                  className="pr-12"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowResetPassword(!showResetPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
-                >
-                  {showResetPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button type="submit" disabled={resettingPassword}>
-                {resettingPassword ? (
-                  <>
-                    <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2"></div>
-                    Resetting...
-                  </>
-                ) : (
-                  'Reset Password'
                 )}
               </Button>
             </DialogFooter>

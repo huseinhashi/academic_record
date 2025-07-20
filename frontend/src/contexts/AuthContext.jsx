@@ -193,47 +193,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const loginWithPassword = async (email, password) => {
-    try {
-      if (!email || !password) {
-        throw new Error("Email and password are required");
-      }
-      
-      const response = await api.post("/auth/login/password", { 
-        email, 
-        password 
-      });
-      
-      if (!response.data || !response.data.data) {
-        throw new Error("Invalid response from server");
-      }
-      
-      const { token, user } = response.data.data;
-
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-
-      setUser(user);
-      setIsAuthenticated(true);
-      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-
-      return user;
-    } catch (error) {
-      console.error("Login error:", error);
-      
-      // Provide more specific error messages based on the response
-      if (error.response) {
-        if (error.response.status === 404) {
-          throw new Error("Invalid email or password");
-        } else if (error.response.data && error.response.data.message) {
-          throw new Error(error.response.data.message);
-        }
-      }
-      
-      throw new Error("Login failed. Please check your credentials and try again.");
-    }
-  };
-
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -259,7 +218,6 @@ export const AuthProvider = ({ children }) => {
         registerInstitution,
         registerCompany,
         loginWithWallet,
-        loginWithPassword,
         connectWallet,
         logout,
         updateUser

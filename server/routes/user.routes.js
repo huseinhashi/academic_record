@@ -12,7 +12,6 @@ import {
   updateStudent,
   verifyStudent,
   deleteStudent,
-  changeStudentPassword,
 
   // Institution routes
   getAllInstitutions,
@@ -20,7 +19,6 @@ import {
   updateInstitution,
   verifyInstitution,
   deleteInstitution,
-  changeInstitutionPassword,
 
   // Company routes
   getAllCompanies,
@@ -28,7 +26,6 @@ import {
   updateCompany,
   verifyCompany,
   deleteCompany,
-  changeCompanyPassword,
 
   // Public routes
   getPublicInstitutions,
@@ -45,9 +42,9 @@ router.get("/public/institutions", getPublicInstitutions);
 // Protected routes - all require authentication
 router.use(protect);
 
-// Profile and password routes (for all user types)
+// Profile and wallet routes (for all user types)
 router.put("/profile", updateProfile);
-router.post("/change-password", changePassword);
+router.post("/change-wallet", changePassword);
 
 // Admin routes - admin access only
 router.get("/admins", authorize("Admin"), getAllAdmins);
@@ -60,22 +57,12 @@ router.get("/students", authorize("Admin", "Institution"), getAllStudents);
 router.get("/students/:id", authorize("Admin", "Institution"), getStudentById);
 router.put("/students/:id", authorize("Admin", "Institution"), updateStudent);
 router.patch("/students/:id/verify", authorize("Institution"), verifyStudent);
-router.patch(
-  "/students/:id/password",
-  authorize("Admin", "Institution"),
-  changeStudentPassword
-);
 router.delete("/students/:id", authorize("Admin"), deleteStudent);
 
 // Institution routes
 router.get("/institutions", authorize("Admin"), getAllInstitutions);
 router.get("/institutions/:id", authorize("Admin"), getInstitutionById);
 router.put("/institutions/:id", authorize("Admin"), updateInstitution);
-router.patch(
-  "/institutions/:id/password",
-  authorize("Admin"),
-  changeInstitutionPassword
-);
 router.patch("/institutions/:id/verify", authorize("Admin"), verifyInstitution);
 router.delete("/institutions/:id", authorize("Admin"), deleteInstitution);
 
@@ -83,11 +70,6 @@ router.delete("/institutions/:id", authorize("Admin"), deleteInstitution);
 router.get("/companies", authorize("Admin"), getAllCompanies);
 router.get("/companies/:id", authorize("Admin"), getCompanyById);
 router.put("/companies/:id", authorize("Admin"), updateCompany);
-router.patch(
-  "/companies/:id/password",
-  authorize("Admin"),
-  changeCompanyPassword
-);
 router.patch("/companies/:id/verify", authorize("Admin"), verifyCompany);
 router.delete("/companies/:id", authorize("Admin"), deleteCompany);
 
