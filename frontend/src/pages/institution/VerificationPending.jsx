@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Clock, FileText, CheckCircle2, AlertCircle, GraduationCap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 export const InstitutionVerificationPending = () => {
   const { user, logout } = useAuth();
@@ -15,6 +16,11 @@ export const InstitutionVerificationPending = () => {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      {/* Theme Toggle */}
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      
       <Card className="w-full max-w-2xl">
         <CardHeader>
           <div className="flex items-center space-x-4">

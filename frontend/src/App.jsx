@@ -252,15 +252,6 @@ function App() {
           
           {/* Institution Routes */}
           <Route
-            path="/institution/verification-pending"
-            element={
-              <ProtectedRoute requiredType="Institution">
-                <InstitutionVerificationPending />
-              </ProtectedRoute>
-            }
-          />
-          
-          <Route
             path="/institution/dashboard"
             element={
               <ProtectedRoute requiredType="Institution" requireVerification>
@@ -311,6 +302,15 @@ function App() {
                 <DashboardLayout>
                   <InstitutionReports />
                 </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/institution/verification-pending"
+            element={
+              <ProtectedRoute requiredType="Institution">
+                <InstitutionVerificationPending />
               </ProtectedRoute>
             }
           />

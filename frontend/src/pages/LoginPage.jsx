@@ -13,6 +13,7 @@ import {
 import { Wallet, ArrowRight, Shield } from "lucide-react";
 import { LoaderCircle } from "@/components/LoaderCircle";
 import { useToast } from "@/hooks/use-toast";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 export const LoginPage = () => {
   const { loginWithWallet, isConnecting } = useAuth();
@@ -61,6 +62,11 @@ export const LoginPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/10 px-4">
+      {/* Theme Toggle */}
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      
       <div className="w-full max-w-md">
         <Card className="backdrop-blur-sm border-opacity-50 shadow-lg">
           <CardHeader className="space-y-1 text-center pb-6">

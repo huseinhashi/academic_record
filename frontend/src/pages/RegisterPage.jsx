@@ -14,6 +14,7 @@ import api from "@/lib/axios";
 import { useToast } from "@/hooks/use-toast";
 import { LoaderCircle } from "@/components/LoaderCircle";
 import { SkillsSelect } from "@/components/SkillsSelect";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 export const RegisterPage = () => {
   const { connectWallet, registerStudent, registerInstitution, registerCompany, isConnecting } = useAuth();
@@ -808,6 +809,11 @@ export const RegisterPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-primary p-4">
+      {/* Theme Toggle */}
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      
       <Card className="w-full max-w-md shadow-lg">
         <CardContent className="p-6">
           <div className="flex justify-center mb-4">
