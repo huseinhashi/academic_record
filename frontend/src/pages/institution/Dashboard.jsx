@@ -144,7 +144,7 @@ export const InstitutionDashboard = () => {
           <CardContent>
             <div className="text-2xl font-bold">{stats.verifiedRecords}</div>
             <p className="text-xs text-muted-foreground">
-              Blockchain-verified records
+                              Verified records
             </p>
           </CardContent>
         </Card>
@@ -197,19 +197,19 @@ export const InstitutionDashboard = () => {
           <CardHeader>
             <CardTitle>Verification Process</CardTitle>
             <CardDescription>
-              How academic records are verified on the blockchain
+              How academic records are verified securely
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Your institution can verify student records on the blockchain, creating tamper-proof credentials that can be trusted by employers and other educational institutions.
+                Your institution can verify student records securely, creating tamper-proof credentials that can be trusted by employers and other educational institutions.
               </p>
               <ol className="list-decimal pl-5 space-y-2 text-sm">
                 <li>Review academic records submitted by students</li>
                 <li>Verify the authenticity of the records</li>
                 <li>Approve or reject records with appropriate feedback</li>
-                <li>Approved records are automatically submitted to the blockchain</li>
+                <li>Approved records are automatically verified and secured</li>
                 <li>Once verified, records become immutable and can be shared by students</li>
               </ol>
               <div className="mt-4">

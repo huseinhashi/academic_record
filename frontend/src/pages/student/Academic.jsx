@@ -66,12 +66,12 @@ export const StudentAcademic = () => {
       status: "verified", // "verified", "pending", "rejected"
       verificationDate: "2024-01-10",
       txHash: "0x7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9",
-      blockchain: "Ethereum",
+      blockchain: "Verified",
       details: {
         coursework: [
           "Data Structures and Algorithms",
           "Artificial Intelligence",
-          "Blockchain Technology",
+          "Advanced Technology",
           "Distributed Systems",
           "Computer Networks"
         ],
@@ -83,7 +83,7 @@ export const StudentAcademic = () => {
     },
     {
       id: "rec-002",
-      title: "Introduction to Blockchain Technology",
+      title: "Introduction to Advanced Technology",
       type: "course",
       institution: "Massachusetts Institute of Technology",
       date: "2023-12-15",
@@ -92,10 +92,10 @@ export const StudentAcademic = () => {
       status: "verified",
       verificationDate: "2024-01-05",
       txHash: "0x1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b",
-      blockchain: "Ethereum",
+      blockchain: "Verified",
       details: {
         instructor: "Dr. Sarah Johnson",
-        description: "Comprehensive introduction to blockchain technology and its applications."
+        description: "Comprehensive introduction to advanced technology and its applications."
       }
     },
     {
@@ -109,10 +109,10 @@ export const StudentAcademic = () => {
       status: "verified",
       verificationDate: "2023-11-15",
       txHash: "0x3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d",
-      blockchain: "Ethereum",
+      blockchain: "Verified",
       details: {
         instructor: "Prof. Michael Chen",
-        description: "Study of advanced cryptographic algorithms and protocols with applications in blockchain."
+        description: "Study of advanced cryptographic algorithms and protocols with applications in secure systems."
       }
     },
     {
@@ -123,13 +123,13 @@ export const StudentAcademic = () => {
       date: "2023-08-20",
       status: "pending",
       details: {
-        description: "Intensive workshop on developing decentralized applications on Ethereum.",
-        skills: ["Solidity", "Web3.js", "Smart Contract Development"]
+        description: "Intensive workshop on developing secure applications and systems.",
+        skills: ["JavaScript", "React", "Secure Development"]
       }
     },
     {
       id: "rec-005",
-      title: "Machine Learning for Blockchain",
+      title: "Machine Learning for Secure Systems",
       type: "course",
       institution: "Massachusetts Institute of Technology",
       date: "2023-05-15",
@@ -138,10 +138,10 @@ export const StudentAcademic = () => {
       status: "verified",
       verificationDate: "2023-06-01",
       txHash: "0x5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f",
-      blockchain: "Ethereum",
+      blockchain: "Verified",
       details: {
         instructor: "Dr. Lisa Wong",
-        description: "Application of machine learning techniques to blockchain data analysis."
+        description: "Application of machine learning techniques to secure data analysis."
       }
     }
   ];
@@ -547,7 +547,7 @@ export const StudentAcademic = () => {
           <DialogHeader>
             <DialogTitle>Verify Academic Record</DialogTitle>
             <DialogDescription>
-              Blockchain verification information for this credential
+                              Verification information for this credential
             </DialogDescription>
           </DialogHeader>
           
@@ -556,11 +556,11 @@ export const StudentAcademic = () => {
               <div className="rounded-lg bg-primary/5 p-4 space-y-3">
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="h-5 w-5 text-primary" />
-                  <span className="font-semibold">Verified on Blockchain</span>
+                  <span className="font-semibold">Verified on Platform</span>
                 </div>
                 
                 <p className="text-sm text-muted-foreground">
-                  This academic record has been cryptographically verified and permanently stored on the blockchain.
+                  This academic record has been cryptographically verified and permanently stored in our secure system.
                 </p>
               </div>
               
@@ -586,7 +586,7 @@ export const StudentAcademic = () => {
                 </div>
                 
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-muted-foreground">Blockchain:</span>
+                  <span className="text-muted-foreground">Verification:</span>
                   <span>{selectedRecord.blockchain}</span>
                 </div>
                 
@@ -609,7 +609,7 @@ export const StudentAcademic = () => {
                   <div>
                     <h4 className="font-semibold text-green-800 dark:text-green-300">Tamper-Proof Credential</h4>
                     <p className="text-sm text-green-700 dark:text-green-400 mt-1">
-                      This credential is stored on the blockchain and cannot be altered or falsified.
+                      This credential is stored securely and cannot be altered or falsified.
                       You can share this credential with potential employers or institutions knowing its authenticity is cryptographically proven.
                     </p>
                   </div>
@@ -629,7 +629,7 @@ export const StudentAcademic = () => {
                 target="_blank" 
                 rel="noopener noreferrer"
               >
-                View on Blockchain
+                View Details
               </Button>
             )}
           </DialogFooter>

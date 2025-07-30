@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import api from "@/lib/axios";
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 export const StudentReports = () => {
   const { user } = useAuth();
@@ -104,34 +104,154 @@ export const StudentReports = () => {
     if (!reportData || !reportData.length) return;
 
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
     
-    // Add title
-    doc.setFontSize(16);
-    const reportTypeLabel = reportTypes.find(r => r.value === reportType)?.label || "Report";
-    doc.text(reportTypeLabel, 14, 15);
+    // Colors
+    const primaryColor = [41, 128, 185]; // Blue
+    const secondaryColor = [52, 73, 94]; // Dark gray
+    const lightGray = [236, 240, 241];
+    const darkGray = [127, 140, 141];
     
-    // Add student name
+    // Header section with background
+    doc.setFillColor(...primaryColor);
+    doc.rect(0, 0, pageWidth, 40, 'F');
+    
+    // Title
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    const reportTypeLabel = reportTypes.find(r => r.value === reportType)?.label || "Student Report";
+    doc.text(reportTypeLabel.toUpperCase(), pageWidth / 2, 18, { align: 'center' });
+    
+    // Subtitle
     doc.setFontSize(12);
-    doc.text(`Student: ${user?.name || "N/A"}`, 14, 25);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Student Academic and Career Report', pageWidth / 2, 28, { align: 'center' });
     
-    // Add date range
+    // Student Information Card
+    doc.setFillColor(...lightGray);
+    doc.roundedRect(14, 50, pageWidth - 28, 35, 3, 3, 'F');
+    
+    // Student info content
+    doc.setTextColor(...secondaryColor);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('STUDENT INFORMATION', 20, 62);
+    
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Student: ${user?.name || 'N/A'}`, 20, 72);
+    doc.text(`Email: ${user?.email || 'N/A'}`, 20, 80);
+    
+    const rightColumnX = pageWidth / 2 + 10;
+    doc.text(`Report Type: ${reportTypeLabel}`, rightColumnX, 72);
+    doc.text(`Period: ${format(dateRange.from, 'MMM dd, yyyy')} - ${format(dateRange.to, 'MMM dd, yyyy')}`, rightColumnX, 80);
+    
+    // Summary statistics
+    const totalRecords = reportData.length;
+    const uniqueColumns = Object.keys(reportData[0] || {}).length;
+    const recordsWithData = reportData.filter(r => Object.values(r).some(val => val && val !== 'N/A')).length;
+    
+    // Statistics section
+    doc.setFillColor(248, 249, 250);
+    doc.roundedRect(14, 95, pageWidth - 28, 25, 3, 3, 'F');
+    
+    doc.setTextColor(...secondaryColor);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SUMMARY STATISTICS', 20, 107);
+    
     doc.setFontSize(10);
-    doc.text(`Period: ${format(dateRange.from, 'MMM dd, yyyy')} - ${format(dateRange.to, 'MMM dd, yyyy')}`, 14, 35);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Total Records: ${totalRecords}`, 20, 115);
+    doc.text(`Data Fields: ${uniqueColumns}`, 90, 115);
+    doc.text(`Valid Records: ${recordsWithData}`, 160, 115);
     
-    // Add table
-    const tableColumn = Object.keys(reportData[0] || {});
-    const tableRows = reportData.map(item => Object.values(item || {}));
-    
-    doc.autoTable({
-      head: [tableColumn],
-      body: tableRows,
-      startY: 45,
-      theme: 'grid',
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [41, 128, 185] }
+    // Prepare enhanced table data
+    const tableHeaders = Object.keys(reportData[0] || {});
+    const tableData = reportData.map((row, index) => {
+      const rowData = [index + 1]; // Add row number
+      tableHeaders.forEach(header => {
+        const value = row[header];
+        rowData.push(value !== null && value !== undefined ? value.toString() : 'N/A');
+      });
+      return rowData;
     });
     
-    doc.save(`${reportType}_report_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    // Generate table with enhanced styling
+    try {
+      autoTable(doc, {
+        startY: 130,
+        head: [['#', ...tableHeaders]],
+        body: tableData,
+      theme: 'grid',
+        styles: { 
+          fontSize: 9,
+          cellPadding: 4,
+          lineColor: [200, 200, 200],
+          lineWidth: 0.5,
+          textColor: [60, 60, 60],
+          font: 'helvetica',
+        },
+        headStyles: { 
+          fillColor: primaryColor,
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 10,
+          halign: 'center',
+          valign: 'middle',
+        },
+        alternateRowStyles: {
+          fillColor: [250, 250, 250],
+        },
+        columnStyles: {
+          0: { 
+            halign: 'center', 
+            cellWidth: 15,
+            fillColor: [245, 245, 245],
+            fontStyle: 'bold',
+          },
+        },
+        margin: { top: 130, left: 14, right: 14 },
+        tableWidth: 'auto',
+        didDrawPage: function (data) {
+          // Add page numbers
+          doc.setFontSize(8);
+          doc.setTextColor(...darkGray);
+          doc.text(
+            `Page ${data.pageNumber}`,
+            pageWidth - 30,
+            pageHeight - 10
+          );
+        }
+      });
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      return;
+    }
+    
+    // Footer
+    const finalY = doc.lastAutoTable.finalY || 200;
+    if (finalY < pageHeight - 50) {
+      doc.setFillColor(...lightGray);
+      doc.rect(14, finalY + 20, pageWidth - 28, 30, 'F');
+      
+      doc.setTextColor(...darkGray);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'italic');
+      doc.text('This report was generated automatically and contains student academic information.', 20, finalY + 32);
+      doc.text(`Generated on: ${format(new Date(), 'MMMM d, yyyy HH:mm')}`, 20, finalY + 42);
+      
+      // Add a small icon using text
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'normal');
+      doc.text('🎓', pageWidth - 30, finalY + 38);
+    }
+    
+    // Save with enhanced filename
+    const dateStr = format(new Date(), 'yyyy-MM-dd');
+    doc.save(`${reportType}_report_${dateStr}.pdf`);
   };
 
   // Compute all unique headers from the data

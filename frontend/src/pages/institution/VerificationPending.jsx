@@ -55,7 +55,7 @@ export const InstitutionVerificationPending = () => {
                 <ul className="text-sm text-muted-foreground mt-1 space-y-1 list-disc pl-4">
                   <li>Review  your institution profile</li>
                   <li>Prepare your academic record templates</li>
-                  <li>Familiarize yourself with the blockchain verification process</li>
+                  <li>Familiarize yourself with the verification process</li>
                   <li>Review the platform's academic record guidelines</li>
                 </ul>
               </div>
@@ -84,7 +84,7 @@ export const InstitutionVerificationPending = () => {
                 <ul className="text-sm text-muted-foreground mt-1 space-y-1 list-disc pl-4">
                   <li>Issue verified academic records and certificates</li>
                   <li>Manage student records and verifications</li>
-                  <li>Access blockchain verification tools</li>
+                  <li>Access verification tools</li>
                 </ul>
               </div>
             </div>

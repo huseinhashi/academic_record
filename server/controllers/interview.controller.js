@@ -163,6 +163,27 @@ const updateInterview = asyncHandler(async (req, res) => {
     throw new ErrorResponse("Not authorized to update this interview", 403);
   }
 
+  // Validation: Cannot mark as pass/fail without proper scheduling
+  if (result === "pass" || result === "fail") {
+    // Check if interview is properly scheduled
+    if (!interview.interviewDate || !interview.interviewerName) {
+      throw new ErrorResponse(
+        "Cannot complete interview. Interview must be properly scheduled with date and interviewer before marking as pass/fail.",
+        400
+      );
+    }
+
+    // Check if interview date has passed
+    const interviewDate = new Date(interview.interviewDate);
+    const currentDate = new Date();
+    if (interviewDate > currentDate) {
+      throw new ErrorResponse(
+        "Cannot complete interview before the scheduled date.",
+        400
+      );
+    }
+  }
+
   const updatedInterview = await Interview.findByIdAndUpdate(
     id,
     {

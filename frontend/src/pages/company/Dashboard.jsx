@@ -164,7 +164,7 @@ export const CompanyDashboard = () => {
           <CardContent>
             <div className="text-2xl font-bold">{stats.verifiedCandidates}</div>
             <p className="text-xs text-muted-foreground">
-              Blockchain-verified applicants
+                              Verified applicants
             </p>
           </CardContent>
         </Card>
@@ -222,18 +222,18 @@ export const CompanyDashboard = () => {
         <CardHeader>
           <CardTitle>Recruitment Process</CardTitle>
           <CardDescription>
-            How to effectively use blockchain verification in hiring
+            How to effectively use verification in hiring
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <p>
-              Streamline your recruitment process by leveraging blockchain-verified academic credentials to ensure candidate qualifications are authentic and trustworthy.
+              Streamline your recruitment process by leveraging verified academic credentials to ensure candidate qualifications are authentic and trustworthy.
             </p>
             <ol className="list-decimal pl-5 space-y-2">
               <li>Create detailed job listings with specific qualification requirements</li>
-              <li>Receive applications with pre-verified blockchain credentials</li>
-              <li>Instantly validate candidate qualifications through our blockchain network</li>
+              <li>Receive applications with pre-verified credentials</li>
+              <li>Instantly validate candidate qualifications through our secure network</li>
               <li>Focus on candidate assessment knowing their credentials are authentic</li>
               <li>Make confident hiring decisions based on verified qualifications</li>
             </ol>

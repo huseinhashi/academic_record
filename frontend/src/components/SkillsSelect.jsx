@@ -18,7 +18,7 @@ const COMMON_SKILLS = [
   "Web Development", "Frontend", "Backend", "Full Stack", "REST API",
   "Testing", "Jest", "Selenium", "Cypress", "Unit Testing",
   "Cybersecurity", "Network Security", "Ethical Hacking", "Penetration Testing",
-  "Blockchain", "Web3", "Ethereum",
+      "Advanced Technology", "Web Development", "Security",
   "Data Analysis", "Data Visualization", "Business Intelligence", "Tableau", "Power BI",
   "Cloud Computing", "Serverless", "Microservices", "API Gateway", "Lambda",
   "System Design", "Architecture", "Design Patterns", "Clean Code", "SOLID Principles","Others"

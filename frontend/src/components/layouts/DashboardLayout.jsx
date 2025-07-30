@@ -35,9 +35,24 @@ import {
   History,
   UserCircle,
   HelpCircle,
-  Clock1
+  Clock1,
+  Search,
+  Grid3X3,
+  List,
+  Plus,
+  Upload,
+  Monitor,
+  Users as UsersIcon,
+  Clock as ClockIcon,
+  Trash,
+  Star,
+  RotateCcw,
+  Cloud,
+  Image as ImageIcon,
+  ArrowUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { 
   Tooltip,
   TooltipContent,
@@ -77,7 +92,6 @@ import { useToast } from "@/hooks/use-toast";
 import api from "@/lib/axios";
 import { LoaderCircle } from "@/components/LoaderCircle";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "../theme/ThemeToggle";
 
 export const DashboardLayout = ({ children }) => {
@@ -441,32 +455,39 @@ export const DashboardLayout = ({ children }) => {
       {/* Mobile sidebar backdrop */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-foreground/50 lg:hidden z-40"
+          className="fixed inset-0 bg-black/20 lg:hidden z-40"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
+      
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed top-0 bottom-0 left-0 z-50 bg-card border-r transition-all duration-300 ease-in-out",
+          "fixed top-0 bottom-0 left-0 z-50 bg-primary transition-all duration-300 ease-in-out shadow-lg",
           isSidebarOpen ? "w-64" : "w-20",
           "lg:transform-none",
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
+        style={{ borderRadius: '0 20px 20px 0' }}
       >
+        {/* Sidebar Header */}
         <div className={cn(
-          "flex h-16 items-center px-4 border-b",
+          "flex h-20 items-center px-4 border-b border-primary/20 pt-4",
           isSidebarOpen ? "justify-between" : "justify-center"
         )}>
-          {isSidebarOpen && (
-            <div className="flex items-center gap-2">
-              <BookOpen className="h-6 w-6 text-primary" />
-              <h1 className="text-lg font-bold text-foreground">Academic Records</h1>
+          {isSidebarOpen ? (
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-primary-foreground rounded-xl flex items-center justify-center shadow-sm">
+                <BookOpen className="h-7 w-7 text-primary" />
+              </div>
+              <h1 className="text-xl font-bold text-primary-foreground">Hiigsi Forum</h1>
+            </div>
+          ) : (
+            <div className="w-12 h-12 bg-primary-foreground rounded-xl flex items-center justify-center shadow-sm">
+              <BookOpen className="h-7 w-7 text-primary" />
             </div>
           )}
-          {!isSidebarOpen && (
-            <BookOpen className="h-6 w-6 text-primary" />
-          )}
+          
           <button
             onClick={() => {
               if (windowWidth >= 1024) {
@@ -475,14 +496,24 @@ export const DashboardLayout = ({ children }) => {
                 setIsMobileMenuOpen(false);
               }
             }}
-            className="p-1 rounded-full hover:bg-muted transition-colors hidden lg:flex"
+            className="p-1.5 rounded-lg hover:bg-primary/20 transition-colors hidden lg:flex text-primary-foreground hover:text-primary-foreground"
           >
             {isSidebarOpen ? 
-              <ChevronLeft className="h-5 w-5 text-foreground" /> : 
-              <ChevronRight className="h-5 w-5 text-foreground" />
+              <ChevronLeft className="h-4 w-4" /> : 
+              <ChevronRight className="h-4 w-4" />
             }
           </button>
         </div>
+
+        {/* Upload Button
+        {isSidebarOpen && (
+          <div className="p-4">
+            <Button className="w-full bg-primary-foreground hover:bg-primary-foreground/90 text-primary border border-primary rounded-lg shadow-sm font-medium transition-all duration-200 hover:shadow-md">
+              <Upload className="h-4 w-4 mr-2" />
+              Upload New Files
+            </Button>
+          </div>
+        )} */}
 
         <div className="py-4 flex flex-col h-[calc(100%-4rem)] justify-between">
           <TooltipProvider delayDuration={isSidebarOpen ? 700 : 0}>
@@ -498,15 +529,16 @@ export const DashboardLayout = ({ children }) => {
                         <Link
                           to={item.href}
                           className={cn(
-                            "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all relative group",
+                            "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 relative group hover:bg-primary/20 hover:text-primary-foreground",
                             isActive
-                              ? "bg-primary text-primary-foreground"
-                              : "text-muted-foreground hover:bg-muted"
+                              ? "bg-primary/20 text-primary-foreground"
+                              : "text-primary-foreground hover:text-primary-foreground"
                           )}
                         >
                           <item.icon className={cn(
-                            "flex-shrink-0",
-                            isSidebarOpen ? "h-5 w-5" : "h-6 w-6"
+                            "flex-shrink-0 transition-colors",
+                            isSidebarOpen ? "h-5 w-5" : "h-6 w-6",
+                            isActive ? "text-primary-foreground" : "text-primary-foreground group-hover:text-primary-foreground"
                           )} />
                           {isSidebarOpen && (
                             <span className="truncate">{item.title}</span>
@@ -514,11 +546,11 @@ export const DashboardLayout = ({ children }) => {
                         </Link>
                       </TooltipTrigger>
                       {!isSidebarOpen && (
-                        <TooltipContent side="right" className="max-w-xs">
+                        <TooltipContent side="right" className="max-w-xs bg-card text-card-foreground border border-border shadow-lg">
                           <div>
                             <p className="font-medium">{item.title}</p>
                             {item.description && (
-                              <p className="text-xs text-muted-foreground">{item.description}</p>
+                              <p className="text-xs text-gray-600">{item.description}</p>
                             )}
                           </div>
                         </TooltipContent>
@@ -536,21 +568,21 @@ export const DashboardLayout = ({ children }) => {
                                 <Link
                                   to={subItem.href}
                                   className={cn(
-                                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all relative group",
+                                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative group hover:bg-primary/20 hover:text-primary-foreground",
                                     isSubActive
-                                      ? "bg-primary/20 text-primary"
-                                      : "text-muted-foreground hover:bg-muted/50"
+                                      ? "bg-primary/20 text-primary-foreground"
+                                      : "text-primary-foreground hover:text-primary-foreground"
                                   )}
                                 >
-                                  <subItem.icon className="h-4 w-4 flex-shrink-0" />
+                                  <subItem.icon className="h-4 w-4 flex-shrink-0 transition-colors" />
                                   <span className="truncate">{subItem.title}</span>
                                 </Link>
                               </TooltipTrigger>
-                              <TooltipContent side="right" className="max-w-xs">
+                              <TooltipContent side="right" className="max-w-xs bg-card text-card-foreground border border-border shadow-lg">
                                 <div>
                                   <p className="font-medium">{subItem.title}</p>
                                   {subItem.description && (
-                                    <p className="text-xs text-muted-foreground">{subItem.description}</p>
+                                    <p className="text-xs text-gray-600">{subItem.description}</p>
                                   )}
                                 </div>
                               </TooltipContent>
@@ -565,13 +597,14 @@ export const DashboardLayout = ({ children }) => {
             </nav>
           </TooltipProvider>
 
-          <div className="px-3 mt-auto">
+          
+          <div className="px-3">
             {isSidebarOpen && (
-              <div className="mb-4 p-3 rounded-lg bg-muted">
+              <div className="mb-4 p-3 rounded-lg bg-primary/10 border border-primary/20">
                 <div className="flex flex-col gap-1">
-                  <p className="font-medium text-sm truncate">{user?.name}</p>
-                  <p className="text-xs text-muted-foreground">{shortenWallet(user?.wallet)}</p>
-                  <p className="text-xs text-muted-foreground mt-1 uppercase">
+                  <p className="font-medium text-sm truncate text-primary-foreground">{user?.name}</p>
+                  <p className="text-xs text-primary-foreground/80">{shortenWallet(user?.wallet)}</p>
+                  <p className="text-xs text-primary-foreground/80 mt-1 uppercase font-medium">
                     {user?.userType || "User"}
                   </p>
                 </div>
@@ -584,7 +617,7 @@ export const DashboardLayout = ({ children }) => {
                   <Button
                     variant="ghost"
                     className={cn(
-                      "w-full flex items-center gap-3 justify-start text-destructive hover:bg-destructive/10 hover:text-destructive",
+                      "w-full flex items-center gap-3 justify-start text-primary-foreground hover:bg-primary/20 hover:text-primary-foreground",
                       !isSidebarOpen && "justify-center px-0"
                     )}
                     onClick={() => logout()}
@@ -594,7 +627,7 @@ export const DashboardLayout = ({ children }) => {
                   </Button>
                 </TooltipTrigger>
                 {!isSidebarOpen && (
-                  <TooltipContent side="right">
+                  <TooltipContent side="right" className="bg-card text-card-foreground border border-border shadow-lg">
                     <p className="font-medium">Logout</p>
                     <p className="text-xs text-muted-foreground">Sign out of your account</p>
                   </TooltipContent>
@@ -610,23 +643,55 @@ export const DashboardLayout = ({ children }) => {
         "transition-all duration-300 ease-in-out",
         isSidebarOpen ? "lg:pl-64" : "lg:pl-20"
       )}>
-        <header className="sticky top-0 z-40 h-16 border-b bg-background/80 backdrop-blur-sm px-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setIsMobileMenuOpen(true)}>
+        {/* Top Header */}
+        <header className="sticky top-0 z-40 h-16 bg-card border-b border-border px-4 flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-4 flex-1">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="lg:hidden hover:bg-muted text-foreground" 
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
               <Menu className="h-5 w-5" />
             </Button>
             
-            <div className="text-lg font-semibold">
-              {user?.userType} Portal
+            {/* Logo
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-sm">
+                <BookOpen className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <h1 className="text-lg font-semibold text-card-foreground">Hiigsi Forum</h1>
+            </div> */}
+            
+            {/* Search Bar */}
+            <div className="flex-1 max-w-2xl ml-8">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  placeholder="Search in Hiigsi Forum"
+                  className="pl-10 pr-4 py-2 w-full bg-muted border-0 rounded-lg focus:bg-background focus:ring-2 focus:ring-primary transition-all duration-200"
+                />
+              </div>
             </div>
           </div>
           
           <div className="flex items-center gap-2">
             <ThemeToggle />
+            
+            {/* View Toggle */}
+            <div className="hidden md:flex items-center bg-muted rounded-lg p-1">
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-background text-foreground">
+                <Grid3X3 className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-background text-foreground">
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
+
             {/* Notification Button */}
             <DropdownMenu open={showNotifications} onOpenChange={setShowNotifications}>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative">
+                <Button variant="ghost" size="icon" className="relative hover:bg-muted text-foreground">
                   <Bell className="h-5 w-5" />
                   {unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive text-[10px] text-destructive-foreground flex items-center justify-center">
@@ -635,14 +700,14 @@ export const DashboardLayout = ({ children }) => {
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80">
+              <DropdownMenuContent align="end" className="w-80 bg-card border border-border shadow-lg">
                 <div className="flex items-center justify-between px-4 py-2">
-                  <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                  <DropdownMenuLabel className="text-card-foreground">Notifications</DropdownMenuLabel>
                   <div className="flex items-center gap-2">
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 px-2"
+                      className="h-8 px-2 text-primary hover:bg-primary/10"
                       onClick={() => markAllAsRead()}
                     >
                       <CheckCheck className="h-4 w-4 mr-1" />
@@ -651,7 +716,7 @@ export const DashboardLayout = ({ children }) => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 px-2 text-destructive hover:text-destructive"
+                      className="h-8 px-2 text-destructive hover:bg-destructive/10"
                       onClick={() => deleteAllNotifications()}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -674,8 +739,8 @@ export const DashboardLayout = ({ children }) => {
                         <DropdownMenuItem
                           key={notification._id}
                           className={cn(
-                            "flex flex-col items-start p-3 cursor-pointer",
-                            !notification.isRead && "bg-muted/50"
+                            "flex flex-col items-start p-3 cursor-pointer hover:bg-muted/50",
+                            !notification.isRead && "bg-primary/5"
                           )}
                           onClick={() => {
                             if (!notification.isRead) {
@@ -695,13 +760,13 @@ export const DashboardLayout = ({ children }) => {
                             )} />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between gap-2">
-                                <p className="text-sm font-medium truncate">
+                                <p className="text-sm font-medium truncate text-card-foreground">
                                   {notification.title}
                                 </p>
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-6 w-6 flex-shrink-0"
+                                  className="h-6 w-6 flex-shrink-0 hover:bg-muted"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     deleteNotification(notification._id);
@@ -722,7 +787,7 @@ export const DashboardLayout = ({ children }) => {
                       ))}
                       {notifications.length > 0 && (
                         <DropdownMenuItem
-                          className="flex items-center justify-center p-2 text-sm text-muted-foreground hover:text-foreground"
+                          className="flex items-center justify-center p-2 text-sm text-primary hover:bg-primary/10"
                           onClick={handleViewAllNotifications}
                         >
                           View all notifications
@@ -730,21 +795,21 @@ export const DashboardLayout = ({ children }) => {
                       )}
                     </>
                   )}
-              </div>
+                </div>
               </DropdownMenuContent>
             </DropdownMenu>
 
             {/* Settings Button */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="hover:bg-muted text-foreground">
                   <Settings className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>Settings</DropdownMenuLabel>
+              <DropdownMenuContent align="end" className="w-56 bg-card border border-border shadow-lg">
+                <DropdownMenuLabel className="text-card-foreground">Settings</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate("/settings/terms")}>
+                <DropdownMenuItem onClick={() => navigate("/settings/terms")} className="hover:bg-muted/50">
                   <KeyRound className="mr-2 h-4 w-4" />
                   <span>Terms and Conditions</span>
                 </DropdownMenuItem>
@@ -754,34 +819,34 @@ export const DashboardLayout = ({ children }) => {
             {/* User Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2 px-2 md:pl-3 md:pr-2">
-                  <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-sm">
+                <Button variant="ghost" className="flex items-center gap-2 px-2 md:pl-3 md:pr-2 hover:bg-muted text-foreground">
+                  <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-sm font-medium">
                     {user?.name?.charAt(0).toUpperCase() || "U"}
                   </div>
                   <div className="hidden md:block text-left">
-                    <p className="text-sm font-medium leading-none mb-1">{user?.name || "User"}</p>
+                    <p className="text-sm font-medium leading-none mb-1 text-card-foreground">{user?.name || "User"}</p>
                     <p className="text-xs text-muted-foreground leading-none">{shortenWallet(user?.wallet)}</p>
                   </div>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuContent align="end" className="w-56 bg-card border border-border shadow-lg">
+                <DropdownMenuLabel className="text-card-foreground">My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="flex items-center">
+                <DropdownMenuItem className="flex items-center hover:bg-muted/50">
                   <User className="mr-2 h-4 w-4" />
                   <div className="flex flex-col">
-                    <span>{user?.name}</span>
+                    <span className="text-card-foreground">{user?.name}</span>
                     <span className="text-xs text-muted-foreground">{shortenWallet(user?.wallet)}</span>
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate("/settings/terms")}>
+                <DropdownMenuItem onClick={() => navigate("/settings/terms")} className="hover:bg-muted/50">
                   <KeyRound className="mr-2 h-4 w-4" />
                   <span>Terms and Conditions</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
+                  className="text-destructive hover:bg-destructive/10 focus:text-destructive"
                   onClick={() => setShowLogoutAlert(true)}
                 >
                   <LogOut className="mr-2 h-4 w-4" />
@@ -792,15 +857,15 @@ export const DashboardLayout = ({ children }) => {
 
             {/* Logout Confirmation Dialog */}
             <AlertDialog open={showLogoutAlert} onOpenChange={setShowLogoutAlert}>
-              <AlertDialogContent className="max-w-sm">
+              <AlertDialogContent className="max-w-sm bg-card">
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Are you sure you want to logout?</AlertDialogTitle>
-                  <AlertDialogDescription>
+                  <AlertDialogTitle className="text-card-foreground">Are you sure you want to logout?</AlertDialogTitle>
+                  <AlertDialogDescription className="text-muted-foreground">
                     Your session will end and you will be redirected to the login page.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel className="hover:bg-muted">Cancel</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleLogout}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -813,22 +878,22 @@ export const DashboardLayout = ({ children }) => {
           </div>
         </header>
         
-        <main className="p-4 md:p-6 lg:p-8">
+        <main className="p-4 md:p-6 lg:p-8 bg-background">
           {children}
         </main>
       </div>
 
       {/* All Notifications Dialog */}
       <Dialog open={showAllNotifications} onOpenChange={setShowAllNotifications}>
-        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col bg-card">
           <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
+            <DialogTitle className="flex items-center justify-between text-card-foreground">
               <span>All Notifications</span>
               <div className="flex items-center gap-2">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 px-2"
+                  className="h-8 px-2 text-primary hover:bg-primary/10"
                   onClick={() => markAllAsRead()}
                 >
                   <CheckCheck className="h-4 w-4 mr-1" />
@@ -837,7 +902,7 @@ export const DashboardLayout = ({ children }) => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 px-2 text-destructive hover:text-destructive"
+                  className="h-8 px-2 text-destructive hover:bg-destructive/10"
                   onClick={() => {
                     deleteAllNotifications();
                     setShowAllNotifications(false);
@@ -863,8 +928,8 @@ export const DashboardLayout = ({ children }) => {
                   <div
                     key={notification._id}
                     className={cn(
-                      "flex flex-col items-start p-3 rounded-lg cursor-pointer hover:bg-muted/50",
-                      !notification.isRead && "bg-muted/50"
+                      "flex flex-col items-start p-3 rounded-lg cursor-pointer hover:bg-muted/50 border border-border",
+                      !notification.isRead && "bg-primary/5"
                     )}
                     onClick={() => {
                       if (!notification.isRead) {
@@ -886,13 +951,13 @@ export const DashboardLayout = ({ children }) => {
                       )} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm font-medium truncate">
+                          <p className="text-sm font-medium truncate text-card-foreground">
                             {notification.title}
                           </p>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 flex-shrink-0"
+                            className="h-6 w-6 flex-shrink-0 hover:bg-muted"
                             onClick={(e) => {
                               e.stopPropagation();
                               deleteNotification(notification._id);

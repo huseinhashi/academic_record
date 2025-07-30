@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserPlus, Wallet, X } from "lucide-react";
+import { UserPlus, Wallet, X, GraduationCap, Building2, Briefcase } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -388,18 +388,23 @@ export const RegisterPage = () => {
       return (
         <form onSubmit={handleStudentSubmit} className="space-y-4">
           {/* Wallet Connection Section */}
-          <div className="bg-muted/30 p-4 rounded-lg border">
-            <div className="flex items-center justify-between mb-2">
-              <Label className="text-sm font-medium">Wallet Connection</Label>
+          <div className="bg-gradient-to-r from-primary/5 to-primary/10 p-4 rounded-lg border border-primary/20">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-primary/10 rounded-lg">
+                  <Wallet className="h-4 w-4 text-primary" />
+                </div>
+                <Label className="text-sm font-semibold">Wallet Connection</Label>
+              </div>
               {walletConnected && (
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 px-2 py-0.5 text-xs">
                   Connected
-                </Badge>
+          </Badge>
               )}
             </div>
             {walletConnected ? (
-              <div className="text-sm text-muted-foreground">
-                <p>Connected: {walletAddress}</p>
+              <div className="text-xs text-muted-foreground bg-background p-2 rounded-lg">
+                <p className="font-medium">Connected: {walletAddress}</p>
               </div>
             ) : (
               <Button
@@ -407,7 +412,7 @@ export const RegisterPage = () => {
                 variant="outline"
                 onClick={handleConnectWallet}
                 disabled={isConnecting}
-                className="w-full"
+                className="w-full h-10 bg-background hover:bg-background/80 border-primary/30 hover:border-primary/50 text-sm"
               >
                 {isConnecting ? (
                   <>
@@ -426,12 +431,12 @@ export const RegisterPage = () => {
 
           <div className="space-y-4">
             <div>
-              <Label htmlFor="name" className="mb-2 block">
+              <Label htmlFor="name" className="mb-2 block text-sm font-semibold">
                 Full Name <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
-                  <UserPlus size={20} />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-primary">
+                  <UserPlus size={16} />
                 </div>
                 <Input 
                   id="name" 
@@ -440,18 +445,18 @@ export const RegisterPage = () => {
                   value={studentData.name}
                   onChange={(e) => handleInputChange(e, "student")}
                   required
-                  className="h-12 pl-12"
+                  className="h-11 pl-10 text-sm border-2 focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
               </div>
             </div>
             
             <div>
-              <Label htmlFor="roleNumber" className="mb-2 block">
+              <Label htmlFor="roleNumber" className="mb-2 block text-sm font-semibold">
                 Role Number <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
-                  <UserPlus size={20} />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-primary">
+                  <UserPlus size={16} />
                 </div>
                 <Input 
                   id="roleNumber" 
@@ -460,25 +465,25 @@ export const RegisterPage = () => {
                   value={studentData.roleNumber}
                   onChange={(e) => handleInputChange(e, "student")}
                   required
-                  className="h-12 pl-12"
+                  className="h-11 pl-10 text-sm border-2 focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
               </div>
             </div>
             
             <div>
-              <Label htmlFor="institution" className="mb-2 block">
+              <Label htmlFor="institution" className="mb-2 block text-sm font-semibold">
                 Institution <span className="text-red-500">*</span>
               </Label>
               <Select 
                 value={studentData.institutionId} 
                 onValueChange={(value) => handleSelectChange(value, "institutionId")}
               >
-                <SelectTrigger className="h-12">
+                <SelectTrigger className="h-11 text-sm border-2 focus:border-primary focus:ring-2 focus:ring-primary/20">
                   <SelectValue placeholder="Select your institution" />
                 </SelectTrigger>
                 <SelectContent>
                   {loadingInstitutions ? (
-                    <div className="p-2 text-center text-sm">
+                    <div className="p-4 text-center text-sm">
                       Loading institutions...
                     </div>
                   ) : institutions.length > 0 ? (
@@ -491,7 +496,7 @@ export const RegisterPage = () => {
                       </SelectItem>
                     ))
                   ) : (
-                    <div className="p-2 text-center text-sm">
+                    <div className="p-4 text-center text-sm">
                       No institutions available
                     </div>
                   )}
@@ -500,7 +505,7 @@ export const RegisterPage = () => {
             </div>
 
             <div>
-              <Label htmlFor="skills" className="mb-2 block">
+              <Label htmlFor="skills" className="mb-3 block text-sm font-semibold">
                 Skills <span className="text-red-500">*</span>
               </Label>
               <SkillsSelect
@@ -514,12 +519,12 @@ export const RegisterPage = () => {
           
           <Button 
             type="submit" 
-            className="w-full font-semibold h-12 mt-6" 
+            className="w-full font-semibold h-11 text-sm mt-6 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200" 
             disabled={loading || !walletConnected}
           >
             {loading ? (
               <>
-                <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />
+                <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
                 Registering...
               </>
             ) : (
@@ -528,7 +533,7 @@ export const RegisterPage = () => {
           </Button>
           
           <div className="text-center mt-4">
-            <Link to="/login" className="text-primary hover:underline text-sm">
+            <Link to="/login" className="text-primary hover:underline text-sm font-medium">
               Already have an account? Login
             </Link>
           </div>
@@ -538,18 +543,23 @@ export const RegisterPage = () => {
       return (
         <form onSubmit={handleInstitutionSubmit} className="space-y-4">
           {/* Wallet Connection Section */}
-          <div className="bg-muted/30 p-4 rounded-lg border">
-            <div className="flex items-center justify-between mb-2">
-              <Label className="text-sm font-medium">Wallet Connection</Label>
+          <div className="bg-gradient-to-r from-primary/5 to-primary/10 p-4 rounded-lg border border-primary/20">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-primary/10 rounded-lg">
+                  <Wallet className="h-4 w-4 text-primary" />
+                </div>
+                <Label className="text-sm font-semibold">Wallet Connection</Label>
+              </div>
               {walletConnected && (
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 px-2 py-0.5 text-xs">
                   Connected
                 </Badge>
               )}
             </div>
             {walletConnected ? (
-              <div className="text-sm text-muted-foreground">
-                <p>Connected: {walletAddress}</p>
+              <div className="text-xs text-muted-foreground bg-background p-2 rounded-lg">
+                <p className="font-medium">Connected: {walletAddress}</p>
               </div>
             ) : (
               <Button
@@ -557,7 +567,7 @@ export const RegisterPage = () => {
                 variant="outline"
                 onClick={handleConnectWallet}
                 disabled={isConnecting}
-                className="w-full"
+                className="w-full h-10 bg-background hover:bg-background/80 border-primary/30 hover:border-primary/50 text-sm"
               >
                 {isConnecting ? (
                   <>
@@ -576,12 +586,12 @@ export const RegisterPage = () => {
 
           <div className="space-y-4">
             <div>
-              <Label htmlFor="institution-name" className="mb-2 block">
+              <Label htmlFor="institution-name" className="mb-2 block text-sm font-semibold">
                 Institution Name <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
-                  <UserPlus size={20} />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-primary">
+                  <UserPlus size={16} />
                 </div>
                 <Input 
                   id="institution-name" 
@@ -590,18 +600,18 @@ export const RegisterPage = () => {
                   value={institutionData.name}
                   onChange={(e) => handleInputChange(e, "institution")}
                   required
-                  className="h-12 pl-12"
+                  className="h-11 pl-10 text-sm border-2 focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="institution-website" className="mb-2 block">
+              <Label htmlFor="institution-website" className="mb-2 block text-sm font-semibold">
                 Website <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
-                  <UserPlus size={20} />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-primary">
+                  <UserPlus size={16} />
                 </div>
                 <Input 
                   id="institution-website" 
@@ -611,18 +621,18 @@ export const RegisterPage = () => {
                   value={institutionData.website}
                   onChange={(e) => handleInputChange(e, "institution")}
                   required
-                  className="h-12 pl-12"
+                  className="h-11 pl-10 text-sm border-2 focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="institution-location" className="mb-2 block">
+              <Label htmlFor="institution-location" className="mb-2 block text-sm font-semibold">
                 Location <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
-                  <UserPlus size={20} />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-primary">
+                  <UserPlus size={16} />
                 </div>
                 <Input 
                   id="institution-location" 
@@ -631,7 +641,7 @@ export const RegisterPage = () => {
                   value={institutionData.location}
                   onChange={(e) => handleInputChange(e, "institution")}
                   required
-                  className="h-12 pl-12"
+                  className="h-11 pl-10 text-sm border-2 focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
               </div>
             </div>
@@ -639,12 +649,12 @@ export const RegisterPage = () => {
           
           <Button 
             type="submit" 
-            className="w-full font-semibold h-12 mt-6" 
+            className="w-full font-semibold h-11 text-sm mt-6 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200" 
             disabled={loading || !walletConnected}
           >
             {loading ? (
               <>
-                <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />
+                <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
                 Registering...
               </>
             ) : (
@@ -653,7 +663,7 @@ export const RegisterPage = () => {
           </Button>
           
           <div className="text-center mt-4">
-            <Link to="/login" className="text-primary hover:underline text-sm">
+            <Link to="/login" className="text-primary hover:underline text-sm font-medium">
               Already have an account? Login
             </Link>
           </div>
@@ -663,18 +673,23 @@ export const RegisterPage = () => {
       return (
         <form onSubmit={handleCompanySubmit} className="space-y-4">
           {/* Wallet Connection Section */}
-          <div className="bg-muted/30 p-4 rounded-lg border">
-            <div className="flex items-center justify-between mb-2">
-              <Label className="text-sm font-medium">Wallet Connection</Label>
+          <div className="bg-gradient-to-r from-primary/5 to-primary/10 p-4 rounded-lg border border-primary/20">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-primary/10 rounded-lg">
+                  <Wallet className="h-4 w-4 text-primary" />
+                </div>
+                <Label className="text-sm font-semibold">Wallet Connection</Label>
+              </div>
               {walletConnected && (
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 px-2 py-0.5 text-xs">
                   Connected
                 </Badge>
               )}
             </div>
             {walletConnected ? (
-              <div className="text-sm text-muted-foreground">
-                <p>Connected: {walletAddress}</p>
+              <div className="text-xs text-muted-foreground bg-background p-2 rounded-lg">
+                <p className="font-medium">Connected: {walletAddress}</p>
               </div>
             ) : (
               <Button
@@ -682,7 +697,7 @@ export const RegisterPage = () => {
                 variant="outline"
                 onClick={handleConnectWallet}
                 disabled={isConnecting}
-                className="w-full"
+                className="w-full h-10 bg-background hover:bg-background/80 border-primary/30 hover:border-primary/50 text-sm"
               >
                 {isConnecting ? (
                   <>
@@ -701,12 +716,12 @@ export const RegisterPage = () => {
 
           <div className="space-y-4">
             <div>
-              <Label htmlFor="company-name" className="mb-2 block">
+              <Label htmlFor="company-name" className="mb-2 block text-sm font-semibold">
                 Company Name <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
-                  <UserPlus size={20} />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-primary">
+                  <UserPlus size={16} />
                 </div>
                 <Input 
                   id="company-name" 
@@ -715,18 +730,18 @@ export const RegisterPage = () => {
                   value={companyData.name}
                   onChange={(e) => handleInputChange(e, "company")}
                   required
-                  className="h-12 pl-12"
+                  className="h-11 pl-10 text-sm border-2 focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="company-website" className="mb-2 block">
+              <Label htmlFor="company-website" className="mb-2 block text-sm font-semibold">
                 Website <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
-                  <UserPlus size={20} />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-primary">
+                  <UserPlus size={16} />
                 </div>
                 <Input 
                   id="company-website" 
@@ -736,18 +751,18 @@ export const RegisterPage = () => {
                   value={companyData.website}
                   onChange={(e) => handleInputChange(e, "company")}
                   required
-                  className="h-12 pl-12"
+                  className="h-11 pl-10 text-sm border-2 focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="company-address" className="mb-2 block">
+              <Label htmlFor="company-address" className="mb-2 block text-sm font-semibold">
                 Address <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
-                  <UserPlus size={20} />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-primary">
+                  <UserPlus size={16} />
                 </div>
                 <Input 
                   id="company-address" 
@@ -756,18 +771,18 @@ export const RegisterPage = () => {
                   value={companyData.address}
                   onChange={(e) => handleInputChange(e, "company")}
                   required
-                  className="h-12 pl-12"
+                  className="h-11 pl-10 text-sm border-2 focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="company-phone" className="mb-2 block">
+              <Label htmlFor="company-phone" className="mb-2 block text-sm font-semibold">
                 Phone <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">
-                  <UserPlus size={20} />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-primary">
+                  <UserPlus size={16} />
                 </div>
                 <Input 
                   id="company-phone" 
@@ -776,7 +791,7 @@ export const RegisterPage = () => {
                   value={companyData.phone}
                   onChange={(e) => handleInputChange(e, "company")}
                   required
-                  className="h-12 pl-12"
+                  className="h-11 pl-10 text-sm border-2 focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
               </div>
             </div>
@@ -784,12 +799,12 @@ export const RegisterPage = () => {
           
           <Button 
             type="submit" 
-            className="w-full font-semibold h-12 mt-6" 
+            className="w-full font-semibold h-11 text-sm mt-6 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200" 
             disabled={loading || !walletConnected}
           >
             {loading ? (
               <>
-                <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />
+                <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
                 Registering...
               </>
             ) : (
@@ -798,7 +813,7 @@ export const RegisterPage = () => {
           </Button>
           
           <div className="text-center mt-4">
-            <Link to="/login" className="text-primary hover:underline text-sm">
+            <Link to="/login" className="text-primary hover:underline text-sm font-medium">
               Already have an account? Login
             </Link>
           </div>
@@ -808,48 +823,83 @@ export const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-primary p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 p-4">
       {/* Theme Toggle */}
       <div className="absolute top-4 right-4">
         <ThemeToggle />
       </div>
       
-      <Card className="w-full max-w-md shadow-lg">
+      <Card className="w-full max-w-4xl shadow-2xl hover-lift border-0 bg-card/80 backdrop-blur-sm">
         <CardContent className="p-6">
           <div className="flex justify-center mb-4">
-            <img src="/logo.png" alt="Logo" className="h-12" />
+            <div className="relative">
+              <img src="/logo.png" alt="Logo" className="h-12" />
+              <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-12 h-0.5 bg-gradient-to-r from-primary to-primary/60 rounded-full"></div>
+            </div>
           </div>
           
-          <h1 className="text-3xl font-bold text-center mb-8 text-primary">USER REGISTER</h1>
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-foreground mb-1">Welcome to Hiigsi Forum</h1>
+            <p className="text-muted-foreground text-sm">Choose your account type to get started</p>
+          </div>
           
-          <div className="flex rounded-md overflow-hidden mb-8">
+          <div className="grid grid-cols-3 gap-3 mb-6">
             <button 
-              className={`flex-1 py-4 text-center transition-colors ${activeTab === "student" ? "bg-primary text-white" : "bg-muted text-primary"}`}
+              className={`relative p-4 rounded-lg transition-all duration-300 font-medium text-sm ${
+                activeTab === "student" 
+                  ? "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-md scale-105" 
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:scale-105 border-2 border-transparent hover:border-primary/20"
+              }`}
               onClick={() => setActiveTab("student")}
             >
-              Graduate
+              <div className="flex flex-col items-center gap-2">
+                <div className={`p-2 rounded-lg ${activeTab === "student" ? "bg-primary-foreground/20" : "bg-muted"}`}>
+                  <GraduationCap className="h-5 w-5" />
+                </div>
+                <span>Graduate</span>
+              </div>
             </button>
             <button 
-              className={`flex-1 py-4 text-center transition-colors ${activeTab === "institution" ? "bg-primary text-white" : "bg-muted text-primary"}`}
+              className={`relative p-4 rounded-lg transition-all duration-300 font-medium text-sm ${
+                activeTab === "institution" 
+                  ? "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-md scale-105" 
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:scale-105 border-2 border-transparent hover:border-primary/20"
+              }`}
               onClick={() => setActiveTab("institution")}
             >
-              Institution
+              <div className="flex flex-col items-center gap-2">
+                <div className={`p-2 rounded-lg ${activeTab === "institution" ? "bg-primary-foreground/20" : "bg-muted"}`}>
+                  <Building2 className="h-5 w-5" />
+                </div>
+                <span>Institution</span>
+              </div>
             </button>
             <button 
-              className={`flex-1 py-4 text-center transition-colors ${activeTab === "company" ? "bg-primary text-white" : "bg-muted text-primary"}`}
+              className={`relative p-4 rounded-lg transition-all duration-300 font-medium text-sm ${
+                activeTab === "company" 
+                  ? "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-md scale-105" 
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:scale-105 border-2 border-transparent hover:border-primary/20"
+              }`}
               onClick={() => setActiveTab("company")}
             >
-              Employer
+              <div className="flex flex-col items-center gap-2">
+                <div className={`p-2 rounded-lg ${activeTab === "company" ? "bg-primary-foreground/20" : "bg-muted"}`}>
+                  <Briefcase className="h-5 w-5" />
+                </div>
+                <span>Company</span>
+              </div>
             </button>
           </div>
           
-          {renderForm()}
+          <div className="bg-gradient-to-r from-muted/30 to-muted/20 p-6 rounded-xl border border-muted/50">
+            {renderForm()}
+          </div>
           
-          <div className="mt-6 text-center">
-            <Link to="/login" className="text-primary hover:underline text-sm">
+          {/* <div className="mt-4 text-center">
+            <Link to="/login" className="text-primary hover:underline text-sm font-medium">
               Already have an account? Login
             </Link>
-          </div>
+          </div> */}
         </CardContent>
       </Card>
     </div>

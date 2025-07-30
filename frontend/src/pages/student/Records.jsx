@@ -791,7 +791,7 @@ export const StudentRecords = () => {
               <div>
                 <h3 className="font-semibold">Share Securely</h3>
                 <p className="text-sm text-muted-foreground">
-                  Once verified, you can share your credentials with employers using a secure blockchain-verified link.
+                  Once verified, you can share your credentials with employers using a secure verification link.
                 </p>
               </div>
             </div>

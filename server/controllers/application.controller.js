@@ -441,6 +441,32 @@ export const updateApplicationStatus = async (req, res, next) => {
       });
     }
 
+    // If moving to interviewed status, check that interviews are properly completed
+    if (status === "interviewed") {
+      const Interview = (await import("../models/interview.model.js")).default;
+      const interviews = await Interview.find({
+        applicationId: application._id,
+      });
+
+      if (interviews.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Cannot mark as interviewed without scheduling any interviews first",
+        });
+      }
+
+      // Check if at least one interview has been completed (pass or fail)
+      const hasCompletedInterviews = interviews.some(
+        (interview) => interview.result === "pass" || interview.result === "fail"
+      );
+      if (!hasCompletedInterviews) {
+        return res.status(400).json({
+          success: false,
+          message: "Cannot mark as interviewed. All scheduled interviews must be completed (pass or fail) first",
+        });
+      }
+    }
+
     // If hiring, check that the applicant has passed interviews
     if (status === "hired") {
       // Check if applicant has passed interviews

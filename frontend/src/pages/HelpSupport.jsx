@@ -40,9 +40,9 @@ export const HelpSupport = () => {
       link: "https://wa.me/+252612480687"
     },
     email: {
-      support: "support@academicblockchain.com",
-      technical: "tech@academicblockchain.com",
-      general: "info@academicblockchain.com"
+             support: "support@hiigsiforum.com",
+       technical: "tech@hiigsiforum.com",
+       general: "info@hiigsiforum.com"
     },
     phone: {
       number: "+252612480687",
@@ -66,8 +66,8 @@ export const HelpSupport = () => {
       category: "General",
       questions: [
         {
-          question: "What is the Academic Blockchain platform?",
-          answer: "The Academic Blockchain platform is a secure, decentralized system for managing and verifying academic records, job applications, and professional credentials using blockchain technology."
+          question: "What is Hiigsi Forum?",
+                     answer: "Hiigsi Forum is a secure system for managing and verifying academic records, job applications, and professional credentials using advanced encryption and verification technology."
         },
         {
           question: "How do I get started?",
@@ -75,7 +75,7 @@ export const HelpSupport = () => {
         },
         {
           question: "Is my data secure?",
-          answer: "Yes, we use advanced blockchain technology and encryption to ensure your academic records and personal information are secure and tamper-proof."
+          answer: "Yes, we use advanced encryption and security protocols to ensure your academic records and personal information are secure and tamper-proof."
         }
       ]
     },
@@ -165,15 +165,15 @@ export const HelpSupport = () => {
   ];
 
   const handleWhatsAppClick = () => {
-    const message = `Hello! I need help with the Academic Blockchain platform. My user type is: ${user?.userType || 'Unknown'}`;
+         const message = `Hello! I need help with the Hiigsi Forum platform. My user type is: ${user?.userType || 'Unknown'}`;
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `${contactInfo.whatsapp.link}?text=${encodedMessage}`;
     window.open(whatsappUrl, '_blank');
   };
 
   const handleEmailClick = (email) => {
-    const subject = encodeURIComponent("Academic Blockchain Platform Support");
-    const body = encodeURIComponent(`Hello,\n\nI need assistance with the Academic Blockchain platform.\n\nUser Type: ${user?.userType || 'Unknown'}\nUser ID: ${user?._id || 'Unknown'}\n\nPlease help me with:\n\n\n\nThank you.`);
+         const subject = encodeURIComponent("Hiigsi Forum Platform Support");
+     const body = encodeURIComponent(`Hello,\n\nI need assistance with the Hiigsi Forum platform.\n\nUser Type: ${user?.userType || 'Unknown'}\nUser ID: ${user?._id || 'Unknown'}\n\nPlease help me with:\n\n\n\nThank you.`);
     window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
   };
 

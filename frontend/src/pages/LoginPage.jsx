@@ -10,7 +10,7 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
-import { Wallet, ArrowRight, Shield } from "lucide-react";
+import { Wallet, ArrowRight } from "lucide-react";
 import { LoaderCircle } from "@/components/LoaderCircle";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
@@ -71,9 +71,9 @@ export const LoginPage = () => {
         <Card className="backdrop-blur-sm border-opacity-50 shadow-lg">
           <CardHeader className="space-y-1 text-center pb-6">
             <div className="flex justify-center mb-2">
-              <Shield className="h-12 w-12 text-primary" />
+              <img src="/logo.png" alt="Hiigsi Forum Logo" className="h-24 w-24 object-contain" />
             </div>
-            <CardTitle className="text-2xl font-bold">Academic Record System</CardTitle>
+            <CardTitle className="text-2xl font-bold">Hiigsi Forum</CardTitle>
             <CardDescription className="text-muted-foreground">
               Connect with MetaMask to access your account
             </CardDescription>

@@ -124,9 +124,19 @@ export const UpcomingInterviews = () => {
       }
     } catch (error) {
       console.error("Error updating interview:", error);
+      
+      // Handle specific validation errors
+      let errorMessage = error.response?.data?.message || "Failed to update interview";
+      
+      if (error.response?.status === 400) {
+        if (errorMessage.includes("Cannot complete interview")) {
+          errorMessage = "Please ensure the interview is properly scheduled with date and interviewer, and the interview date has passed before marking as pass/fail.";
+        }
+      }
+      
       toast({
         title: "Update Failed",
-        description: error.response?.data?.message || "Failed to update interview",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

@@ -104,7 +104,7 @@ export const StudentDashboard = () => {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Student Dashboard</h1>
         <p className="text-muted-foreground">
-          Welcome back, {user?.name || 'Student'}! View and manage your academic records
+          Welcome back, {user?.name || 'Student'}! View and manage your academic records on Hiigsi Forum
         </p>
       </div>
 
@@ -170,7 +170,7 @@ export const StudentDashboard = () => {
           <CardHeader>
             <CardTitle>Recent Academic Records</CardTitle>
             <CardDescription>
-              Your most recent academic achievements
+              Your most recent academic achievements on Hiigsi Forum
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -220,7 +220,7 @@ export const StudentDashboard = () => {
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
             <CardDescription>
-              Manage your academic records
+              Manage your academic records on Hiigsi Forum
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -242,24 +242,24 @@ export const StudentDashboard = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>About Blockchain Verification</CardTitle>
-          <CardDescription>
-            How your academic records are secured on the blockchain
-          </CardDescription>
+                     <CardTitle>About Hiigsi Forum Verification</CardTitle>
+           <CardDescription>
+             How your academic records are secured and verified
+           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <p>
-              Our platform uses blockchain technology to create immutable, tamper-proof records of your academic achievements. 
-              This ensures that your credentials can be instantly verified by employers and other institutions around the world.
-            </p>
+                         <p>
+               Our platform uses advanced encryption and verification technology to create secure, tamper-proof records of your academic achievements. 
+               This ensures that your credentials can be instantly verified by employers and other institutions around the world.
+             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
               <div className="border rounded-lg p-4">
-                <h3 className="font-semibold mb-2">Immutable Records</h3>
-                <p className="text-sm text-muted-foreground">
-                  Once verified, your records cannot be altered or tampered with, providing the highest level of security and trust.
-                </p>
+                                 <h3 className="font-semibold mb-2">Secure Records</h3>
+                 <p className="text-sm text-muted-foreground">
+                   Once verified, your records are protected with advanced encryption, providing the highest level of security and trust.
+                 </p>
               </div>
               <div className="border rounded-lg p-4">
                 <h3 className="font-semibold mb-2">Instant Verification</h3>
@@ -268,10 +268,10 @@ export const StudentDashboard = () => {
                 </p>
               </div>
               <div className="border rounded-lg p-4">
-                <h3 className="font-semibold mb-2">Lifelong Access</h3>
-                <p className="text-sm text-muted-foreground">
-                  Your credentials will remain accessible to you for life, regardless of changes to your institution's systems.
-                </p>
+                                 <h3 className="font-semibold mb-2">Lifelong Access</h3>
+                 <p className="text-sm text-muted-foreground">
+                   Your credentials will remain accessible to you for life, securely stored in our verified system.
+                 </p>
               </div>
             </div>
           </div>

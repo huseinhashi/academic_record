@@ -8,89 +8,91 @@
 
 @layer base {
   :root {
-    /* Light theme - inspired by the teal login interface */
-    --background: 165 50% 85%;
-    /* Soft teal background */
-    --foreground: 210 25% 25%;
-    /* Dark slate text */
+    /* Light theme - Clean white and blue inspired by Google Drive */
+    --background: 0 0% 98%;
+    /* Very light gray background like Google Drive */
+    --foreground: 210 20% 20%;
+    /* Dark gray text for readability */
     --card: 0 0% 100%;
-    /* Clean white cards */
-    --card-foreground: 210 25% 25%;
-    /* Dark slate text on cards */
+    /* Pure white cards */
+    --card-foreground: 210 20% 20%;
+    /* Dark gray text on cards */
     --popover: 0 0% 100%;
-    --popover-foreground: 210 25% 25%;
-    --primary: 165 65% 45%;
-    /* Rich teal primary - matches the login button */
+    --popover-foreground: 210 20% 20%;
+    --primary: 217 91% 60%;
+    /* Google blue primary color */
     --primary-foreground: 0 0% 100%;
     /* White text on primary */
-    --secondary: 165 35% 75%;
-    /* Lighter teal for secondary elements */
-    --secondary-foreground: 210 25% 30%;
+    --secondary: 217 20% 95%;
+    /* Very light blue for secondary elements */
+    --secondary-foreground: 210 20% 30%;
     /* Darker text on secondary */
-    --muted: 165 25% 90%;
-    /* Very light teal for muted areas */
-    --muted-foreground: 210 15% 45%;
-    /* Muted text color */
-    --accent: 165 55% 55%;
-    /* Accent teal */
+    --muted: 0 0% 96%;
+    /* Very light gray for muted areas */
+    --muted-foreground: 210 10% 50%;
+    /* Medium gray for muted text */
+    --accent: 217 91% 60%;
+    /* Accent blue matching primary */
     --accent-foreground: 0 0% 100%;
     /* White accent text */
-    --destructive: 0 75% 55%;
+    --destructive: 0 84% 60%;
+    /* Red for destructive actions */
     --destructive-foreground: 0 0% 100%;
-    --border: 165 25% 75%;
-    /* Subtle teal borders */
-    --input: 165 20% 85%;
+    --border: 214 15% 88%;
+    /* Light gray borders */
+    --input: 0 0% 96%;
     /* Light input backgrounds */
-    --ring: 165 65% 45%;
+    --ring: 217 91% 60%;
     /* Focus ring matches primary */
     --radius: 0.75rem;
   }
 
   .dark {
-    /* Dark theme - inspired by the academic dashboard */
-    --background: 215 25% 12%;
-    /* Deep navy background like the dashboard */
-    --foreground: 45 85% 70%;
-    /* Golden text like "Academic Excellence" */
-    --card: 215 20% 16%;
-    /* Slightly lighter dark cards */
-    --card-foreground: 45 85% 70%;
-    /* Golden text on cards */
-    --popover: 215 20% 16%;
-    --popover-foreground: 45 85% 70%;
-    --primary: 45 85% 65%;
-    /* Rich gold primary - matches the dashboard accents */
-    --primary-foreground: 215 25% 12%;
-    /* Dark text on gold */
-    --secondary: 215 15% 20%;
+    /* Dark theme - Professional dark blue with white accents */
+    --background: 220 25% 8%;
+    /* Very dark blue background */
+    --foreground: 0 0% 95%;
+    /* Near white text */
+    --card: 220 20% 12%;
+    /* Dark blue cards */
+    --card-foreground: 0 0% 95%;
+    /* Light text on cards */
+    --popover: 220 20% 12%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 217 91% 65%;
+    /* Bright blue primary for dark mode */
+    --primary-foreground: 220 25% 8%;
+    /* Dark text on bright primary */
+    --secondary: 220 15% 18%;
     /* Dark secondary elements */
-    --secondary-foreground: 45 60% 60%;
-    /* Muted gold text */
-    --muted: 215 15% 18%;
+    --secondary-foreground: 0 0% 85%;
+    /* Light secondary text */
+    --muted: 220 15% 15%;
     /* Dark muted areas */
-    --muted-foreground: 215 10% 50%;
-    /* Gray muted text */
-    --accent: 165 45% 50%;
-    /* Teal accent for variety */
-    --accent-foreground: 0 0% 100%;
-    /* White accent text */
-    --destructive: 0 75% 60%;
+    --muted-foreground: 220 10% 60%;
+    /* Medium gray muted text */
+    --accent: 217 91% 65%;
+    /* Bright blue accent */
+    --accent-foreground: 220 25% 8%;
+    /* Dark accent text */
+    --destructive: 0 84% 65%;
+    /* Brighter red for dark mode */
     --destructive-foreground: 0 0% 100%;
-    --border: 215 15% 25%;
-    /* Subtle dark borders */
-    --input: 215 15% 22%;
+    --border: 220 15% 20%;
+    /* Dark borders */
+    --input: 220 15% 16%;
     /* Dark input backgrounds */
-    --ring: 45 85% 65%;
-    /* Gold focus ring */
-    --chart-1: 45 85% 65%;
-    /* Gold */
-    --chart-2: 165 55% 55%;
-    /* Teal */
-    --chart-3: 215 65% 65%;
+    --ring: 217 91% 65%;
+    /* Bright blue focus ring */
+    --chart-1: 217 91% 65%;
     /* Blue */
-    --chart-4: 25 85% 65%;
-    /* Orange */
-    --chart-5: 0 75% 65%;
+    --chart-2: 0 0% 85%;
+    /* Light gray */
+    --chart-3: 197 91% 65%;
+    /* Cyan */
+    --chart-4: 142 76% 60%;
+    /* Green */
+    --chart-5: 0 84% 65%;
     /* Red */
     --radius: 0.75rem;
   }
@@ -106,33 +108,110 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
-  /* Custom enhancements for the academic theme */
-  .dark {
-
-    /* Add subtle gradient backgrounds for cards in dark mode */
-    .card {
-      background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(215 20% 14%) 100%);
-    }
-
-    /* Enhanced button styling for dark mode */
-    .btn-primary {
-      background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(45 85% 55%) 100%);
-      box-shadow: 0 4px 12px hsla(45, 85%, 50%, 0.3);
-    }
-  }
-
-  /* Light theme enhancements */
+  /* Custom enhancements for the Google Drive inspired theme */
   .light {
-
-    /* Subtle shadows for cards in light mode */
+    /* Enhanced card styling for light mode */
     .card {
-      box-shadow: 0 2px 8px hsla(165, 25%, 25%, 0.1);
+      background: hsl(var(--card));
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+      border: 1px solid hsl(var(--border));
     }
 
     /* Enhanced button styling for light mode */
     .btn-primary {
-      background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(165 65% 40%) 100%);
-      box-shadow: 0 2px 8px hsla(165, 65%, 45%, 0.25);
+      background: linear-gradient(135deg, hsl(217, 91%, 60%) 0%, hsl(217, 91%, 55%) 100%);
+      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
     }
+
+    /* Google Drive style sidebar */
+    .sidebar {
+      background: hsl(var(--card));
+      border-right: 1px solid hsl(var(--border));
+    }
+
+    /* Clean search bar styling */
+    .search-bar {
+      background: hsl(0, 0%, 96%);
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .search-bar:focus {
+      background: hsl(var(--card));
+      border-color: hsl(var(--primary));
+      box-shadow: 0 0 0 2px hsla(217, 91%, 60%, 0.2);
+    }
+  }
+
+  .dark {
+    /* Enhanced card styling for dark mode */
+    .card {
+      background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(220, 20%, 10%) 100%);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+      border: 1px solid hsl(var(--border));
+    }
+
+    /* Enhanced button styling for dark mode */
+    .btn-primary {
+      background: linear-gradient(135deg, hsl(217, 91%, 65%) 0%, hsl(217, 91%, 60%) 100%);
+      box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+    }
+
+    /* Dark sidebar styling */
+    .sidebar {
+      background: hsl(var(--card));
+      border-right: 1px solid hsl(var(--border));
+    }
+
+    /* Dark search bar styling */
+    .search-bar {
+      background: hsl(220, 15%, 16%);
+      border: 1px solid hsl(var(--border));
+    }
+
+    .search-bar:focus {
+      background: hsl(var(--card));
+      border-color: hsl(var(--primary));
+      box-shadow: 0 0 0 2px hsla(217, 91%, 65%, 0.3);
+    }
+  }
+
+  /* Global enhancements */
+  .hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .glass-effect {
+    backdrop-filter: blur(10px);
+    background-color: hsla(var(--background), 0.8);
+  }
+
+  /* Improved scrollbar styling */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground)) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted-foreground));
+    border-radius: 3px;
+    opacity: 0.5;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    opacity: 0.8;
   }
 }

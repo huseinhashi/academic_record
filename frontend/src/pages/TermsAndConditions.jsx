@@ -8,7 +8,7 @@ export const TermsAndConditions = () => {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Terms and Conditions</h1>
         <p className="text-muted-foreground">
-          Please read these terms and conditions carefully before using our platform
+          Please read these terms and conditions carefully before using Hiigsi Forum
         </p>
       </div>
 
@@ -42,7 +42,7 @@ export const TermsAndConditions = () => {
                     <div>
                       <h3 className="font-semibold text-lg">2. Platform Services</h3>
                       <p className="text-muted-foreground mt-2">
-                        Our platform provides blockchain-based academic record verification and job application services. 
+                                                 Hiigsi Forum provides secure academic record verification and job application services. 
                         We reserve the right to modify, suspend, or discontinue any aspect of the service at any time.
                       </p>
                     </div>

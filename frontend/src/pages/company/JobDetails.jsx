@@ -148,29 +148,63 @@ export const JobDetails = () => {
   }, [jobId]);
   
   // Handle application processing
-  const handleProcessApplication = async (status) => {
-    if (!selectedApplication) return;
-    
+  const handleProcessApplication = async (applicationId, status) => {
     setProcessingApplication(true);
     
     try {
-      await api.put(`/applications/${selectedApplication._id}/status`, { status });
+      await api.put(`/applications/${applicationId}/status`, { status });
+      
+      let statusMessage = "";
+      switch (status) {
+        case "accepted":
+          statusMessage = "accepted";
+          break;
+        case "rejected":
+          statusMessage = "rejected";
+          break;
+        case "interviewing":
+          statusMessage = "moved to interview stage";
+          break;
+        case "interviewed":
+          statusMessage = "interview completed";
+          break;
+        case "hired":
+          statusMessage = "hired";
+          break;
+        default:
+          statusMessage = "processed";
+      }
       
       toast({
         title: "Application Processed",
-        description: `The application has been ${status === "accepted" ? "accepted" : "rejected"}`,
+        description: `The application has been ${statusMessage}`,
       });
       
-      setShowApplicationDetailsDialog(false);
-      setSelectedApplication(null);
+      if (selectedApplication) {
+        setShowApplicationDetailsDialog(false);
+        setSelectedApplication(null);
+      }
       
       // Refresh applications
       fetchApplications();
     } catch (error) {
       console.error("Error processing application:", error);
+      
+      // Handle specific validation errors
+      let errorMessage = error.response?.data?.message || "Failed to process application";
+      
+      if (error.response?.status === 400) {
+        // Show more user-friendly messages for validation errors
+        if (errorMessage.includes("Cannot mark as interviewed")) {
+          errorMessage = "Please complete all scheduled interviews before marking as interviewed. Go to 'Schedule Interviews' to manage interviews.";
+        } else if (errorMessage.includes("Cannot hire applicant")) {
+          errorMessage = "Please ensure the applicant has passed at least one interview before hiring.";
+        }
+      }
+      
       toast({
         title: "Processing Failed",
-        description: error.response?.data?.message || "Failed to process application",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -346,9 +380,19 @@ export const JobDetails = () => {
       }
     } catch (error) {
       console.error("Error updating interview:", error);
+      
+      // Handle specific validation errors
+      let errorMessage = error.response?.data?.message || "Failed to update interview";
+      
+      if (error.response?.status === 400) {
+        if (errorMessage.includes("Cannot complete interview")) {
+          errorMessage = "Please ensure the interview is properly scheduled with date and interviewer, and the interview date has passed before marking as pass/fail.";
+        }
+      }
+      
       toast({
         title: "Interview Update Failed",
-        description: error.response?.data?.message || "Failed to update interview",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -400,6 +444,17 @@ export const JobDetails = () => {
   const canHireApplicant = (applicationId) => {
     const applicationInterviews = interviews[applicationId] || [];
     return applicationInterviews.some(interview => interview.result === 'pass');
+  };
+
+  // Check if interviews are properly scheduled and completed
+  const canCompleteInterviewProcess = (applicationId) => {
+    const applicationInterviews = interviews[applicationId] || [];
+    if (applicationInterviews.length === 0) return false;
+    
+    // Check if at least one interview has been completed (pass or fail)
+    return applicationInterviews.some(interview => 
+      interview.result === 'pass' || interview.result === 'fail'
+    );
   };
 
   // Get interview status for an application
@@ -664,7 +719,7 @@ export const JobDetails = () => {
                               variant="outline" 
                               size="sm"
                               className="flex-1"
-                              onClick={() => handleProcessApplication("rejected")}
+                              onClick={() => handleProcessApplication(application._id, "rejected")}
                               disabled={processingApplication}
                             >
                               <XCircle className="h-4 w-4 mr-1" />
@@ -673,7 +728,7 @@ export const JobDetails = () => {
                             <Button 
                               size="sm"
                               className="flex-1"
-                              onClick={() => handleProcessApplication("interviewing")}
+                              onClick={() => handleProcessApplication(application._id, "interviewing")}
                               disabled={processingApplication}
                             >
                               <Clock className="h-4 w-4 mr-1" />
@@ -686,11 +741,12 @@ export const JobDetails = () => {
                           <Button 
                             size="sm"
                             className="flex-1"
-                            onClick={() => handleProcessApplication("interviewed")}
-                            disabled={processingApplication}
+                            onClick={() => handleProcessApplication(application._id, "interviewed")}
+                            disabled={processingApplication || !canCompleteInterviewProcess(application._id)}
+                            title={!canCompleteInterviewProcess(application._id) ? "Schedule and complete interviews first" : ""}
                           >
                             <CheckCircle2 className="h-4 w-4 mr-1" />
-                            Complete Interview
+                            Complete Interview Process
                           </Button>
                         )}
                         
@@ -873,7 +929,11 @@ export const JobDetails = () => {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground">No interviews scheduled yet</p>
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                      <p className="text-sm text-yellow-800">
+                        <strong>No interviews scheduled yet.</strong> You must schedule and complete interviews before marking the application as interviewed.
+                      </p>
+                    </div>
                   )}
                   
                   {/* Add Interview Button */}
@@ -885,6 +945,16 @@ export const JobDetails = () => {
                     <Plus className="h-4 w-4 mr-2" />
                     Schedule Interview
                   </Button>
+                  
+                  {/* Status indicator */}
+                  {interviews[selectedApplication._id] && interviews[selectedApplication._id].length > 0 && (
+                    <div className="text-xs text-muted-foreground">
+                      {canCompleteInterviewProcess(selectedApplication._id) 
+                        ? "✅ Interviews completed - ready to mark as interviewed"
+                        : "⏳ Interviews scheduled but not completed yet"
+                      }
+                    </div>
+                  )}
                 </div>
               </div>
               
@@ -894,7 +964,7 @@ export const JobDetails = () => {
                     variant="outline" 
                     className="w-full"
                     disabled={processingApplication}
-                    onClick={() => handleProcessApplication("rejected")}
+                    onClick={() => handleProcessApplication(selectedApplication._id, "rejected")}
                   >
                     {processingApplication ? (
                       <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></div>
@@ -906,7 +976,7 @@ export const JobDetails = () => {
                   <Button 
                     className="w-full"
                     disabled={processingApplication}
-                    onClick={() => handleProcessApplication("interviewing")}
+                    onClick={() => handleProcessApplication(selectedApplication._id, "interviewing")}
                   >
                     {processingApplication ? (
                       <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></div>
@@ -924,7 +994,7 @@ export const JobDetails = () => {
                     variant="outline" 
                     className="w-full"
                     disabled={processingApplication}
-                    onClick={() => handleProcessApplication("rejected")}
+                    onClick={() => handleProcessApplication(selectedApplication._id, "rejected")}
                   >
                     {processingApplication ? (
                       <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></div>
@@ -935,8 +1005,9 @@ export const JobDetails = () => {
                   </Button>
                   <Button 
                     className="w-full"
-                    disabled={processingApplication}
-                    onClick={() => handleProcessApplication("interviewed")}
+                    disabled={processingApplication || !canCompleteInterviewProcess(selectedApplication._id)}
+                    onClick={() => handleProcessApplication(selectedApplication._id, "interviewed")}
+                    title={!canCompleteInterviewProcess(selectedApplication._id) ? "Schedule and complete interviews first" : ""}
                   >
                     {processingApplication ? (
                       <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></div>
