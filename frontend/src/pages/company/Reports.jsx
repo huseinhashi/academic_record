@@ -1,15 +1,9 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Popover,
   PopoverContent,
@@ -25,8 +19,9 @@ import autoTable from 'jspdf-autotable';
 
 export const CompanyReports = () => {
   const { user } = useAuth();
+  const { reportType = "jobs" } = useParams();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [reportType, setReportType] = useState("jobs");
   const [dateRange, setDateRange] = useState({
     from: new Date(new Date().setMonth(new Date().getMonth() - 1)),
     to: new Date()
@@ -40,6 +35,8 @@ export const CompanyReports = () => {
     { value: "interviews", label: "Interviews Report", icon: CalendarDays },
     { value: "hiring", label: "Hiring Analytics Report", icon: BarChart3 }
   ];
+
+  const currentReportType = reportTypes.find(r => r.value === reportType) || reportTypes[0];
 
   useEffect(() => {
     fetchReportData();
@@ -121,8 +118,7 @@ export const CompanyReports = () => {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
-    const reportTypeLabel = reportTypes.find(r => r.value === reportType)?.label || "Company Report";
-    doc.text(reportTypeLabel.toUpperCase(), pageWidth / 2, 18, { align: 'center' });
+    doc.text(currentReportType.label.toUpperCase(), pageWidth / 2, 18, { align: 'center' });
     
     // Subtitle
     doc.setFontSize(12);
@@ -145,7 +141,7 @@ export const CompanyReports = () => {
     doc.text(`Email: ${user.email || 'N/A'}`, 20, 80);
     
     const rightColumnX = pageWidth / 2 + 10;
-    doc.text(`Report Type: ${reportTypeLabel}`, rightColumnX, 72);
+    doc.text(`Report Type: ${currentReportType.label}`, rightColumnX, 72);
     doc.text(`Period: ${format(dateRange.from, 'MMM dd, yyyy')} - ${format(dateRange.to, 'MMM dd, yyyy')}`, rightColumnX, 80);
     
     // Summary statistics
@@ -264,7 +260,7 @@ export const CompanyReports = () => {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Company Reports</h1>
         <p className="text-muted-foreground">
-          Generate and export company-specific reports and analytics
+          Generate and export company-specific reports and analytics - {currentReportType.label}
         </p>
       </div>
 
@@ -323,31 +319,34 @@ export const CompanyReports = () => {
         </Card>
       </div>
 
+      {/* Report Type Navigation */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Report Type</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {reportTypes.map((type) => (
+              <Button
+                key={type.value}
+                variant={reportType === type.value ? "default" : "outline"}
+                onClick={() => navigate(`/company/reports/${type.value}`)}
+                className="flex items-center gap-2"
+              >
+                <type.icon className="h-4 w-4" />
+                {type.label}
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Report Configuration</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Report Type</label>
-              <Select value={reportType} onValueChange={setReportType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select report type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {reportTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      <div className="flex items-center gap-2">
-                        <type.icon className="h-4 w-4" />
-                        {type.label}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium">Date Range</label>
               <div className="flex gap-2">
@@ -428,7 +427,7 @@ export const CompanyReports = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Report Preview</CardTitle>
+          <CardTitle>Report Preview - {currentReportType.label}</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (

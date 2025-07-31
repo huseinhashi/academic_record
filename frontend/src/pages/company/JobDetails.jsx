@@ -696,29 +696,29 @@ export const JobDetails = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredApplications.map((application) => (
+              {filteredApplications.map((application) => (
                       <TableRow key={application._id}>
                         <TableCell>
-                          <div>
+                      <div>
                             <div className="font-medium">{application.studentId?.name}</div>
                             <div className="text-sm text-muted-foreground">{application.studentId?.email}</div>
-                          </div>
+                      </div>
                         </TableCell>
                         <TableCell>
                           <div className="text-sm">
                             {formatDate(application.createdAt)}
-                          </div>
+                    </div>
                         </TableCell>
                         <TableCell>
                           {getApplicationStatusBadge(application.status)}
                         </TableCell>
                         <TableCell>
-                          <div className="text-sm">
+                      <div className="text-sm">
                             {application.academicRecords?.length || 0} verified
-                          </div>
+                      </div>
                         </TableCell>
                         <TableCell>
-                          <div className="text-sm">
+                      <div className="text-sm">
                             {interviews[application._id] ? (
                               <span>
                                 {interviews[application._id].length} scheduled
@@ -731,14 +731,14 @@ export const JobDetails = () => {
                             ) : (
                               <span className="text-muted-foreground">None</span>
                             )}
-                          </div>
+                      </div>
                         </TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="sm">
                                 <MoreHorizontal className="h-4 w-4" />
-                              </Button>
+                      </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={() => handleViewApplication(application)}>
@@ -747,35 +747,35 @@ export const JobDetails = () => {
                               </DropdownMenuItem>
                               
                               {/* Action buttons based on status */}
-                              {application.status === "pending" && (
-                                <>
+                        {application.status === "pending" && (
+                          <>
                                   <DropdownMenuItem 
                                     onClick={() => handleProcessApplication(application._id, "interviewing")}
-                                    disabled={processingApplication}
-                                  >
+                              disabled={processingApplication}
+                            >
                                     <Clock className="h-4 w-4 mr-2" />
                                     Start Interview Process
                                   </DropdownMenuItem>
                                   <DropdownMenuItem 
                                     onClick={() => handleProcessApplication(application._id, "rejected")}
-                                    disabled={processingApplication}
+                              disabled={processingApplication}
                                     className="text-red-600"
                                   >
                                     <XCircle className="h-4 w-4 mr-2" />
                                     Reject Application
                                   </DropdownMenuItem>
-                                </>
-                              )}
-                              
-                              {application.status === "interviewing" && (
+                          </>
+                        )}
+                        
+                        {application.status === "interviewing" && (
                                 <>
                                   <DropdownMenuItem 
-                                    onClick={() => handleProcessApplication(application._id, "interviewed")}
-                                    disabled={processingApplication || !canCompleteInterviewProcess(application._id)}
-                                    title={!canCompleteInterviewProcess(application._id) ? "Schedule and complete interviews first" : ""}
-                                  >
+                            onClick={() => handleProcessApplication(application._id, "interviewed")}
+                            disabled={processingApplication || !canCompleteInterviewProcess(application._id)}
+                            title={!canCompleteInterviewProcess(application._id) ? "Schedule and complete interviews first" : ""}
+                          >
                                     <CheckCircle2 className="h-4 w-4 mr-2" />
-                                    Complete Interview Process
+                            Complete Interview Process
                                   </DropdownMenuItem>
                                   <DropdownMenuItem 
                                     onClick={() => handleProcessApplication(application._id, "rejected")}
@@ -792,7 +792,7 @@ export const JobDetails = () => {
                                 <>
                                   {canHireApplicant(application._id) && (
                                     <DropdownMenuItem 
-                                      onClick={() => handleHireApplicant(application._id)}
+                            onClick={() => handleHireApplicant(application._id)}
                                       className="text-green-600"
                                     >
                                       <CheckCircle2 className="h-4 w-4 mr-2" />

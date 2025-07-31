@@ -183,6 +183,17 @@ function App() {
             }
           />
           
+          <Route
+            path="/admin/reports/:reportType"
+            element={
+              <ProtectedRoute requiredType="Admin">
+                <DashboardLayout>
+                  <AdminReports />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
           {/* Student Routes */}
           <Route
             path="/student/dashboard"
@@ -250,6 +261,17 @@ function App() {
             }
           />
           
+          <Route
+            path="/student/reports/:reportType"
+            element={
+              <ProtectedRoute requiredType="Student">
+                <DashboardLayout>
+                  <StudentReports />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
           {/* Institution Routes */}
           <Route
             path="/institution/dashboard"
@@ -297,6 +319,17 @@ function App() {
           
           <Route
             path="/institution/reports"
+            element={
+              <ProtectedRoute requiredType="Institution" requireVerification>
+                <DashboardLayout>
+                  <InstitutionReports />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/institution/reports/:reportType"
             element={
               <ProtectedRoute requiredType="Institution" requireVerification>
                 <DashboardLayout>
@@ -404,6 +437,17 @@ function App() {
           
           <Route
             path="/company/reports"
+            element={
+              <ProtectedRoute requiredType="Company" requireVerification>
+                <DashboardLayout>
+                  <CompanyReports />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/company/reports/:reportType"
             element={
               <ProtectedRoute requiredType="Company" requireVerification>
                 <DashboardLayout>

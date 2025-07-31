@@ -27,6 +27,7 @@ import {
   Trash2,
   CheckCheck,
   AlertCircle,
+  CheckCircle,
   CheckCircle2,
   Eye,
   EyeOff,
@@ -215,6 +216,38 @@ export const DashboardLayout = ({ children }) => {
           icon: BarChart3,
           href: `${basePath}/reports`,
           description: "View and export system reports",
+          subItems: [
+            {
+              title: "User Registration",
+              icon: Users,
+              href: `${basePath}/reports/users`,
+              description: "User registration and activity reports",
+            },
+            {
+              title: "Academic Records",
+              icon: FileText,
+              href: `${basePath}/reports/records`,
+              description: "Academic records and verification reports",
+            },
+            {
+              title: "Job Applications",
+              icon: ClipboardList,
+              href: `${basePath}/reports/applications`,
+              description: "Job application and hiring reports",
+            },
+            {
+              title: "Job Postings",
+              icon: Briefcase,
+              href: `${basePath}/reports/jobs`,
+              description: "Job posting and recruitment reports",
+            },
+            {
+              title: "Verification Status",
+              icon: CheckCircle,
+              href: `${basePath}/reports/verifications`,
+              description: "Account and record verification reports",
+            },
+          ],
         },
         {
           title: "Profile",
@@ -256,6 +289,32 @@ export const DashboardLayout = ({ children }) => {
           icon: BarChart3,
           href: `${basePath}/reports`,
           description: "Generate and export reports",
+          subItems: [
+            {
+              title: "Academic Records",
+              icon: FileText,
+              href: `${basePath}/reports/records`,
+              description: "Academic records and verification reports",
+            },
+            {
+              title: "Job Applications",
+              icon: Briefcase,
+              href: `${basePath}/reports/applications`,
+              description: "Job application and hiring reports",
+            },
+            {
+              title: "Interview History",
+              icon: Calendar,
+              href: `${basePath}/reports/interviews`,
+              description: "Interview history and feedback reports",
+            },
+            {
+              title: "Academic Progress",
+              icon: GraduationCap,
+              href: `${basePath}/reports/progress`,
+              description: "Academic progress and achievement reports",
+            },
+          ],
         },
         {
           title: "Profile",
@@ -305,6 +364,32 @@ export const DashboardLayout = ({ children }) => {
           icon: BarChart3,
           href: `${basePath}/reports`,
           description: "Generate and export reports",
+          subItems: [
+            {
+              title: "Student Registration",
+              icon: Users,
+              href: `${basePath}/reports/students`,
+              description: "Student registration and activity reports",
+            },
+            {
+              title: "Academic Records",
+              icon: FileText,
+              href: `${basePath}/reports/records`,
+              description: "Academic records and verification reports",
+            },
+            {
+              title: "Verification Status",
+              icon: CheckCircle,
+              href: `${basePath}/reports/verifications`,
+              description: "Record verification status reports",
+            },
+            {
+              title: "Graduation Analytics",
+              icon: GraduationCap,
+              href: `${basePath}/reports/graduations`,
+              description: "Graduation and completion reports",
+            },
+          ],
         },
         {
           title: "Profile",
@@ -366,6 +451,32 @@ export const DashboardLayout = ({ children }) => {
           icon: BarChart3,
           href: `${basePath}/reports`,
           description: "Generate and export reports",
+          subItems: [
+            {
+              title: "Job Postings",
+              icon: Briefcase,
+              href: `${basePath}/reports/jobs`,
+              description: "Job posting and recruitment reports",
+            },
+            {
+              title: "Job Applications",
+              icon: Users,
+              href: `${basePath}/reports/applications`,
+              description: "Job application and hiring reports",
+            },
+            {
+              title: "Interviews",
+              icon: Calendar,
+              href: `${basePath}/reports/interviews`,
+              description: "Interview scheduling and feedback reports",
+            },
+            {
+              title: "Hiring Analytics",
+              icon: BarChart3,
+              href: `${basePath}/reports/hiring`,
+              description: "Hiring success and analytics reports",
+            },
+          ],
         },
         {
           title: "Profile",

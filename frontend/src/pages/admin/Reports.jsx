@@ -1,22 +1,16 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Download, FileDown, FileText } from "lucide-react";
+import { Calendar as CalendarIcon, Download, FileDown, FileText, Users, FileText as FileTextIcon, ClipboardList, Briefcase, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import api from "@/lib/axios";
 import * as XLSX from 'xlsx';
@@ -25,8 +19,9 @@ import autoTable from 'jspdf-autotable';
 
 export const AdminReports = () => {
   const { user } = useAuth();
+  const { reportType = "users" } = useParams();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [reportType, setReportType] = useState("users");
   const [dateRange, setDateRange] = useState({
     from: new Date(new Date().setMonth(new Date().getMonth() - 1)),
     to: new Date()
@@ -34,12 +29,14 @@ export const AdminReports = () => {
   const [reportData, setReportData] = useState([]);
 
   const reportTypes = [
-    { value: "users", label: "User Registration Report" },
-    { value: "records", label: "Academic Records Report" },
-    { value: "applications", label: "Job Applications Report" },
-    { value: "jobs", label: "Job Postings Report" },
-    { value: "verifications", label: "Verification Status Report" }
+    { value: "users", label: "User Registration Report", icon: Users },
+    { value: "records", label: "Academic Records Report", icon: FileTextIcon },
+    { value: "applications", label: "Job Applications Report", icon: ClipboardList },
+    { value: "jobs", label: "Job Postings Report", icon: Briefcase },
+    { value: "verifications", label: "Verification Status Report", icon: CheckCircle }
   ];
+
+  const currentReportType = reportTypes.find(r => r.value === reportType) || reportTypes[0];
 
   useEffect(() => {
     fetchReportData();
@@ -100,8 +97,7 @@ export const AdminReports = () => {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
-    const reportTypeLabel = reportTypes.find(r => r.value === reportType)?.label || "System Report";
-    doc.text(reportTypeLabel.toUpperCase(), pageWidth / 2, 18, { align: 'center' });
+    doc.text(currentReportType.label.toUpperCase(), pageWidth / 2, 18, { align: 'center' });
     
     // Subtitle
     doc.setFontSize(12);
@@ -120,7 +116,7 @@ export const AdminReports = () => {
     
     doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Report Type: ${reportTypeLabel}`, 20, 72);
+    doc.text(`Report Type: ${currentReportType.label}`, 20, 72);
     doc.text(`Period: ${format(dateRange.from, 'MMM dd, yyyy')} - ${format(dateRange.to, 'MMM dd, yyyy')}`, 20, 80);
     
     const rightColumnX = pageWidth / 2 + 10;
@@ -158,9 +154,9 @@ export const AdminReports = () => {
       return rowData;
     });
     
-         // Generate table with enhanced styling
-     try {
-       autoTable(doc, {
+    // Generate table with enhanced styling
+    try {
+      autoTable(doc, {
         startY: 130,
         head: [['#', ...tableHeaders]],
         body: tableData,
@@ -207,7 +203,6 @@ export const AdminReports = () => {
       });
     } catch (error) {
       console.error("Error generating PDF:", error);
-      // Show error toast if you have toast functionality
       return;
     }
     
@@ -242,34 +237,40 @@ export const AdminReports = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Reports</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Admin Reports</h1>
         <p className="text-muted-foreground">
-          Generate and export system reports
+          Generate and export system reports - {currentReportType.label}
         </p>
       </div>
+
+      {/* Report Type Navigation */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Report Type</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {reportTypes.map((type) => (
+              <Button
+                key={type.value}
+                variant={reportType === type.value ? "default" : "outline"}
+                onClick={() => navigate(`/admin/reports/${type.value}`)}
+                className="flex items-center gap-2"
+              >
+                <type.icon className="h-4 w-4" />
+                {type.label}
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
           <CardTitle>Report Configuration</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Report Type</label>
-              <Select value={reportType} onValueChange={setReportType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select report type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {reportTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium">Date Range</label>
               <div className="flex gap-2">
@@ -350,7 +351,7 @@ export const AdminReports = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Report Preview</CardTitle>
+          <CardTitle>Report Preview - {currentReportType.label}</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
