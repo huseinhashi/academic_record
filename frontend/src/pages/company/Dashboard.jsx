@@ -1,11 +1,62 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, GraduationCap, CheckCircle, School, Briefcase, Search, Building2, Users } from "lucide-react";
+import { FileText, GraduationCap, CheckCircle, School, Briefcase, Search, Building2, Users, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import api from "@/lib/axios";
 import { useToast } from "@/hooks/use-toast";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Area,
+  AreaChart
+} from "recharts";
+
+// Custom tooltip component for better styling
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 border rounded-lg shadow-lg">
+        <p className="font-medium text-sm mb-1">{label}</p>
+        {payload.map((entry, index) => (
+          <p key={index} className="text-sm" style={{ color: entry.color }}>
+            {entry.name}: {entry.value}
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
+// Custom legend component
+const CustomLegend = ({ payload }) => {
+  return (
+    <div className="flex justify-center gap-4 mt-4">
+      {payload.map((entry, index) => (
+        <div key={index} className="flex items-center gap-2">
+          <div
+            className="w-3 h-3 rounded-full"
+            style={{ backgroundColor: entry.color }}
+          />
+          <span className="text-sm">{entry.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 export const CompanyDashboard = () => {
   const { user } = useAuth();
@@ -17,10 +68,23 @@ export const CompanyDashboard = () => {
     verifiedCandidates: 0,
     pendingApplications: 0
   });
+  const [jobStats, setJobStats] = useState([]);
+  const [applicationStats, setApplicationStats] = useState([]);
+  const [jobTrends, setJobTrends] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Add verification check
   const isVerified = user?.isVerifiedByAdmin;
+
+  // Custom colors for different charts
+  const CHART_COLORS = {
+    primary: "#8884d8",
+    success: "#82ca9d",
+    warning: "#ffc658",
+    danger: "#ff8042",
+    info: "#0088FE",
+    secondary: "#00C49F"
+  };
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -55,6 +119,12 @@ export const CompanyDashboard = () => {
           verifiedCandidates,
           pendingApplications
         });
+
+        // Process data for charts
+        processJobStats(jobs);
+        processApplicationStats(applications);
+        processJobTrends(jobs);
+
       } catch (error) {
         console.error("Error fetching dashboard stats:", error);
         toast({
@@ -69,6 +139,49 @@ export const CompanyDashboard = () => {
 
     fetchStats();
   }, [toast]);
+
+  const processJobStats = (jobs) => {
+    // Group jobs by status
+    const stats = jobs.reduce((acc, job) => {
+      if (!acc[job.status]) acc[job.status] = 0;
+      acc[job.status]++;
+      return acc;
+    }, {});
+
+    setJobStats(Object.entries(stats).map(([status, count]) => ({
+      status: status.charAt(0).toUpperCase() + status.slice(1),
+      count
+    })));
+  };
+
+  const processApplicationStats = (applications) => {
+    // Group applications by status
+    const stats = applications.reduce((acc, app) => {
+      if (!acc[app.status]) acc[app.status] = 0;
+      acc[app.status]++;
+      return acc;
+    }, {});
+
+    setApplicationStats(Object.entries(stats).map(([status, count]) => ({
+      status: status.charAt(0).toUpperCase() + status.slice(1),
+      count
+    })));
+  };
+
+  const processJobTrends = (jobs) => {
+    // Group jobs by creation date
+    const jobData = jobs.reduce((acc, job) => {
+      const date = new Date(job.createdAt).toLocaleDateString();
+      if (!acc[date]) {
+        acc[date] = { date, open: 0, closed: 0 };
+      }
+      if (job.status === "open") acc[date].open++;
+      if (job.status === "closed") acc[date].closed++;
+      return acc;
+    }, {});
+
+    setJobTrends(Object.values(jobData).sort((a, b) => new Date(a.date) - new Date(b.date)));
+  };
 
   if (loading) {
     return (
@@ -166,6 +279,139 @@ export const CompanyDashboard = () => {
             <p className="text-xs text-muted-foreground">
                               Verified applicants
             </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Job Trends Chart */}
+        <Card className="col-span-2">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Job Posting Trends</CardTitle>
+              <TrendingUp className="h-5 w-5 text-muted-foreground" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[400px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={jobTrends}>
+                  <defs>
+                    <linearGradient id="colorOpen" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={CHART_COLORS.success} stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor={CHART_COLORS.success} stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorClosed" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={CHART_COLORS.warning} stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor={CHART_COLORS.warning} stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fill: '#666' }}
+                    tickLine={{ stroke: '#666' }}
+                  />
+                  <YAxis 
+                    tick={{ fill: '#666' }}
+                    tickLine={{ stroke: '#666' }}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend content={<CustomLegend />} />
+                  <Area 
+                    type="monotone" 
+                    dataKey="open" 
+                    stroke={CHART_COLORS.success} 
+                    fillOpacity={1} 
+                    fill="url(#colorOpen)" 
+                    name="Open Jobs"
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="closed" 
+                    stroke={CHART_COLORS.warning} 
+                    fillOpacity={1} 
+                    fill="url(#colorClosed)" 
+                    name="Closed Jobs"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Job Status Chart */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Job Status Distribution</CardTitle>
+              <Briefcase className="h-5 w-5 text-muted-foreground" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={jobStats}
+                    dataKey="count"
+                    nameKey="status"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    innerRadius={60}
+                    paddingAngle={5}
+                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                  >
+                    {jobStats.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={Object.values(CHART_COLORS)[index % Object.keys(CHART_COLORS).length]} 
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend content={<CustomLegend />} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Application Status Chart */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Application Status Distribution</CardTitle>
+              <FileText className="h-5 w-5 text-muted-foreground" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={applicationStats}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis 
+                    dataKey="status" 
+                    tick={{ fill: '#666' }}
+                    tickLine={{ stroke: '#666' }}
+                  />
+                  <YAxis 
+                    tick={{ fill: '#666' }}
+                    tickLine={{ stroke: '#666' }}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend content={<CustomLegend />} />
+                  <Bar 
+                    dataKey="count" 
+                    fill={CHART_COLORS.primary}
+                    radius={[4, 4, 0, 0]}
+                    name="Applications"
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       </div>

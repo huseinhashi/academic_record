@@ -33,7 +33,8 @@ import {
   CheckCircle2,
   XCircle,
   Eye,
-  FileText
+  FileText,
+  MoreHorizontal
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,6 +48,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import api from "@/lib/axios";
 import { SkillsSelect } from "@/components/SkillsSelect";
 
@@ -380,6 +395,15 @@ export const CompanyJobs = () => {
     job.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     job.location?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Filter applications based on search query
+  const filteredApplications = applications.filter(application => 
+    application.studentId?.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    application.studentId?.lastName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    application.studentId?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    application.jobId?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    application.coverLetter?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
   
   // Sort jobs
   const sortedJobs = [...filteredJobs].sort((a, b) => {
@@ -551,7 +575,7 @@ export const CompanyJobs = () => {
       <Tabs defaultValue="jobs">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="jobs">Job Listings</TabsTrigger>
-          <TabsTrigger value="applications">Applications</TabsTrigger>
+          <TabsTrigger value="applications">Applicants</TabsTrigger>
         </TabsList>
         
         {/* Job Listings Tab */}
@@ -693,69 +717,96 @@ export const CompanyJobs = () => {
         
         {/* Applications Tab */}
         <TabsContent value="applications" className="space-y-4 pt-4">
+          <div className="flex items-center gap-4">
+            <div className="relative flex-grow">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search applications..."
+                className="pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+          
           {loadingApplications ? (
             <div className="flex justify-center py-8">
               <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full"></div>
             </div>
-          ) : applications.length === 0 ? (
+          ) : filteredApplications.length === 0 ? (
             <Card>
               <CardContent className="pt-6 text-center">
                 <p className="text-muted-foreground">No applications received yet</p>
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 gap-4">
-              {applications.map((application) => (
-                <Card key={application._id}>
-                  <CardHeader className="pb-3">
-                    <div className="flex justify-between">
-                      <div>
-                        <CardTitle>
-                          {application.studentId?.firstName} {application.studentId?.lastName}
-                        </CardTitle>
-                        <CardDescription className="flex items-center mt-1">
-                          <Briefcase className="h-3.5 w-3.5 mr-1" />
-                          {application.jobId?.title || "Unknown Job"}
-                        </CardDescription>
-                      </div>
-                      {getApplicationStatusBadge(application.status)}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pb-3">
-                    <div className="space-y-3">
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Calendar className="h-4 w-4 mr-1" />
-                        Applied: {formatDate(application.createdAt)}
-                      </div>
-                      
-                      <div className="text-sm mt-2">
-                        <p className="font-medium">Cover Letter:</p>
-                        <p className="text-muted-foreground mt-1">
-                          {application.coverLetter?.length > 150 
-                            ? `${application.coverLetter.substring(0, 150)}...` 
-                            : application.coverLetter}
-                        </p>
-                      </div>
-                      
-                      <div className="text-sm mt-2">
-                        <p className="font-medium">Academic Records: {application.academicRecords?.length || 0}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="pt-0">
-                    <Button 
-                      variant="outline" 
-                      className="w-full"
-                      disabled={application.status !== "pending"}
-                      onClick={() => handleViewApplication(application)}
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      View Application
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
+            <Card>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Applicant</TableHead>
+                      <TableHead>Job</TableHead>
+                      <TableHead>Applied Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Records</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredApplications.map((application) => (
+                      <TableRow key={application._id}>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">
+                              {application.studentId?.firstName} {application.studentId?.lastName}
+                            </div>
+                            <div className="text-sm text-muted-foreground">{application.studentId?.email}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            {application.jobId?.title || "Unknown Job"}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            {formatDate(application.createdAt)}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {getApplicationStatusBadge(application.status)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            {application.academicRecords?.length || 0} verified
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleViewApplication(application)}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Application Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => navigate(`/company/jobs/${application.jobId?._id}`)}>
+                                <Briefcase className="h-4 w-4 mr-2" />
+                                View Job Details
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
       </Tabs>

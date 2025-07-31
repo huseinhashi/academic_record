@@ -1,11 +1,62 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, GraduationCap, CheckCircle, School, AlertCircle } from "lucide-react";
+import { FileText, GraduationCap, CheckCircle, School, AlertCircle, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import api from "@/lib/axios";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Area,
+  AreaChart
+} from "recharts";
+
+// Custom tooltip component for better styling
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 border rounded-lg shadow-lg">
+        <p className="font-medium text-sm mb-1">{label}</p>
+        {payload.map((entry, index) => (
+          <p key={index} className="text-sm" style={{ color: entry.color }}>
+            {entry.name}: {entry.value}
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
+// Custom legend component
+const CustomLegend = ({ payload }) => {
+  return (
+    <div className="flex justify-center gap-4 mt-4">
+      {payload.map((entry, index) => (
+        <div key={index} className="flex items-center gap-2">
+          <div
+            className="w-3 h-3 rounded-full"
+            style={{ backgroundColor: entry.color }}
+          />
+          <span className="text-sm">{entry.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 export const InstitutionDashboard = () => {
   const { user } = useAuth();
@@ -18,7 +69,20 @@ export const InstitutionDashboard = () => {
     pendingRecords: 0,
     rejectedRecords: 0
   });
+  const [recordStats, setRecordStats] = useState([]);
+  const [studentStats, setStudentStats] = useState([]);
+  const [recordTrends, setRecordTrends] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Custom colors for different charts
+  const CHART_COLORS = {
+    primary: "#8884d8",
+    success: "#82ca9d",
+    warning: "#ffc658",
+    danger: "#ff8042",
+    info: "#0088FE",
+    secondary: "#00C49F"
+  };
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -55,6 +119,12 @@ export const InstitutionDashboard = () => {
             pendingRecords,
             rejectedRecords
           });
+
+          // Process data for charts
+          processRecordStats(records);
+          processStudentStats(records);
+          processRecordTrends(records);
+
         }
       } catch (error) {
         console.error("Error fetching dashboard stats:", error);
@@ -70,6 +140,65 @@ export const InstitutionDashboard = () => {
 
     fetchStats();
   }, [toast]);
+
+  const processRecordStats = (records) => {
+    // Group records by status
+    const stats = records.reduce((acc, record) => {
+      if (!acc[record.status]) acc[record.status] = 0;
+      acc[record.status]++;
+      return acc;
+    }, {});
+
+    setRecordStats(Object.entries(stats).map(([status, count]) => ({
+      status: status.charAt(0).toUpperCase() + status.slice(1),
+      count
+    })));
+  };
+
+  const processStudentStats = (records) => {
+    // Group students by verification status
+    const studentData = records.reduce((acc, record) => {
+      const studentId = record.studentId._id;
+      if (!acc[studentId]) {
+        acc[studentId] = {
+          student: record.studentId.name || "Unknown Student",
+          verified: 0,
+          pending: 0,
+          rejected: 0
+        };
+      }
+      acc[studentId][record.status]++;
+      return acc;
+    }, {});
+
+    // Convert to array and get top students by total records
+    const studentStats = Object.values(studentData)
+      .map(student => ({
+        name: student.student,
+        total: student.verified + student.pending + student.rejected,
+        verified: student.verified,
+        pending: student.pending,
+        rejected: student.rejected
+      }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5); // Top 5 students
+
+    setStudentStats(studentStats);
+  };
+
+  const processRecordTrends = (records) => {
+    // Group records by creation date
+    const recordData = records.reduce((acc, record) => {
+      const date = new Date(record.createdAt).toLocaleDateString();
+      if (!acc[date]) {
+        acc[date] = { date, verified: 0, pending: 0, rejected: 0 };
+      }
+      acc[date][record.status]++;
+      return acc;
+    }, {});
+
+    setRecordTrends(Object.values(recordData).sort((a, b) => new Date(a.date) - new Date(b.date)));
+  };
 
   if (loading) {
     return (
@@ -146,6 +275,169 @@ export const InstitutionDashboard = () => {
             <p className="text-xs text-muted-foreground">
                               Verified records
             </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Record Trends Chart */}
+        <Card className="col-span-2">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Record Verification Trends</CardTitle>
+              <TrendingUp className="h-5 w-5 text-muted-foreground" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[400px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={recordTrends}>
+                  <defs>
+                    <linearGradient id="colorVerified" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={CHART_COLORS.success} stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor={CHART_COLORS.success} stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorPending" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={CHART_COLORS.warning} stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor={CHART_COLORS.warning} stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorRejected" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={CHART_COLORS.danger} stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor={CHART_COLORS.danger} stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fill: '#666' }}
+                    tickLine={{ stroke: '#666' }}
+                  />
+                  <YAxis 
+                    tick={{ fill: '#666' }}
+                    tickLine={{ stroke: '#666' }}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend content={<CustomLegend />} />
+                  <Area 
+                    type="monotone" 
+                    dataKey="verified" 
+                    stroke={CHART_COLORS.success} 
+                    fillOpacity={1} 
+                    fill="url(#colorVerified)" 
+                    name="Verified Records"
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="pending" 
+                    stroke={CHART_COLORS.warning} 
+                    fillOpacity={1} 
+                    fill="url(#colorPending)" 
+                    name="Pending Records"
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="rejected" 
+                    stroke={CHART_COLORS.danger} 
+                    fillOpacity={1} 
+                    fill="url(#colorRejected)" 
+                    name="Rejected Records"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Record Status Chart */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Record Status Distribution</CardTitle>
+              <FileText className="h-5 w-5 text-muted-foreground" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={recordStats}
+                    dataKey="count"
+                    nameKey="status"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    innerRadius={60}
+                    paddingAngle={5}
+                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                  >
+                    {recordStats.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={Object.values(CHART_COLORS)[index % Object.keys(CHART_COLORS).length]} 
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend content={<CustomLegend />} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Top Students Chart */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Top Students by Records</CardTitle>
+              <GraduationCap className="h-5 w-5 text-muted-foreground" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={studentStats} layout="horizontal">
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis 
+                    type="number"
+                    tick={{ fill: '#666' }}
+                    tickLine={{ stroke: '#666' }}
+                  />
+                  <YAxis 
+                    type="category"
+                    dataKey="name"
+                    tick={{ fill: '#666' }}
+                    tickLine={{ stroke: '#666' }}
+                    width={80}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend content={<CustomLegend />} />
+                  <Bar 
+                    dataKey="verified" 
+                    fill={CHART_COLORS.success}
+                    radius={[0, 4, 4, 0]}
+                    name="Verified"
+                    stackId="a"
+                  />
+                  <Bar 
+                    dataKey="pending" 
+                    fill={CHART_COLORS.warning}
+                    radius={[0, 4, 4, 0]}
+                    name="Pending"
+                    stackId="a"
+                  />
+                  <Bar 
+                    dataKey="rejected" 
+                    fill={CHART_COLORS.danger}
+                    radius={[0, 4, 4, 0]}
+                    name="Rejected"
+                    stackId="a"
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       </div>

@@ -35,7 +35,8 @@ import {
   Award,
   Edit,
   Trash2,
-  Plus
+  Plus,
+  MoreHorizontal
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,6 +50,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import api from "@/lib/axios";
 
 export const JobDetails = () => {
@@ -559,7 +574,7 @@ export const JobDetails = () => {
       <Tabs defaultValue="details">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="details">Job Details</TabsTrigger>
-          <TabsTrigger value="applications">Applications ({applications.length})</TabsTrigger>
+          <TabsTrigger value="applications">Applicants ({applications.length})</TabsTrigger>
         </TabsList>
         
         {/* Job Details Tab */}
@@ -667,113 +682,160 @@ export const JobDetails = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 gap-4">
-              {filteredApplications.map((application) => (
-                <Card key={application._id}>
-                  <CardHeader className="pb-3">
-                    <div className="flex justify-between">
-                      <div>
-                        <CardTitle>
-                          {application.studentId?.name}
-                        </CardTitle>
-                        <CardDescription className="flex items-center mt-1">
-                          <Calendar className="h-3.5 w-3.5 mr-1" />
-                          Applied: {formatDate(application.createdAt)}
-                        </CardDescription>
-                      </div>
-                      {getApplicationStatusBadge(application.status)}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pb-3">
-                    <div className="space-y-3">
-                      <div className="text-sm">
-                        <p className="font-medium">Cover Letter:</p>
-                        <p className="text-muted-foreground mt-1">
-                          {application.coverLetter?.length > 150 
-                            ? `${application.coverLetter.substring(0, 150)}...` 
-                            : application.coverLetter}
-                        </p>
-                      </div>
-                      
-                      <div className="text-sm">
-                        <p className="font-medium">Academic Records: {application.academicRecords?.length || 0}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="pt-0">
-                    <div className="flex flex-col gap-2 w-full">
-                      <Button 
-                        variant="outline" 
-                        className="w-full"
-                        onClick={() => handleViewApplication(application)}
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        View Application
-                      </Button>
-                      
-                      {/* Interview Status and Actions */}
-                      <div className="flex gap-2">
-                        {application.status === "pending" && (
-                          <>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              className="flex-1"
-                              onClick={() => handleProcessApplication(application._id, "rejected")}
-                              disabled={processingApplication}
-                            >
-                              <XCircle className="h-4 w-4 mr-1" />
-                              Reject
-                            </Button>
-                            <Button 
-                              size="sm"
-                              className="flex-1"
-                              onClick={() => handleProcessApplication(application._id, "interviewing")}
-                              disabled={processingApplication}
-                            >
-                              <Clock className="h-4 w-4 mr-1" />
-                              Start Interview
-                            </Button>
-                          </>
-                        )}
-                        
-                        {application.status === "interviewing" && (
-                          <Button 
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => handleProcessApplication(application._id, "interviewed")}
-                            disabled={processingApplication || !canCompleteInterviewProcess(application._id)}
-                            title={!canCompleteInterviewProcess(application._id) ? "Schedule and complete interviews first" : ""}
-                          >
-                            <CheckCircle2 className="h-4 w-4 mr-1" />
-                            Complete Interview Process
-                          </Button>
-                        )}
-                        
-                        {canHireApplicant(application._id) && application.status !== "hired" && (
-                          <Button 
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => handleHireApplicant(application._id)}
-                          >
-                            <CheckCircle2 className="h-4 w-4 mr-1" />
-                            Hire
-                          </Button>
-                        )}
-                      </div>
-                      
-                      {/* Interview Status Display */}
-                      {interviews[application._id] && interviews[application._id].length > 0 && (
-                        <div className="text-xs text-muted-foreground">
-                          Interviews: {interviews[application._id].length} 
-                          ({interviews[application._id].filter(i => i.result === 'pass').length} passed)
-                        </div>
-                      )}
-                    </div>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
+            <Card>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Applicant</TableHead>
+                      <TableHead>Applied Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Records</TableHead>
+                      <TableHead>Interviews</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredApplications.map((application) => (
+                      <TableRow key={application._id}>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{application.studentId?.name}</div>
+                            <div className="text-sm text-muted-foreground">{application.studentId?.email}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            {formatDate(application.createdAt)}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {getApplicationStatusBadge(application.status)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            {application.academicRecords?.length || 0} verified
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            {interviews[application._id] ? (
+                              <span>
+                                {interviews[application._id].length} scheduled
+                                {interviews[application._id].filter(i => i.result === 'pass').length > 0 && (
+                                  <span className="text-green-600 ml-1">
+                                    ({interviews[application._id].filter(i => i.result === 'pass').length} passed)
+                                  </span>
+                                )}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">None</span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleViewApplication(application)}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Details
+                              </DropdownMenuItem>
+                              
+                              {/* Action buttons based on status */}
+                              {application.status === "pending" && (
+                                <>
+                                  <DropdownMenuItem 
+                                    onClick={() => handleProcessApplication(application._id, "interviewing")}
+                                    disabled={processingApplication}
+                                  >
+                                    <Clock className="h-4 w-4 mr-2" />
+                                    Start Interview Process
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => handleProcessApplication(application._id, "rejected")}
+                                    disabled={processingApplication}
+                                    className="text-red-600"
+                                  >
+                                    <XCircle className="h-4 w-4 mr-2" />
+                                    Reject Application
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                              
+                              {application.status === "interviewing" && (
+                                <>
+                                  <DropdownMenuItem 
+                                    onClick={() => handleProcessApplication(application._id, "interviewed")}
+                                    disabled={processingApplication || !canCompleteInterviewProcess(application._id)}
+                                    title={!canCompleteInterviewProcess(application._id) ? "Schedule and complete interviews first" : ""}
+                                  >
+                                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                                    Complete Interview Process
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => handleProcessApplication(application._id, "rejected")}
+                                    disabled={processingApplication}
+                                    className="text-red-600"
+                                  >
+                                    <XCircle className="h-4 w-4 mr-2" />
+                                    Reject Application
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                              
+                              {application.status === "interviewed" && (
+                                <>
+                                  {canHireApplicant(application._id) && (
+                                    <DropdownMenuItem 
+                                      onClick={() => handleHireApplicant(application._id)}
+                                      className="text-green-600"
+                                    >
+                                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                                      Hire Applicant
+                                    </DropdownMenuItem>
+                                  )}
+                                  <DropdownMenuItem 
+                                    onClick={() => handleProcessApplication(application._id, "rejected")}
+                                    disabled={processingApplication}
+                                    className="text-red-600"
+                                  >
+                                    <XCircle className="h-4 w-4 mr-2" />
+                                    Reject Application
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                              
+                              {application.status === "accepted" && (
+                                <DropdownMenuItem 
+                                  onClick={() => handleHireApplicant(application._id)}
+                                  className="text-green-600"
+                                >
+                                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                                  Hire Applicant
+                                </DropdownMenuItem>
+                              )}
+                              
+                              {/* Interview management */}
+                              {application.status !== "rejected" && application.status !== "hired" && (
+                                <DropdownMenuItem onClick={() => handleOpenInterviewDialog(application)}>
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  Schedule Interview
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
       </Tabs>
