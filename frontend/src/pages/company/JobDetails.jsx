@@ -79,6 +79,7 @@ export const JobDetails = () => {
   const [applications, setApplications] = useState([]);
   const [showApplicationDetailsDialog, setShowApplicationDetailsDialog] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState(null);
+  const [showAllRecordsDialog, setShowAllRecordsDialog] = useState(false);
   const [processingApplication, setProcessingApplication] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showInterviewDialog, setShowInterviewDialog] = useState(false);
@@ -276,6 +277,11 @@ export const JobDetails = () => {
   const handleViewApplication = (application) => {
     setSelectedApplication(application);
     setShowApplicationDetailsDialog(true);
+  };
+
+  const handleViewAllRecords = (application) => {
+    setSelectedApplication(application);
+    setShowAllRecordsDialog(true);
   };
   
   // Filter applications based on search query
@@ -745,6 +751,10 @@ export const JobDetails = () => {
                                 <Eye className="h-4 w-4 mr-2" />
                                 View Details
                               </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleViewAllRecords(application)}>
+                                <FileText className="h-4 w-4 mr-2" />
+                                View All Records
+                              </DropdownMenuItem>
                               
                               {/* Action buttons based on status */}
                         {application.status === "pending" && (
@@ -1094,6 +1104,55 @@ export const JobDetails = () => {
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* View All Records Dialog */}
+      <Dialog open={showAllRecordsDialog} onOpenChange={setShowAllRecordsDialog}>
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>All Records - {selectedApplication?.studentId?.name || "Applicant"}</DialogTitle>
+            <DialogDescription>
+              Verified and submitted academic records for this applicant
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3 py-2">
+            {(selectedApplication?.academicRecords || []).length === 0 ? (
+              <div className="text-sm text-muted-foreground">No records provided</div>
+            ) : (
+              selectedApplication.academicRecords.map((record) => (
+                <div key={record._id} className="flex items-center justify-between bg-muted p-3 rounded-md">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">{record.title}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {record.recordType} - {record.institutionId?.name || "Institution"}
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (record.signedUrl) {
+                        window.open(record.signedUrl, "_blank");
+                      } else if (record.fileUrl) {
+                        window.open(record.fileUrl, "_blank");
+                      } else if (record.documentUrl) {
+                        window.open(record.documentUrl, "_blank");
+                      } else {
+                        toast({
+                          title: "Error",
+                          description: "Document is not available for viewing",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                  >
+                    View
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
         </DialogContent>
       </Dialog>
       

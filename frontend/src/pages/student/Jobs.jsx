@@ -39,6 +39,13 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import api from "@/lib/axios";
 
@@ -50,9 +57,11 @@ export const StudentJobs = () => {
   const [loadingApplications, setLoadingApplications] = useState(true);
   const [loadingRecords, setLoadingRecords] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [jobs, setJobs] = useState([]);
   const [applications, setApplications] = useState([]);
   const [verifiedRecords, setVerifiedRecords] = useState([]);
+  const [jobCategories, setJobCategories] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
   const [showApplyDialog, setShowApplyDialog] = useState(false);
   const [applying, setApplying] = useState(false);
@@ -61,6 +70,18 @@ export const StudentJobs = () => {
   // Application form state
   const [coverLetter, setCoverLetter] = useState("");
   const [selectedRecords, setSelectedRecords] = useState([]);
+  
+  // Fetch job categories
+  const fetchJobCategories = async () => {
+    try {
+      const response = await api.get("/jobs/categories");
+      if (response.data.success) {
+        setJobCategories(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching job categories:", error);
+    }
+  };
   
   // Fetch all open jobs
   const fetchJobs = async () => {
@@ -131,6 +152,7 @@ export const StudentJobs = () => {
     fetchJobs();
     fetchApplications();
     fetchVerifiedRecords();
+    fetchJobCategories();
   }, []);
   
   // Handle job application
@@ -192,12 +214,18 @@ export const StudentJobs = () => {
     }
   };
   
-  // Filter jobs based on search query
-  const filteredJobs = jobs.filter(job => 
-    job.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    job.companyId?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    job.location?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter jobs based on search query and category
+  const filteredJobs = jobs.filter(job => {
+    const matchesSearch = job.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.companyId?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.location?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesCategory = !categoryFilter || 
+      job.category === categoryFilter ||
+      (job.category === "Other" && job.customCategory?.toLowerCase().includes(categoryFilter.toLowerCase()));
+    
+    return matchesSearch && matchesCategory;
+  });
   
   // Check if user already applied to a job
   const hasApplied = (jobId) => {
@@ -287,6 +315,22 @@ export const StudentJobs = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
+            <Select
+              value={categoryFilter || "ALL"}
+              onValueChange={(value) => setCategoryFilter(value === "ALL" ? "" : value)}
+            >
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filter by category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Categories</SelectItem>
+                {jobCategories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           
           {loading ? (
@@ -309,6 +353,7 @@ export const StudentJobs = () => {
                     <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
                       <th className="h-12 px-4 text-left align-middle font-medium">Title</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Company</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium">Category</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Location</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Posted</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
@@ -317,10 +362,15 @@ export const StudentJobs = () => {
                   </thead>
                   <tbody className="[&_tr:last-child]:border-0">
                     {filteredJobs.map((job) => (
-                      <tr key={job._id} className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                        <td className="p-4 align-middle font-medium">{job.title}</td>
-                        <td className="p-4 align-middle">{job.companyId?.name || "Unknown Company"}</td>
-                        <td className="p-4 align-middle">{job.location}</td>
+                                              <tr key={job._id} className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                          <td className="p-4 align-middle font-medium">{job.title}</td>
+                          <td className="p-4 align-middle">{job.companyId?.name || "Unknown Company"}</td>
+                          <td className="p-4 align-middle">
+                            <Badge variant="outline">
+                              {job.category === "Other" && job.customCategory ? job.customCategory : job.category || "Uncategorized"}
+                            </Badge>
+                          </td>
+                          <td className="p-4 align-middle">{job.location}</td>
                         <td className="p-4 align-middle">{formatDate(job.createdAt)}</td>
                         <td className="p-4 align-middle">
                           <Badge variant={job.status === "open" ? "outline" : "secondary"}>
@@ -577,6 +627,14 @@ export const StudentJobs = () => {
                 <div className="flex items-center text-sm text-muted-foreground">
                   <Award className="h-4 w-4 mr-1" />
                   Required Certificates: {selectedJob.certificateRequirements?.join(", ")}
+                </div>
+                <div className="flex items-center text-sm">
+                  <span className="font-medium mr-2">Category:</span>
+                  <Badge variant="outline">
+                    {selectedJob.category === "Other" && selectedJob.customCategory 
+                      ? selectedJob.customCategory 
+                      : selectedJob.category || "Uncategorized"}
+                  </Badge>
                 </div>
               </div>
 

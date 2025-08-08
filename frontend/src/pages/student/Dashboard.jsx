@@ -214,9 +214,9 @@ export const StudentDashboard = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Student Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Graduate Dashboard</h1>
         <p className="text-muted-foreground">
-          Welcome back, {user?.name || 'Student'}! View and manage your academic records on Hiigsi Forum
+          Welcome back, {user?.name || 'Graduate'}! View and manage your academic records on Hiigsi Forum
         </p>
       </div>
 
@@ -485,13 +485,13 @@ export const StudentDashboard = () => {
               <FileCheck className="mr-2 h-4 w-4" />
               View Academic Records
             </Button>
-            <Button className="w-full justify-start" variant="outline" onClick={() => navigate("/student/jobs")}>
+          <Button className="w-full justify-start" variant="outline" onClick={() => navigate("/student/jobs")}> 
               <Share2 className="mr-2 h-4 w-4" />
               Job Opportunities {jobsCount > 0 && `(${jobsCount})`}
             </Button>
             <Button className="w-full justify-start" variant="secondary" onClick={() => navigate("/student/profile")}>
               <GraduationCap className="mr-2 h-4 w-4" />
-              Update Student Profile
+              Update Graduate Profile
             </Button>
           </CardContent>
         </Card>

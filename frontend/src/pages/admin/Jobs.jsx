@@ -33,6 +33,13 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import api from "@/lib/axios";
 
 export const AdminJobs = () => {
@@ -41,6 +48,8 @@ export const AdminJobs = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [jobCategories, setJobCategories] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
   const [showJobDialog, setShowJobDialog] = useState(false);
   const [sortConfig, setSortConfig] = useState({
@@ -50,7 +59,19 @@ export const AdminJobs = () => {
 
   useEffect(() => {
     fetchJobs();
+    fetchJobCategories();
   }, [activeTab]);
+
+  const fetchJobCategories = async () => {
+    try {
+      const response = await api.get("/jobs/categories");
+      if (response.data.success) {
+        setJobCategories(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching job categories:", error);
+    }
+  };
 
   const fetchJobs = async () => {
     try {
@@ -112,12 +133,18 @@ export const AdminJobs = () => {
   };
 
   // Filter jobs
-  const filteredJobs = jobs.filter(job => 
-    job.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    job.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    job.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    job.companyId?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredJobs = jobs.filter(job => {
+    const matchesSearch = job.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.companyId?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesCategory = !categoryFilter || 
+      job.category === categoryFilter ||
+      (job.category === "Other" && job.customCategory?.toLowerCase().includes(categoryFilter.toLowerCase()));
+    
+    return matchesSearch && matchesCategory;
+  });
 
   // Sort jobs
   const sortedJobs = [...filteredJobs].sort((a, b) => {
@@ -163,14 +190,32 @@ export const AdminJobs = () => {
         </TabsList>
 
         <div className="mt-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search jobs by title, description, location, or company..."
-              className="pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+          <div className="flex items-center gap-4">
+            <div className="relative flex-grow">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search jobs by title, description, location, or company..."
+                className="pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <Select
+              value={categoryFilter || "ALL"}
+              onValueChange={(value) => setCategoryFilter(value === "ALL" ? "" : value)}
+            >
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filter by category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Categories</SelectItem>
+                {jobCategories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -203,6 +248,7 @@ export const AdminJobs = () => {
                         </div>
                       </th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Company</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium">Category</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Location</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Salary</th>
                       <th 
@@ -215,7 +261,7 @@ export const AdminJobs = () => {
                         </div>
                       </th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
-                      <th className="h-12 px-4 text-left align-middle font-medium">Hired Student</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium">Hired Graduate</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Documents</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Actions</th>
                     </tr>
@@ -225,6 +271,11 @@ export const AdminJobs = () => {
                       <tr key={job._id} className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
                         <td className="p-4 align-middle font-medium">{job.title}</td>
                         <td className="p-4 align-middle">{job.companyId?.name}</td>
+                        <td className="p-4 align-middle">
+                          <Badge variant="outline">
+                            {job.category === "Other" && job.customCategory ? job.customCategory : job.category || "Uncategorized"}
+                          </Badge>
+                        </td>
                         <td className="p-4 align-middle">{job.location}</td>
                         <td className="p-4 align-middle">{job.salary}</td>
                         <td className="p-4 align-middle">{formatDate(job.createdAt)}</td>
@@ -308,6 +359,14 @@ export const AdminJobs = () => {
                   <Award className="h-4 w-4 mr-1" />
                   Required Certificates: {selectedJob.certificateRequirements?.join(", ")}
                 </div>
+                <div className="flex items-center text-sm">
+                  <span className="font-medium mr-2">Category:</span>
+                  <Badge variant="outline">
+                    {selectedJob.category === "Other" && selectedJob.customCategory 
+                      ? selectedJob.customCategory 
+                      : selectedJob.category || "Uncategorized"}
+                  </Badge>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -358,7 +417,7 @@ export const AdminJobs = () => {
 
               {selectedJob.hiredApplicant && (
                 <div className="space-y-2">
-                  <h4 className="font-medium">Hired Student</h4>
+                  <h4 className="font-medium">Hired Graduate</h4>
                   <div className="flex items-center text-sm">
                     <Users className="h-4 w-4 mr-1" />
                     {selectedJob.hiredApplicant.name}

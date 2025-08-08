@@ -123,21 +123,21 @@ export const StudentReports = () => {
     // Subtitle
     doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
-    doc.text('Student Academic and Career Report', pageWidth / 2, 28, { align: 'center' });
+    doc.text('Graduate Academic and Career Report', pageWidth / 2, 28, { align: 'center' });
     
-    // Student Information Card
+    // Graduate Information Card
     doc.setFillColor(...lightGray);
     doc.roundedRect(14, 50, pageWidth - 28, 35, 3, 3, 'F');
     
-    // Student info content
+    // Graduate info content
     doc.setTextColor(...secondaryColor);
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text('STUDENT INFORMATION', 20, 62);
+    doc.text('GRADUATE INFORMATION', 20, 62);
     
     doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Student: ${user?.name || 'N/A'}`, 20, 72);
+    doc.text(`Graduate: ${user?.name || 'N/A'}`, 20, 72);
     doc.text(`Email: ${user?.email || 'N/A'}`, 20, 80);
     
     const rightColumnX = pageWidth / 2 + 10;
@@ -236,7 +236,7 @@ export const StudentReports = () => {
       doc.setTextColor(...darkGray);
       doc.setFontSize(9);
       doc.setFont('helvetica', 'italic');
-      doc.text('This report was generated automatically and contains student academic information.', 20, finalY + 32);
+      doc.text('This report was generated automatically and contains graduate academic information.', 20, finalY + 32);
       doc.text(`Generated on: ${format(new Date(), 'MMMM d, yyyy HH:mm')}`, 20, finalY + 42);
       
       // Add a small icon using text

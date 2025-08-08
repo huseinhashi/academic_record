@@ -23,6 +23,21 @@ const jobDocumentSchema = new mongoose.Schema({
   },
 });
 
+// Define predefined job categories
+const JOB_CATEGORIES = [
+  "Software Development",
+  "Data Science & Analytics",
+  "Engineering & Manufacturing",
+  "Healthcare & Medical",
+  "Finance & Banking",
+  "Marketing & Sales",
+  "Education & Training",
+  "Design & Creative",
+  "Human Resources",
+  "Operations & Management",
+  "Other"
+];
+
 const jobSchema = new mongoose.Schema(
   {
     companyId: {
@@ -49,6 +64,26 @@ const jobSchema = new mongoose.Schema(
     salary: {
       type: String,
       required: true,
+    },
+    category: {
+      type: String,
+      enum: JOB_CATEGORIES,
+      default: "Other",
+      required: true,
+    },
+    customCategory: {
+      type: String,
+      // Only required if category is "Other"
+      validate: {
+        validator: function(value) {
+          // If category is "Other", customCategory is required
+          if (this.category === "Other") {
+            return value && value.trim().length > 0;
+          }
+          return true;
+        },
+        message: "Custom category is required when category is 'Other'"
+      }
     },
     status: {
       type: String,
@@ -82,4 +117,6 @@ const jobSchema = new mongoose.Schema(
 
 const Job = mongoose.model("Job", jobSchema);
 
+// Export both the model and the categories
 export default Job;
+export { JOB_CATEGORIES };

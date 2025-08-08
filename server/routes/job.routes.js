@@ -10,6 +10,7 @@ import {
   hireApplicant,
   deleteJob,
   getAllJobsAdmin,
+  getJobCategories,
 } from "../controllers/job.controller.js";
 import { protect, authorize } from "../middlewares/auth.middleware.js";
 import { uploadMiddleware } from "../config/cloudinary.js";
@@ -20,6 +21,7 @@ const router = express.Router();
 router.use(protect);
 // Public routes
 router.get("/", getAllJobs);
+router.get("/categories", getJobCategories);
 // Company routes
 router.post("/", authorize("Company"), uploadMiddleware, createJob);
 router.get("/my-jobs", authorize("Company"), getMyJobs);

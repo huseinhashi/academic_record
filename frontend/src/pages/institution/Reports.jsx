@@ -19,7 +19,7 @@ import autoTable from 'jspdf-autotable';
 
 export const InstitutionReports = () => {
   const { user } = useAuth();
-  const { reportType = "students" } = useParams();
+  const { reportType = "graduates" } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [dateRange, setDateRange] = useState({
@@ -30,7 +30,7 @@ export const InstitutionReports = () => {
   const [summaryStats, setSummaryStats] = useState({});
 
   const reportTypes = [
-    { value: "students", label: "Student Registration Report", icon: Users },
+    { value: "graduates", label: "Graduate Registration Report", icon: Users },
     { value: "records", label: "Academic Records Report", icon: FileText },
     { value: "verifications", label: "Verification Status Report", icon: CheckCircle },
     { value: "graduations", label: "Graduation Analytics Report", icon: GraduationCap }
@@ -268,7 +268,7 @@ export const InstitutionReports = () => {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Students</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Graduates</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -313,7 +313,7 @@ export const InstitutionReports = () => {
           <CardContent>
             <div className="text-2xl font-bold">{summaryStats.graduationRate || 0}%</div>
             <p className="text-xs text-muted-foreground">
-              {summaryStats.graduatedStudents || 0} students graduated
+              {summaryStats.graduatedStudents || 0} graduates
             </p>
           </CardContent>
         </Card>

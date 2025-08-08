@@ -1,10 +1,23 @@
-import Job from "../models/job.model.js";
+import Job, { JOB_CATEGORIES } from "../models/job.model.js";
 import Application from "../models/application.model.js";
+import AcademicRecord from "../models/academicRecord.model.js";
 import Company from "../models/company.model.js";
 import { cloudinaryUtils } from "../config/cloudinary.js";
 import Student from "../models/student.model.js";
 
 // Add this helper function at the top of the file, after the imports
+const addSignedUrlToRecord = async (record) => {
+  if (!record) return record;
+  const recordObj = record.toObject ? record.toObject() : record;
+  if (recordObj.filePublicId) {
+    recordObj.signedUrl = await cloudinaryUtils.generateSignedUrl(
+      recordObj.filePublicId,
+      3600
+    );
+  }
+  return recordObj;
+};
+
 const addSignedUrlsToJobs = async (jobs) => {
   if (!jobs) return jobs;
 
@@ -56,6 +69,8 @@ export const createJob = async (req, res, next) => {
       location,
       salary,
       certificateRequirements,
+      category,
+      customCategory,
     } = req.body;
 
     // Get company ID from authenticated user
@@ -110,6 +125,23 @@ export const createJob = async (req, res, next) => {
       });
     }
 
+    // Validate category
+    const jobCategory = category || "Other";
+    if (!JOB_CATEGORIES.includes(jobCategory)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid category. Must be one of: ${JOB_CATEGORIES.join(", ")}`,
+      });
+    }
+
+    // Validate custom category if needed
+    if (jobCategory === "Other" && (!customCategory || !customCategory.trim())) {
+      return res.status(400).json({
+        success: false,
+        message: "Custom category is required when category is 'Other'",
+      });
+    }
+
     // Process uploaded files
     const documents = req.files.map((file) => ({
       documentUrl: file.path,
@@ -127,6 +159,8 @@ export const createJob = async (req, res, next) => {
       requirements: requirementsArray,
       location,
       salary,
+      category: jobCategory,
+      customCategory: jobCategory === "Other" ? customCategory?.trim() : undefined,
       certificateRequirements: certificateRequirementsArray,
       documents,
     });
@@ -152,8 +186,8 @@ export const createJob = async (req, res, next) => {
 // Get all jobs (public)
 export const getAllJobs = async (req, res, next) => {
   try {
-    // Filter by status if provided
-    const { status } = req.query;
+    // Filter by status and category if provided
+    const { status, category } = req.query;
     const query = {};
 
     if (status && ["open", "closed", "filled"].includes(status)) {
@@ -161,6 +195,19 @@ export const getAllJobs = async (req, res, next) => {
     } else {
       // By default, only show open jobs
       query.status = "open";
+    }
+
+    // Filter by category if provided
+    if (category) {
+      if (JOB_CATEGORIES.includes(category)) {
+        query.category = category;
+      } else {
+        // If invalid category provided, return empty results with error message
+        return res.status(400).json({
+          success: false,
+          message: `Invalid category. Must be one of: ${JOB_CATEGORIES.join(", ")}`,
+        });
+      }
     }
 
     // If the request is from a student, filter jobs based on their skills
@@ -195,12 +242,24 @@ export const getMyJobs = async (req, res, next) => {
   try {
     const companyId = req.user._id;
 
-    // Filter by status if provided
-    const { status } = req.query;
+    // Filter by status and category if provided
+    const { status, category } = req.query;
     const query = { companyId };
 
     if (status && ["open", "closed", "filled"].includes(status)) {
       query.status = status;
+    }
+
+    // Filter by category if provided
+    if (category) {
+      if (JOB_CATEGORIES.includes(category)) {
+        query.category = category;
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid category. Must be one of: ${JOB_CATEGORIES.join(", ")}`,
+        });
+      }
     }
 
     const jobs = await Job.find(query).sort({ createdAt: -1 });
@@ -323,6 +382,40 @@ export const updateJob = async (req, res, next) => {
         : JSON.parse(updates.requirements);
     }
 
+    // Handle category updates
+    if (updates.category !== undefined) {
+      if (!JOB_CATEGORIES.includes(updates.category)) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid category. Must be one of: ${JOB_CATEGORIES.join(", ")}`,
+        });
+      }
+
+      // If changing to "Other", ensure customCategory is provided
+      if (updates.category === "Other" && (!updates.customCategory || !updates.customCategory.trim())) {
+        return res.status(400).json({
+          success: false,
+          message: "Custom category is required when category is 'Other'",
+        });
+      }
+
+      // If changing from "Other" to predefined category, clear customCategory
+      if (updates.category !== "Other") {
+        updates.customCategory = undefined;
+      }
+    }
+
+    // Handle customCategory updates
+    if (updates.customCategory !== undefined) {
+      const currentCategory = updates.category || job.category;
+      if (currentCategory === "Other" && (!updates.customCategory || !updates.customCategory.trim())) {
+        return res.status(400).json({
+          success: false,
+          message: "Custom category is required when category is 'Other'",
+        });
+      }
+    }
+
     // Handle new document uploads if present
     if (req.files && req.files.length > 0) {
       const newDocuments = req.files.map((file) => ({
@@ -433,13 +526,26 @@ export const getJobApplications = async (req, res, next) => {
     }
 
     const applications = await Application.find({ jobId })
-      .populate("studentId", "name wallet roleNumber")
+      .populate("studentId", "name firstName lastName email wallet roleNumber")
       .populate("academicRecords");
+
+    // Add signed URLs to academic records for each application
+    const applicationsWithSignedUrls = await Promise.all(
+      applications.map(async (app) => {
+        const appObj = app.toObject();
+        if (Array.isArray(appObj.academicRecords) && appObj.academicRecords.length > 0) {
+          appObj.academicRecords = await Promise.all(
+            appObj.academicRecords.map(async (rec) => await addSignedUrlToRecord(rec))
+          );
+        }
+        return appObj;
+      })
+    );
 
     res.status(200).json({
       success: true,
-      count: applications.length,
-      data: applications,
+      count: applicationsWithSignedUrls.length,
+      data: applicationsWithSignedUrls,
     });
   } catch (error) {
     next(error);
@@ -564,14 +670,38 @@ export const deleteJob = async (req, res, next) => {
   }
 };
 
+// Get available job categories
+export const getJobCategories = async (req, res, next) => {
+  try {
+    res.status(200).json({
+      success: true,
+      data: JOB_CATEGORIES,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Get all jobs (admin only)
 export const getAllJobsAdmin = async (req, res, next) => {
   try {
-    const { status } = req.query;
+    const { status, category } = req.query;
     const query = {};
 
     if (status && ["open", "closed", "filled"].includes(status)) {
       query.status = status;
+    }
+
+    // Filter by category if provided
+    if (category) {
+      if (JOB_CATEGORIES.includes(category)) {
+        query.category = category;
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid category. Must be one of: ${JOB_CATEGORIES.join(", ")}`,
+        });
+      }
     }
 
     const jobs = await Job.find(query)

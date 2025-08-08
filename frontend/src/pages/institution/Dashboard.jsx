@@ -100,11 +100,11 @@ export const InstitutionDashboard = () => {
           const pendingRecords = records.filter(record => record.status === "pending").length;
           const rejectedRecords = records.filter(record => record.status === "rejected").length;
 
-          // Get unique students from records
+          // Get unique graduates from records
           const uniqueStudents = new Set(records.map(record => record.studentId._id));
           const totalStudents = uniqueStudents.size;
           
-          // Count verified students (students with at least one verified record)
+          // Count verified graduates (graduates with at least one verified record)
           const verifiedStudents = new Set(
             records
               .filter(record => record.status === "verified")
@@ -156,12 +156,12 @@ export const InstitutionDashboard = () => {
   };
 
   const processStudentStats = (records) => {
-    // Group students by verification status
+    // Group graduates by verification status
     const studentData = records.reduce((acc, record) => {
       const studentId = record.studentId._id;
       if (!acc[studentId]) {
         acc[studentId] = {
-          student: record.studentId.name || "Unknown Student",
+          student: record.studentId.name || "Unknown Graduate",
           verified: 0,
           pending: 0,
           rejected: 0
@@ -171,7 +171,7 @@ export const InstitutionDashboard = () => {
       return acc;
     }, {});
 
-    // Convert to array and get top students by total records
+    // Convert to array and get top graduates by total records
     const studentStats = Object.values(studentData)
       .map(student => ({
         name: student.student,
@@ -181,7 +181,7 @@ export const InstitutionDashboard = () => {
         rejected: student.rejected
       }))
       .sort((a, b) => b.total - a.total)
-      .slice(0, 5); // Top 5 students
+      .slice(0, 5); // Top 5 graduates
 
     setStudentStats(studentStats);
   };
@@ -221,14 +221,14 @@ export const InstitutionDashboard = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-sm font-medium">
-              Total Students
+              Total Graduates
             </CardTitle>
             <GraduationCap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalStudents}</div>
             <p className="text-xs text-muted-foreground">
-              Students with academic records
+              Graduates with academic records
             </p>
           </CardContent>
         </Card>
@@ -236,14 +236,14 @@ export const InstitutionDashboard = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-sm font-medium">
-              Verified Students
+              Verified Graduates
             </CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.verifiedStudents}</div>
             <p className="text-xs text-muted-foreground">
-              Students with verified records
+              Graduates with verified records
             </p>
           </CardContent>
         </Card>
@@ -387,11 +387,11 @@ export const InstitutionDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Top Students Chart */}
+        {/* Top Graduates Chart */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Top Students by Records</CardTitle>
+              <CardTitle>Top Graduates by Records</CardTitle>
               <GraduationCap className="h-5 w-5 text-muted-foreground" />
             </div>
           </CardHeader>
@@ -495,14 +495,14 @@ export const InstitutionDashboard = () => {
           <CardContent>
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Your institution can verify student records securely, creating tamper-proof credentials that can be trusted by employers and other educational institutions.
+                Your institution can verify graduate records securely, creating tamper-proof credentials that can be trusted by employers and other educational institutions.
               </p>
               <ol className="list-decimal pl-5 space-y-2 text-sm">
-                <li>Review academic records submitted by students</li>
+                <li>Review academic records submitted by graduates</li>
                 <li>Verify the authenticity of the records</li>
                 <li>Approve or reject records with appropriate feedback</li>
                 <li>Approved records are automatically verified and secured</li>
-                <li>Once verified, records become immutable and can be shared by students</li>
+                <li>Once verified, records become immutable and can be shared by graduates</li>
               </ol>
               <div className="mt-4">
                 <Link to="/institution/records">

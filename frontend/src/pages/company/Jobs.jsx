@@ -73,13 +73,16 @@ export const CompanyJobs = () => {
   const [loading, setLoading] = useState(true);
   const [loadingApplications, setLoadingApplications] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [jobs, setJobs] = useState([]);
   const [applications, setApplications] = useState([]);
+  const [jobCategories, setJobCategories] = useState([]);
   const [showJobDialog, setShowJobDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [jobToDelete, setJobToDelete] = useState(null);
   const [showApplicationDetailsDialog, setShowApplicationDetailsDialog] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState(null);
+  const [showAllRecordsDialog, setShowAllRecordsDialog] = useState(false);
   const [currentAction, setCurrentAction] = useState("add"); // "add" or "edit"
   
   // Job form state
@@ -89,6 +92,8 @@ export const CompanyJobs = () => {
     requirements: [],
     location: "",
     salary: "",
+    category: "",
+    customCategory: "",
     certificateRequirements: ["all"],
     documents: [], // Array to store selected files
     status: "open",
@@ -111,6 +116,18 @@ export const CompanyJobs = () => {
   
   // Add verification check
   const isVerified = user?.isVerifiedByAdmin;
+  
+  // Fetch job categories
+  const fetchJobCategories = async () => {
+    try {
+      const response = await api.get("/jobs/categories");
+      if (response.data.success) {
+        setJobCategories(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching job categories:", error);
+    }
+  };
   
   // Fetch company's jobs
   const fetchJobs = async () => {
@@ -157,6 +174,7 @@ export const CompanyJobs = () => {
   useEffect(() => {
     fetchJobs();
     fetchApplications();
+    fetchJobCategories();
   }, []);
   
   // Handle form input changes
@@ -182,6 +200,25 @@ export const CompanyJobs = () => {
       return;
     }
 
+    // Category validation
+    if (!formData.category) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a job category",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (formData.category === "Other" && !formData.customCategory.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please provide a custom category when selecting 'Other'",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (formData.documents.length === 0) {
       toast({
         title: "Missing Document",
@@ -201,6 +238,10 @@ export const CompanyJobs = () => {
       formDataToSend.append("requirements", JSON.stringify(formData.requirements));
       formDataToSend.append("location", formData.location);
       formDataToSend.append("salary", formData.salary);
+      formDataToSend.append("category", formData.category);
+      if (formData.category === "Other" && formData.customCategory.trim()) {
+        formDataToSend.append("customCategory", formData.customCategory.trim());
+      }
       formDataToSend.append("certificateRequirements", JSON.stringify(formData.certificateRequirements));
       formDataToSend.append("status", formData.status);
       
@@ -240,6 +281,8 @@ export const CompanyJobs = () => {
         requirements: [],
         location: "",
         salary: "",
+        category: "",
+        customCategory: "",
         certificateRequirements: ["all"],
         documents: [],
         status: "open",
@@ -376,6 +419,8 @@ export const CompanyJobs = () => {
       location: job.location || "",
       status: job.status || "open",
       salary: job.salary || "",
+      category: job.category || "",
+      customCategory: job.customCategory || "",
       certificateRequirements: job.certificateRequirements || ["all"],
       documents: [], // Reset documents array when editing
     });
@@ -389,12 +434,23 @@ export const CompanyJobs = () => {
     setShowApplicationDetailsDialog(true);
   };
   
-  // Filter jobs based on search query
-  const filteredJobs = jobs.filter(job => 
-    job.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    job.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    job.location?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleViewAllRecords = (application) => {
+    setSelectedApplication(application);
+    setShowAllRecordsDialog(true);
+  };
+  
+  // Filter jobs based on search query and category
+  const filteredJobs = jobs.filter(job => {
+    const matchesSearch = job.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.location?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesCategory = !categoryFilter || 
+      job.category === categoryFilter ||
+      (job.category === "Other" && job.customCategory?.toLowerCase().includes(categoryFilter.toLowerCase()));
+    
+    return matchesSearch && matchesCategory;
+  });
 
   // Filter applications based on search query
   const filteredApplications = applications.filter(application => 
@@ -516,7 +572,7 @@ export const CompanyJobs = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Job Postings</h1>
           <p className="text-muted-foreground">
-            Create and manage job opportunities for students
+            Create and manage job opportunities for graduates
           </p>
         </div>
         {isVerified ? (
@@ -529,6 +585,8 @@ export const CompanyJobs = () => {
               location: "",
               status: "open",
               salary: "",
+              category: "",
+              customCategory: "",
               certificateRequirements: ["all"],
               documents: [],
             });
@@ -590,6 +648,22 @@ export const CompanyJobs = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
+            <Select
+              value={categoryFilter || "ALL"}
+              onValueChange={(value) => setCategoryFilter(value === "ALL" ? "" : value)}
+            >
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filter by category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Categories</SelectItem>
+                {jobCategories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           
           {loading ? (
@@ -620,6 +694,7 @@ export const CompanyJobs = () => {
                         </div>
                       </th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Description</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium">Category</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Location</th>
                       <th 
                         className="h-12 px-4 text-left align-middle font-medium cursor-pointer"
@@ -645,6 +720,11 @@ export const CompanyJobs = () => {
                             {job.description?.length > 75 
                               ? `${job.description.substring(0, 75)}...` 
                               : job.description}
+                          </td>
+                          <td className="p-4 align-middle">
+                            <Badge variant="outline">
+                              {job.category === "Other" && job.customCategory ? job.customCategory : job.category || "Uncategorized"}
+                            </Badge>
                           </td>
                           <td className="p-4 align-middle">{job.location}</td>
                           <td className="p-4 align-middle">{formatDate(job.createdAt)}</td>
@@ -794,6 +874,10 @@ export const CompanyJobs = () => {
                                 <Eye className="h-4 w-4 mr-2" />
                                 View Application Details
                               </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleViewAllRecords(application)}>
+                                <FileText className="h-4 w-4 mr-2" />
+                                View All Records
+                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => navigate(`/company/jobs/${application.jobId?._id}`)}>
                                 <Briefcase className="h-4 w-4 mr-2" />
                                 View Job Details
@@ -819,7 +903,7 @@ export const CompanyJobs = () => {
             <DialogTitle>{currentAction === "add" ? "Post a New Job" : "Edit Job Posting"}</DialogTitle>
             <DialogDescription>
               {currentAction === "add" 
-                ? "Create a new job listing for students to apply to" 
+                ? "Create a new job listing for graduates to apply to" 
                 : "Update the details of your job listing"}
             </DialogDescription>
           </DialogHeader>
@@ -883,6 +967,47 @@ export const CompanyJobs = () => {
                   required
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="category">Job Category</Label>
+                <Select
+                  name="category"
+                  value={formData.category}
+                  onValueChange={(value) => {
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      category: value,
+                      customCategory: value === "Other" ? prev.customCategory : ""
+                    }));
+                  }}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a job category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {jobCategories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {formData.category === "Other" && (
+                <div className="space-y-2">
+                  <Label htmlFor="customCategory">Custom Category</Label>
+                  <Input
+                    id="customCategory"
+                    name="customCategory"
+                    placeholder="Enter your custom category"
+                    value={formData.customCategory}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="certificateRequirements">Required Certificates</Label>
@@ -980,6 +1105,55 @@ export const CompanyJobs = () => {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* View All Records Dialog */}
+      <Dialog open={showAllRecordsDialog} onOpenChange={setShowAllRecordsDialog}>
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>All Records - {selectedApplication?.studentId?.firstName ? `${selectedApplication.studentId.firstName} ${selectedApplication.studentId.lastName}` : "Applicant"}</DialogTitle>
+            <DialogDescription>
+              Verified and submitted academic records for this applicant
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3 py-2">
+            {(selectedApplication?.academicRecords || []).length === 0 ? (
+              <div className="text-sm text-muted-foreground">No records provided</div>
+            ) : (
+              selectedApplication.academicRecords.map((record) => (
+                <div key={record._id} className="flex items-center justify-between bg-muted p-3 rounded-md">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">{record.title}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {record.recordType} - {record.institutionId?.name || "Institution"}
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (record.signedUrl) {
+                        window.open(record.signedUrl, "_blank");
+                      } else if (record.fileUrl) {
+                        window.open(record.fileUrl, "_blank");
+                      } else if (record.documentUrl) {
+                        window.open(record.documentUrl, "_blank");
+                      } else {
+                        toast({
+                          title: "Error",
+                          description: "Document is not available for viewing",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                  >
+                    View
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
         </DialogContent>
       </Dialog>
       
