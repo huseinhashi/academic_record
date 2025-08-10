@@ -485,7 +485,7 @@ export const StudentDashboard = () => {
               <FileCheck className="mr-2 h-4 w-4" />
               View Academic Records
             </Button>
-          <Button className="w-full justify-start" variant="outline" onClick={() => navigate("/student/jobs")}> 
+            <Button className="w-full justify-start" variant="outline" onClick={() => navigate("/student/jobs")}>
               <Share2 className="mr-2 h-4 w-4" />
               Job Opportunities {jobsCount > 0 && `(${jobsCount})`}
             </Button>

@@ -707,7 +707,7 @@ export const CompanyJobs = () => {
                       </th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Applications</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
-                      <th className="h-12 px-4 text-left align-middle font-medium">Actions</th>
+                      <th className="h-12 px-4 text-right align-middle font-medium">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="[&_tr:last-child]:border-0">
@@ -739,51 +739,53 @@ export const CompanyJobs = () => {
                               {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
                             </Badge>
                           </td>
-                          <td className="p-4 align-middle">
-                            <div className="flex items-center space-x-2">
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => navigate(`/company/jobs/${job._id}`)}
-                              >
-                                <Eye className="h-4 w-4 mr-1" />
-                                View Details
-                              </Button>
-                              {job.documentUrl && (
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon"
-                                  onClick={() => handleViewDocument(job)}
-                                  title="View Job Document"
-                                >
-                                  <FileText className="h-4 w-4" />
+                          <td className="p-4 align-middle text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <MoreHorizontal className="h-4 w-4" />
                                 </Button>
-                              )}
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => handleEditJob(job)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => {
-                                  setJobToDelete(job);
-                                  setShowDeleteDialog(true);
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleToggleJobStatus(job)}
-                              >
-                                {job.status === "open" ? "Close" : "Reopen"}
-                              </Button>
-                            </div>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => navigate(`/company/jobs/${job._id}`)}>
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View Details
+                                </DropdownMenuItem>
+                                {job.documentUrl && (
+                                  <DropdownMenuItem onClick={() => handleViewDocument(job)}>
+                                    <FileText className="h-4 w-4 mr-2" />
+                                    View Job Document
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem onClick={() => handleEditJob(job)}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit Job
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleToggleJobStatus(job)}>
+                                  {job.status === "open" ? (
+                                    <>
+                                      <XCircle className="h-4 w-4 mr-2" />
+                                      Close Job
+                                    </>
+                                  ) : (
+                                    <>
+                                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                                      Reopen Job
+                                    </>
+                                  )}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => {
+                                    setJobToDelete(job);
+                                    setShowDeleteDialog(true);
+                                  }}
+                                  className="text-red-600 focus:text-red-600"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete Job
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </td>
                         </tr>
                       );

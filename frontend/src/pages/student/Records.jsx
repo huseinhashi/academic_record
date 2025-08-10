@@ -53,6 +53,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import api from "@/lib/axios";
+import { 
+  CERTIFICATE_TITLES, 
+  getFields, 
+  getDegreeLevels, 
+  getTitlesForDegreeAndField 
+} from "@/data/certificateTitles";
 
 export const StudentRecords = () => {
   const { toast } = useToast();
@@ -67,7 +73,10 @@ export const StudentRecords = () => {
   
   // State for new record form
   const [recordType, setRecordType] = useState("");
+  const [degreeLevel, setDegreeLevel] = useState("");
+  const [field, setField] = useState("");
   const [title, setTitle] = useState("");
+  const [customTitle, setCustomTitle] = useState("");
   const [gpa, setGpa] = useState("");
   const [institutionId, setInstitutionId] = useState("");
   const [document, setDocument] = useState(null);
@@ -206,7 +215,8 @@ export const StudentRecords = () => {
   const handleSubmitRecord = async (e) => {
     e.preventDefault();
     
-    if (!recordType || !title || !document || !institutionId || !gpa) {
+    // Enhanced validation
+    if (!recordType || !degreeLevel || !field || !document || !institutionId || !gpa) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields and upload a document",
@@ -214,13 +224,42 @@ export const StudentRecords = () => {
       });
       return;
     }
+
+    // Validate title selection
+    if (!title || (title === "Other" && !customTitle.trim())) {
+      toast({
+        title: "Missing Title",
+        description: "Please select a certificate title or provide a custom one",
+        variant: "destructive",
+      });
+      return;
+    }
     
-    // Validate GPA
+    // Enhanced GPA validation
     const gpaValue = parseFloat(gpa);
     if (isNaN(gpaValue) || gpaValue < 0 || gpaValue > 4.0) {
       toast({
         title: "Invalid GPA",
         description: "GPA must be between 0 and 4.0",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Additional GPA validation for different degree levels
+    if (degreeLevel === "phd" && gpaValue < 3.5) {
+      toast({
+        title: "GPA Requirement",
+        description: "PhD programs typically require a minimum GPA of 3.5",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (degreeLevel === "master" && gpaValue < 3.0) {
+      toast({
+        title: "GPA Requirement",
+        description: "Master's programs typically require a minimum GPA of 3.0",
         variant: "destructive",
       });
       return;
@@ -252,8 +291,11 @@ export const StudentRecords = () => {
     try {
       // Create form data
       const formData = new FormData();
-      formData.append("title", title);
+      const finalTitle = title === "Other" ? customTitle.trim() : title;
+      formData.append("title", finalTitle);
       formData.append("recordType", recordType);
+      formData.append("degreeLevel", degreeLevel);
+      formData.append("field", field);
       formData.append("institutionId", institutionId);
       formData.append("gpa", gpa);
       formData.append("documents", document);
@@ -272,7 +314,10 @@ export const StudentRecords = () => {
       
       // Reset form
       setRecordType("");
+      setDegreeLevel("");
+      setField("");
       setTitle("");
+      setCustomTitle("");
       setGpa("");
       setInstitutionId("");
       setDocument(null);
@@ -443,24 +488,125 @@ export const StudentRecords = () => {
             </DialogHeader>
             <form onSubmit={handleSubmitRecord}>
               <div className="grid gap-4 py-4">
+                              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="recordType" className="col-span-1">
+                  Record Type
+                </Label>
+                <Select
+                  value={recordType}
+                  onValueChange={setRecordType}
+                  required
+                >
+                  <SelectTrigger id="recordType" className="col-span-3">
+                    <SelectValue placeholder="Select record type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="specialty">Specialty-Degree</SelectItem>
+                    <SelectItem value="profession">Profession</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="degreeLevel" className="col-span-1">
+                  Degree Level
+                </Label>
+                <Select
+                  value={degreeLevel}
+                  onValueChange={(value) => {
+                    setDegreeLevel(value);
+                    setField("");
+                    setTitle("");
+                    setCustomTitle("");
+                  }}
+                  required
+                >
+                  <SelectTrigger id="degreeLevel" className="col-span-3">
+                    <SelectValue placeholder="Select degree level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getDegreeLevels().map((level) => (
+                      <SelectItem key={level} value={level}>
+                        {level.charAt(0).toUpperCase() + level.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {degreeLevel && (
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="recordType" className="col-span-1">
-                    Record Type
+                  <Label htmlFor="field" className="col-span-1">
+                    Field of Study
                   </Label>
                   <Select
-                    value={recordType}
-                    onValueChange={setRecordType}
+                    value={field}
+                    onValueChange={(value) => {
+                      setField(value);
+                      setTitle("");
+                      setCustomTitle("");
+                    }}
                     required
                   >
-                    <SelectTrigger id="recordType" className="col-span-3">
-                      <SelectValue placeholder="Select record type" />
+                    <SelectTrigger id="field" className="col-span-3">
+                      <SelectValue placeholder="Select field of study" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="specialty">Specialty-Degree</SelectItem>
-                      <SelectItem value="profession">Profession</SelectItem>
+                      {getFields().map((fieldName) => (
+                        <SelectItem key={fieldName} value={fieldName}>
+                          {fieldName}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
+              )}
+
+              {degreeLevel && field && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="title" className="col-span-1">
+                    Certificate Title
+                  </Label>
+                  <Select
+                    value={title}
+                    onValueChange={(value) => {
+                      setTitle(value);
+                      if (value !== "Other") {
+                        setCustomTitle("");
+                      }
+                    }}
+                    required
+                  >
+                    <SelectTrigger id="title" className="col-span-3">
+                      <SelectValue placeholder="Select certificate title" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getTitlesForDegreeAndField(degreeLevel, field).map((titleOption) => (
+                        <SelectItem key={titleOption} value={titleOption}>
+                          {titleOption}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="Other">Other (Custom Title)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {title === "Other" && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="customTitle" className="col-span-1">
+                    Custom Title
+                  </Label>
+                  <Input
+                    id="customTitle"
+                    value={customTitle}
+                    onChange={(e) => setCustomTitle(e.target.value)}
+                    placeholder="Enter your custom certificate title"
+                    className="col-span-3"
+                    required
+                  />
+                </div>
+              )}
 
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="institution" className="col-span-1">
@@ -498,19 +644,7 @@ export const StudentRecords = () => {
                   </Select>
                 </div>
 
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="title" className="col-span-1">
-                    Title
-                  </Label>
-                  <Input
-                    id="title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g. Bachelor of Computer Science"
-                    className="col-span-3"
-                    required
-                  />
-                </div>
+
 
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="gpa" className="col-span-1">
@@ -524,10 +658,20 @@ export const StudentRecords = () => {
                     max="4.0"
                     value={gpa}
                     onChange={(e) => setGpa(e.target.value)}
-                    placeholder="Enter GPA (0-4.0)"
+                    placeholder={`Enter GPA (0-4.0)${degreeLevel === "phd" ? ", min 3.5" : degreeLevel === "master" ? ", min 3.0" : ""}`}
                     className="col-span-3"
                     required
                   />
+                  {degreeLevel && (
+                    <div className="col-span-3 col-start-2">
+                      <p className="text-xs text-muted-foreground">
+                        {degreeLevel === "phd" && "PhD programs typically require a minimum GPA of 3.5"}
+                        {degreeLevel === "master" && "Master's programs typically require a minimum GPA of 3.0"}
+                        {degreeLevel === "bachelor" && "Bachelor's programs typically require a minimum GPA of 2.0"}
+                        {degreeLevel === "diploma" && "Diploma programs typically require a minimum GPA of 2.0"}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-4 items-center gap-4">

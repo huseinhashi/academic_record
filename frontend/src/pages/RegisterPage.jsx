@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserPlus, Wallet, X, GraduationCap, Building2, Briefcase } from "lucide-react";
+import { UserPlus, Wallet, X, GraduationCap, Building2, Briefcase, RefreshCw } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -17,10 +17,11 @@ import { SkillsSelect } from "@/components/SkillsSelect";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 export const RegisterPage = () => {
-  const { connectWallet, registerStudent, registerInstitution, registerCompany, isConnecting } = useAuth();
+  const { connectWallet, refreshWalletConnection, registerStudent, registerInstitution, registerCompany, isConnecting } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [refreshingWallet, setRefreshingWallet] = useState(false);
   const [walletConnected, setWalletConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState("");
   const [institutions, setInstitutions] = useState([]);
@@ -93,6 +94,30 @@ export const RegisterPage = () => {
         description: error.message,
         variant: "destructive",
       });
+    }
+  };
+
+  const handleRefreshWallet = async () => {
+    if (refreshingWallet) return;
+
+    setRefreshingWallet(true);
+    try {
+      const wallet = await refreshWalletConnection();
+      setWalletAddress(wallet);
+      setWalletConnected(true);
+      toast({
+        title: "Wallet refreshed",
+        description: "Your wallet connection has been refreshed",
+      });
+    } catch (error) {
+      console.error("Wallet refresh error:", error);
+      toast({
+        title: "Refresh failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshingWallet(false);
     }
   };
 
@@ -403,8 +428,29 @@ export const RegisterPage = () => {
               )}
             </div>
             {walletConnected ? (
-              <div className="text-xs text-muted-foreground bg-background p-2 rounded-lg">
-                <p className="font-medium">Connected: {walletAddress}</p>
+              <div className="space-y-2">
+                <div className="text-xs text-muted-foreground bg-background p-2 rounded-lg">
+                  <p className="font-medium">Connected: {walletAddress}</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleRefreshWallet}
+                  disabled={refreshingWallet}
+                  className="w-full h-8 bg-background hover:bg-background/80 border-primary/30 hover:border-primary/50 text-xs"
+                >
+                  {refreshingWallet ? (
+                    <>
+                      <LoaderCircle className="mr-2 h-3 w-3 animate-spin" />
+                      Refreshing...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="mr-2 h-3 w-3" />
+                      Refresh Connection
+                    </>
+                  )}
+                </Button>
               </div>
             ) : (
               <Button
@@ -558,8 +604,29 @@ export const RegisterPage = () => {
               )}
             </div>
             {walletConnected ? (
-              <div className="text-xs text-muted-foreground bg-background p-2 rounded-lg">
-                <p className="font-medium">Connected: {walletAddress}</p>
+              <div className="space-y-2">
+                <div className="text-xs text-muted-foreground bg-background p-2 rounded-lg">
+                  <p className="font-medium">Connected: {walletAddress}</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleRefreshWallet}
+                  disabled={refreshingWallet}
+                  className="w-full h-8 bg-background hover:bg-background/80 border-primary/30 hover:border-primary/50 text-xs"
+                >
+                  {refreshingWallet ? (
+                    <>
+                      <LoaderCircle className="mr-2 h-3 w-3 animate-spin" />
+                      Refreshing...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="mr-2 h-3 w-3" />
+                      Refresh Connection
+                    </>
+                  )}
+                </Button>
               </div>
             ) : (
               <Button
@@ -688,8 +755,29 @@ export const RegisterPage = () => {
               )}
             </div>
             {walletConnected ? (
-              <div className="text-xs text-muted-foreground bg-background p-2 rounded-lg">
-                <p className="font-medium">Connected: {walletAddress}</p>
+              <div className="space-y-2">
+                <div className="text-xs text-muted-foreground bg-background p-2 rounded-lg">
+                  <p className="font-medium">Connected: {walletAddress}</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleRefreshWallet}
+                  disabled={refreshingWallet}
+                  className="w-full h-8 bg-background hover:bg-background/80 border-primary/30 hover:border-primary/50 text-xs"
+                >
+                  {refreshingWallet ? (
+                    <>
+                      <LoaderCircle className="mr-2 h-3 w-3 animate-spin" />
+                      Refreshing...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="mr-2 h-3 w-3" />
+                      Refresh Connection
+                    </>
+                  )}
+                </Button>
               </div>
             ) : (
               <Button

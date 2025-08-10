@@ -34,27 +34,64 @@ export const AuthProvider = ({ children }) => {
 
   // Add listener for account changes in MetaMask
   useEffect(() => {
-    if (!window.ethereum || !currentWallet || !isAuthenticated) return;
+    if (!window.ethereum) return;
 
     const handleAccountsChanged = async (accounts) => {
       const newWallet = accounts[0];
       
       // If wallet changed and user is logged in
-      if (newWallet !== currentWallet) {
+      if (newWallet && newWallet !== currentWallet && isAuthenticated) {
         console.log("MetaMask account changed:", newWallet);
         
         // Auto logout user when wallet changes
         logout();
+        
+        // Show notification to user
+        if (window.showToast) {
+          window.showToast({
+            title: "Wallet Changed",
+            description: "Your MetaMask account has changed. Please log in again.",
+            variant: "destructive",
+          });
+        }
       }
     };
     
     // Listen for account changes
     window.ethereum.on('accountsChanged', handleAccountsChanged);
     
+    // Also check for account changes on focus (fallback)
+    const handleWindowFocus = async () => {
+      if (!isAuthenticated) return;
+      
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        const currentAccount = accounts[0];
+        
+        if (currentAccount && currentAccount !== currentWallet) {
+          console.log("Account change detected on focus:", currentAccount);
+          logout();
+          
+          if (window.showToast) {
+            window.showToast({
+              title: "Wallet Changed",
+              description: "Your MetaMask account has changed. Please log in again.",
+              variant: "destructive",
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error checking wallet on focus:", error);
+      }
+    };
+    
+    window.addEventListener('focus', handleWindowFocus);
+    
     return () => {
       if (window.ethereum?.removeListener) {
         window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
       }
+      window.removeEventListener('focus', handleWindowFocus);
     };
   }, [isAuthenticated, currentWallet]);
 
@@ -86,6 +123,28 @@ export const AuthProvider = ({ children }) => {
       throw error.message ? error : new Error("Failed to connect to MetaMask. Please try again.");
     } finally {
       setIsConnecting(false);
+    }
+  };
+
+  // Function to manually refresh wallet connection
+  const refreshWalletConnection = async () => {
+    if (!window.ethereum) {
+      throw new Error("MetaMask is not installed.");
+    }
+
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+      const currentAccount = accounts[0];
+      
+      if (currentAccount && currentAccount !== currentWallet) {
+        setCurrentWallet(currentAccount);
+        return currentAccount;
+      }
+      
+      return currentWallet;
+    } catch (error) {
+      console.error("Error refreshing wallet connection:", error);
+      throw new Error("Failed to refresh wallet connection.");
     }
   };
 
@@ -219,6 +278,7 @@ export const AuthProvider = ({ children }) => {
         registerCompany,
         loginWithWallet,
         connectWallet,
+        refreshWalletConnection,
         logout,
         updateUser
       }}
