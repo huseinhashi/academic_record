@@ -15,6 +15,7 @@ import applicationRoutes from "./routes/application.routes.js";
 import reportsRoutes from "./routes/reports.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
 import interviewRoutes from "./routes/interview.routes.js";
+import skillRoutes from "./routes/skill.routes.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 
 // Get directory name
@@ -57,6 +58,7 @@ app.use("/api/applications", applicationRoutes);
 app.use("/api/reports", reportsRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/interviews", interviewRoutes);
+app.use("/api/skills", skillRoutes);
 
 // Error handler
 app.use(errorHandler);

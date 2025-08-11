@@ -16,6 +16,7 @@ import { AdminStudents } from "@/pages/admin/Students";
 import { AdminInstitutions } from "@/pages/admin/Institutions";
 import { AdminCompanies } from "@/pages/admin/Companies";
 import { AdminRecords } from "@/pages/admin/Records";
+import { AdminSkills } from "@/pages/admin/Skills";
 import { AdminJobs } from "@/pages/admin/Jobs";
 import { AdminApplications } from "@/pages/admin/Applications";
 import { AdminReports } from "@/pages/admin/Reports";
@@ -145,6 +146,17 @@ function App() {
               <ProtectedRoute requiredType="Admin">
                 <DashboardLayout>
                   <AdminRecords />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/admin/skills"
+            element={
+              <ProtectedRoute requiredType="Admin">
+                <DashboardLayout>
+                  <AdminSkills />
                 </DashboardLayout>
               </ProtectedRoute>
             }

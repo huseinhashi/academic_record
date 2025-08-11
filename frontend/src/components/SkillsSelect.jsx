@@ -1,28 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, X, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-// Common skills list - you can expand this list
-const COMMON_SKILLS = [
-  "JavaScript", "Python", "Java", "C++", "C#", "Ruby", "PHP", "Swift", "Kotlin",
-  "React", "Angular", "Vue.js", "Node.js", "Express.js", "Django", "Flask", "Spring Boot",
-  "HTML", "CSS", "TypeScript", "SQL", "MongoDB", "PostgreSQL", "MySQL", "Redis",
-  "AWS", "Azure", "Google Cloud", "Docker", "Kubernetes", "Linux", "Git",
-  "Machine Learning", "Data Science", "Artificial Intelligence", "Deep Learning",
-  "UI/UX Design", "Figma", "Adobe XD", "Photoshop", "Illustrator",
-  "Project Management", "Agile", "Scrum", "DevOps", "CI/CD",
-  "Mobile Development", "iOS", "Android", "React Native", "Flutter",
-  "Web Development", "Frontend", "Backend", "Full Stack", "REST API",
-  "Testing", "Jest", "Selenium", "Cypress", "Unit Testing",
-  "Cybersecurity", "Network Security", "Ethical Hacking", "Penetration Testing",
-      "Advanced Technology", "Web Development", "Security",
-  "Data Analysis", "Data Visualization", "Business Intelligence", "Tableau", "Power BI",
-  "Cloud Computing", "Serverless", "Microservices", "API Gateway", "Lambda",
-  "System Design", "Architecture", "Design Patterns", "Clean Code", "SOLID Principles","Others"
-];
+import api from "@/lib/axios";
 
 export const SkillsSelect = ({ 
   selectedSkills = [], 
@@ -35,9 +17,32 @@ export const SkillsSelect = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [showAll, setShowAll] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [skills, setSkills] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch skills from API
+  useEffect(() => {
+    const fetchSkills = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get('/skills');
+        if (response.data.success) {
+          setSkills(response.data.data.map(skill => skill.name));
+        }
+      } catch (error) {
+        console.error("Error fetching skills:", error);
+        // Fallback to empty array if API fails
+        setSkills([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSkills();
+  }, []);
 
   // Filter skills based on search query
-  const filteredSkills = COMMON_SKILLS.filter(skill =>
+  const filteredSkills = skills.filter(skill =>
     skill.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -92,7 +97,11 @@ export const SkillsSelect = ({
       {/* Skills Dropdown */}
       {isOpen && (
         <div className="border rounded-md p-2 space-y-2 max-h-60 overflow-y-auto">
-          {displaySkills.length > 0 ? (
+          {loading ? (
+            <p className="text-sm text-muted-foreground text-center py-2">
+              Loading skills...
+            </p>
+          ) : displaySkills.length > 0 ? (
             <>
               {displaySkills.map((skill) => (
                 <button

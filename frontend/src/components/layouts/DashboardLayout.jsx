@@ -200,6 +200,12 @@ export const DashboardLayout = ({ children }) => {
           description: "View and manage academic records",
         },
         {
+          title: "Skills",
+          icon: Star,
+          href: `${basePath}/skills`,
+          description: "Manage skills for students and companies",
+        },
+        {
           title: "Jobs",
           icon: Briefcase,
           href: `${basePath}/jobs`,
