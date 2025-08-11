@@ -14,10 +14,15 @@ const addSignedUrlsToRecords = async (records) => {
     const recordsWithUrls = await Promise.all(
       records.map(async (record) => {
         const recordObj = record.toObject ? record.toObject() : record;
-        if (recordObj.filePublicId) {
-          recordObj.signedUrl = await cloudinaryUtils.generateSignedUrl(
-            recordObj.filePublicId,
-            3600 // URL valid for 1 hour
+        if (recordObj.documents && recordObj.documents.length > 0) {
+          recordObj.documents = await Promise.all(
+            recordObj.documents.map(async (doc) => ({
+              ...doc,
+              signedUrl: await cloudinaryUtils.generateSignedUrl(
+                doc.filePublicId,
+                3600 // URL valid for 1 hour
+              ),
+            }))
           );
         }
         return recordObj;
@@ -27,10 +32,15 @@ const addSignedUrlsToRecords = async (records) => {
   } else {
     // Handle single record
     const recordObj = records.toObject ? records.toObject() : records;
-    if (recordObj.filePublicId) {
-      recordObj.signedUrl = await cloudinaryUtils.generateSignedUrl(
-        recordObj.filePublicId,
-        3600 // URL valid for 1 hour
+    if (recordObj.documents && recordObj.documents.length > 0) {
+      recordObj.documents = await Promise.all(
+        recordObj.documents.map(async (doc) => ({
+          ...doc,
+          signedUrl: await cloudinaryUtils.generateSignedUrl(
+            doc.filePublicId,
+            3600 // URL valid for 1 hour
+          ),
+        }))
       );
     }
     return recordObj;
@@ -48,10 +58,15 @@ const addSignedUrlsToApplicationAcademicRecords = async (applications) => {
     return await Promise.all(
       records.map(async (record) => {
         const recordObj = record.toObject ? record.toObject() : record;
-        if (recordObj.filePublicId) {
-          recordObj.signedUrl = await cloudinaryUtils.generateSignedUrl(
-            recordObj.filePublicId,
-            3600 // URL valid for 1 hour
+        if (recordObj.documents && recordObj.documents.length > 0) {
+          recordObj.documents = await Promise.all(
+            recordObj.documents.map(async (doc) => ({
+              ...doc,
+              signedUrl: await cloudinaryUtils.generateSignedUrl(
+                doc.filePublicId,
+                3600 // URL valid for 1 hour
+              ),
+            }))
           );
         }
         return recordObj;
@@ -99,9 +114,8 @@ export const applyToJob = async (req, res, next) => {
     // Get student ID from authenticated user
     const studentId = req.user._id;
 
-    // Check if job exists and is open
+    // Check if job exists and is not expired
     const job = await Job.findById(jobId);
-
     if (!job) {
       return res.status(404).json({
         success: false,
@@ -109,12 +123,23 @@ export const applyToJob = async (req, res, next) => {
       });
     }
 
+    // Check if job deadline has passed
+    if (job.deadline <= new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot apply to this job. The application deadline has passed.",
+      });
+    }
+
+    // Check if job is still open
     if (job.status !== "open") {
       return res.status(400).json({
         success: false,
-        message: `Cannot apply to a job that is ${job.status}`,
+        message: "Cannot apply to this job. The job is no longer accepting applications.",
       });
     }
+
+
 
     // Check if student has already applied to this job
     const existingApplication = await Application.findOne({ jobId, studentId });

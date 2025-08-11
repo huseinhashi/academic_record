@@ -37,6 +37,7 @@ export const AdminRecords = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [viewRecordDialog, setViewRecordDialog] = useState(false);
+  const [showDocumentsDialog, setShowDocumentsDialog] = useState(false);
 
   useEffect(() => {
     fetchRecords();
@@ -101,7 +102,37 @@ export const AdminRecords = () => {
   };
 
   const handleDownloadRecord = (record) => {
-    if (!record?.signedUrl) {
+    if (!record?.documents || record.documents.length === 0) {
+      toast({
+        title: "Error",
+        description: "No documents available for download",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // If only one document, download it directly
+    if (record.documents.length === 1) {
+      const document = record.documents[0];
+      if (!document?.signedUrl) {
+        toast({
+          title: "Error",
+          description: "Secure download link not available",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      window.open(document.signedUrl, '_blank');
+    } else {
+      // Multiple documents - show document selection dialog
+      setSelectedRecord(record);
+      setShowDocumentsDialog(true);
+    }
+  };
+
+  const handleViewDocument = (document) => {
+    if (!document?.signedUrl) {
       toast({
         title: "Error",
         description: "Secure download link not available",
@@ -110,7 +141,8 @@ export const AdminRecords = () => {
       return;
     }
     
-    window.open(record.signedUrl, '_blank');
+    // Open document in new tab
+    window.open(document.signedUrl, '_blank');
   };
 
   return (
@@ -281,6 +313,64 @@ export const AdminRecords = () => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Documents Selection Dialog */}
+      <Dialog open={showDocumentsDialog} onOpenChange={setShowDocumentsDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>View Documents</DialogTitle>
+            <DialogDescription>
+              Select a document to view or download
+            </DialogDescription>
+          </DialogHeader>
+          {selectedRecord && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <h3 className="font-medium">{selectedRecord.title}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {selectedRecord.recordType} • {selectedRecord.studentId?.name}
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <h4 className="font-medium">Documents ({selectedRecord.documents?.length || 0})</h4>
+                {selectedRecord.documents && selectedRecord.documents.length > 0 ? (
+                  <div className="space-y-2">
+                    {selectedRecord.documents.map((doc, index) => (
+                      <div key={index} className="flex items-center justify-between bg-muted p-3 rounded-md">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">{doc.documentName || `Document ${index + 1}`}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {doc.documentType} • {new Date(doc.uploadedAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewDocument(doc)}
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          View
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No documents available</p>
+                )}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowDocumentsDialog(false)}
+            >
+              Close
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

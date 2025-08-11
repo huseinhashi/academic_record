@@ -84,6 +84,7 @@ export const JobDetails = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showInterviewDialog, setShowInterviewDialog] = useState(false);
   const [selectedInterview, setSelectedInterview] = useState(null);
+  const [showDocumentsDialog, setShowDocumentsDialog] = useState(false);
   const [interviews, setInterviews] = useState({});
   const [loadingInterviews, setLoadingInterviews] = useState({});
   
@@ -359,6 +360,26 @@ export const JobDetails = () => {
     window.open(document.signedUrl, '_blank');
   };
 
+  const handleViewRecordDocuments = (record) => {
+    if (!record?.documents || record.documents.length === 0) {
+      toast({
+        title: "Error",
+        description: "No documents available for viewing",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // If only one document, open it directly
+    if (record.documents.length === 1) {
+      handleViewDocument(record.documents[0]);
+    } else {
+      // Multiple documents - show document selection dialog
+      setSelectedRecord(record);
+      setShowDocumentsDialog(true);
+    }
+  };
+
   // Interview management functions
   const handleCreateInterview = async (applicationId, interviewData) => {
     try {
@@ -595,6 +616,14 @@ export const JobDetails = () => {
               </div>
               <CardDescription>
                 Posted on {formatDate(job.createdAt)}
+                {job.deadline && (
+                  <span className="ml-2">
+                    • Deadline: {formatDate(job.deadline)}
+                    {new Date(job.deadline) <= new Date() && (
+                      <span className="text-red-600 font-medium"> (Expired)</span>
+                    )}
+                  </span>
+                )}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -638,12 +667,12 @@ export const JobDetails = () => {
               </div>
               
               {job.documents && job.documents.length > 0 && (
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Job Documents</Label>
+                              <div className="space-y-2">
+                <Label className="text-sm font-medium">TOR</Label>
                   <div className="space-y-2">
                     {job.documents.map((doc, index) => (
                       <div key={index} className="flex items-center justify-between p-2 border rounded">
-                        <span className="text-sm">{doc.documentName}</span>
+                        <span className="text-sm">TOR</span>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -931,7 +960,22 @@ export const JobDetails = () => {
                           variant="link" 
                           className="p-0 h-auto mt-1"
                           onClick={() => {
-                            if (record.signedUrl) {
+                            if (record?.documents && record.documents.length > 0) {
+                              // Open the first document
+                              const document = record.documents[0];
+                              if (document?.signedUrl) {
+                                window.open(document.signedUrl, '_blank');
+                              } else if (document?.fileUrl) {
+                                window.open(document.fileUrl, '_blank');
+                              } else {
+                                toast({
+                                  title: "Error",
+                                  description: "Document is not available for viewing",
+                                  variant: "destructive"
+                                });
+                              }
+                            } else if (record.signedUrl) {
+                              // Fallback for old format
                               window.open(record.signedUrl, '_blank');
                             } else if (record.fileUrl) {
                               window.open(record.fileUrl, '_blank');
@@ -1131,23 +1175,9 @@ export const JobDetails = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      if (record.signedUrl) {
-                        window.open(record.signedUrl, "_blank");
-                      } else if (record.fileUrl) {
-                        window.open(record.fileUrl, "_blank");
-                      } else if (record.documentUrl) {
-                        window.open(record.documentUrl, "_blank");
-                      } else {
-                        toast({
-                          title: "Error",
-                          description: "Document is not available for viewing",
-                          variant: "destructive",
-                        });
-                      }
-                    }}
+                    onClick={() => handleViewRecordDocuments(record)}
                   >
-                    View
+                    {record.documents?.length > 1 ? `${record.documents.length} Docs` : 'View'}
                   </Button>
                 </div>
               ))
@@ -1264,6 +1294,64 @@ export const JobDetails = () => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Documents Selection Dialog */}
+      <Dialog open={showDocumentsDialog} onOpenChange={setShowDocumentsDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>View Documents</DialogTitle>
+            <DialogDescription>
+              Select a document to view or download
+            </DialogDescription>
+          </DialogHeader>
+          {selectedRecord && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <h3 className="font-medium">{selectedRecord.title}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {selectedRecord.recordType} • {selectedRecord.institutionId?.name}
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <h4 className="font-medium">Documents ({selectedRecord.documents?.length || 0})</h4>
+                {selectedRecord.documents && selectedRecord.documents.length > 0 ? (
+                  <div className="space-y-2">
+                    {selectedRecord.documents.map((doc, index) => (
+                      <div key={index} className="flex items-center justify-between bg-muted p-3 rounded-md">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">{doc.documentName || `Document ${index + 1}`}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {doc.documentType} • {new Date(doc.uploadedAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewDocument(doc)}
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          View
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No documents available</p>
+                )}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowDocumentsDialog(false)}
+            >
+              Close
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

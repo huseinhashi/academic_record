@@ -234,7 +234,22 @@ export const AdminApplications = () => {
                           variant="link" 
                           className="p-0 h-auto mt-1"
                           onClick={() => {
-                            if (record.signedUrl) {
+                            if (record?.documents && record.documents.length > 0) {
+                              // Open the first document
+                              const document = record.documents[0];
+                              if (document?.signedUrl) {
+                                window.open(document.signedUrl, '_blank');
+                              } else if (document?.fileUrl) {
+                                window.open(document.fileUrl, '_blank');
+                              } else {
+                                toast({
+                                  title: "Error",
+                                  description: "Document is not available for viewing",
+                                  variant: "destructive"
+                                });
+                              }
+                            } else if (record.signedUrl) {
+                              // Fallback for old format
                               window.open(record.signedUrl, '_blank');
                             } else if (record.fileUrl) {
                               window.open(record.fileUrl, '_blank');

@@ -251,6 +251,7 @@ export const AdminJobs = () => {
                       <th className="h-12 px-4 text-left align-middle font-medium">Category</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Location</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Salary</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium">Deadline</th>
                       <th 
                         className="h-12 px-4 text-left align-middle font-medium cursor-pointer"
                         onClick={() => requestSort("createdAt")}
@@ -262,7 +263,7 @@ export const AdminJobs = () => {
                       </th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Hired Graduate</th>
-                      <th className="h-12 px-4 text-left align-middle font-medium">Documents</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium">TOR</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Actions</th>
                     </tr>
                   </thead>
@@ -278,6 +279,14 @@ export const AdminJobs = () => {
                         </td>
                         <td className="p-4 align-middle">{job.location}</td>
                         <td className="p-4 align-middle">{job.salary}</td>
+                        <td className="p-4 align-middle">
+                          <div className="text-sm">
+                            {job.deadline ? formatDate(job.deadline) : "No deadline"}
+                          </div>
+                          {job.deadline && new Date(job.deadline) <= new Date() && (
+                            <div className="text-xs text-red-600 font-medium">Expired</div>
+                          )}
+                        </td>
                         <td className="p-4 align-middle">{formatDate(job.createdAt)}</td>
                         <td className="p-4 align-middle">{getStatusBadge(job.status)}</td>
                         <td className="p-4 align-middle">
@@ -303,7 +312,7 @@ export const AdminJobs = () => {
                                 variant="ghost" 
                                 size="icon"
                                 onClick={() => handleViewDocument(job.documents[0])}
-                                title="View First Document"
+                                title="View TOR"
                               >
                                 <FileText className="h-4 w-4" />
                               </Button>
@@ -356,6 +365,13 @@ export const AdminJobs = () => {
                   Posted: {formatDate(selectedJob.createdAt)}
                 </div>
                 <div className="flex items-center text-sm text-muted-foreground">
+                  <Clock className="h-4 w-4 mr-1" />
+                  Deadline: {selectedJob.deadline ? formatDate(selectedJob.deadline) : "No deadline"}
+                  {selectedJob.deadline && new Date(selectedJob.deadline) <= new Date() && (
+                    <span className="ml-2 text-red-600 font-medium">(Expired)</span>
+                  )}
+                </div>
+                <div className="flex items-center text-sm text-muted-foreground">
                   <Award className="h-4 w-4 mr-1" />
                   Required Certificates: {selectedJob.certificateRequirements?.join(", ")}
                 </div>
@@ -389,14 +405,14 @@ export const AdminJobs = () => {
 
               {selectedJob.documents && selectedJob.documents.length > 0 && (
                 <div className="space-y-2">
-                  <h4 className="font-medium">Job Documents</h4>
+                  <h4 className="font-medium">TOR</h4>
                   <div className="space-y-2">
                     {selectedJob.documents.map((doc, index) => (
                       <div key={index} className="flex items-center justify-between bg-muted p-2 rounded-md">
                         <div className="flex items-center space-x-2">
                           <FileText className="h-4 w-4" />
                           <div className="flex flex-col">
-                            <span className="text-sm font-medium">{doc.documentName}</span>
+                            <span className="text-sm font-medium">TOR</span>
                             <span className="text-xs text-muted-foreground">
                               Uploaded: {formatDate(doc.uploadedAt)}
                             </span>

@@ -9,10 +9,15 @@ import Student from "../models/student.model.js";
 const addSignedUrlToRecord = async (record) => {
   if (!record) return record;
   const recordObj = record.toObject ? record.toObject() : record;
-  if (recordObj.filePublicId) {
-    recordObj.signedUrl = await cloudinaryUtils.generateSignedUrl(
-      recordObj.filePublicId,
-      3600
+  if (recordObj.documents && recordObj.documents.length > 0) {
+    recordObj.documents = await Promise.all(
+      recordObj.documents.map(async (doc) => ({
+        ...doc,
+        signedUrl: await cloudinaryUtils.generateSignedUrl(
+          doc.filePublicId,
+          3600
+        ),
+      }))
     );
   }
   return recordObj;
@@ -71,6 +76,7 @@ export const createJob = async (req, res, next) => {
       certificateRequirements,
       category,
       customCategory,
+      deadline,
     } = req.body;
 
     // Get company ID from authenticated user
@@ -142,6 +148,29 @@ export const createJob = async (req, res, next) => {
       });
     }
 
+    // Validate deadline
+    if (!deadline) {
+      return res.status(400).json({
+        success: false,
+        message: "Deadline is required",
+      });
+    }
+
+    const deadlineDate = new Date(deadline);
+    if (isNaN(deadlineDate.getTime())) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid deadline date format",
+      });
+    }
+
+    if (deadlineDate <= new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: "Deadline must be in the future",
+      });
+    }
+
     // Process uploaded files
     const documents = req.files.map((file) => ({
       documentUrl: file.path,
@@ -162,6 +191,7 @@ export const createJob = async (req, res, next) => {
       category: jobCategory,
       customCategory: jobCategory === "Other" ? customCategory?.trim() : undefined,
       certificateRequirements: certificateRequirementsArray,
+      deadline: deadlineDate,
       documents,
     });
 
@@ -209,6 +239,9 @@ export const getAllJobs = async (req, res, next) => {
         });
       }
     }
+
+    // Filter out expired jobs (deadline has passed)
+    query.deadline = { $gt: new Date() };
 
     // If the request is from a student, filter jobs based on their skills
     if (req.user?.userType === "Student") {
@@ -261,6 +294,9 @@ export const getMyJobs = async (req, res, next) => {
         });
       }
     }
+
+    // Filter out expired jobs (deadline has passed)
+    query.deadline = { $gt: new Date() };
 
     const jobs = await Job.find(query).sort({ createdAt: -1 });
 
@@ -403,6 +439,26 @@ export const updateJob = async (req, res, next) => {
       if (updates.category !== "Other") {
         updates.customCategory = undefined;
       }
+    }
+
+    // Handle deadline updates
+    if (updates.deadline) {
+      const deadlineDate = new Date(updates.deadline);
+      if (isNaN(deadlineDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid deadline date format",
+        });
+      }
+
+      if (deadlineDate <= new Date()) {
+        return res.status(400).json({
+          success: false,
+          message: "Deadline must be in the future",
+        });
+      }
+
+      updates.deadline = deadlineDate;
     }
 
     // Handle customCategory updates

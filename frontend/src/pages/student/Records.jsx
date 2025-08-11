@@ -69,6 +69,7 @@ export const StudentRecords = () => {
   const [records, setRecords] = useState([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showReuploadDialog, setShowReuploadDialog] = useState(false);
+  const [showDocumentsDialog, setShowDocumentsDialog] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   
   // State for new record form
@@ -79,7 +80,7 @@ export const StudentRecords = () => {
   const [customTitle, setCustomTitle] = useState("");
   const [gpa, setGpa] = useState("");
   const [institutionId, setInstitutionId] = useState("");
-  const [document, setDocument] = useState(null);
+  const [documents, setDocuments] = useState([]);
   const fileInputRef = useRef(null);
   const reuploadFileInputRef = useRef(null);
   const [institutions, setInstitutions] = useState([]);
@@ -87,14 +88,20 @@ export const StudentRecords = () => {
 
   const handleFileChange = (e) => {
     if (e.target.files.length > 0) {
-      setDocument(e.target.files[0]);
+      const newFiles = Array.from(e.target.files);
+      setDocuments(prev => [...prev, ...newFiles]);
     }
   };
 
   const handleReuploadFileChange = (e) => {
     if (e.target.files.length > 0) {
-      setDocument(e.target.files[0]);
+      const newFiles = Array.from(e.target.files);
+      setDocuments(prev => [...prev, ...newFiles]);
     }
+  };
+
+  const removeDocument = (index) => {
+    setDocuments(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleViewRecord = (id) => {
@@ -106,7 +113,65 @@ export const StudentRecords = () => {
   };
 
   const handleDownloadRecord = (record) => {
-    if (!record?.signedUrl) {
+    if (!record?.documents || record.documents.length === 0) {
+      toast({
+        title: "Error",
+        description: "No documents available for download",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // If only one document, download it directly
+    if (record.documents.length === 1) {
+      const document = record.documents[0];
+      if (!document?.signedUrl) {
+        toast({
+          title: "Error",
+          description: "Secure download link not available",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Determine file extension based on file URL
+      let extension = 'pdf';
+      if (document.fileUrl?.toLowerCase().endsWith('.doc')) extension = 'doc';
+      if (document.fileUrl?.toLowerCase().endsWith('.docx')) extension = 'docx';
+      
+      // Generate filename from record info if available
+      const filename = record ? 
+        `${record.recordType}_${record.title.replace(/\s+/g, '_')}.${extension}` : 
+        `academic_record.${extension}`;
+      
+      // Try to open the file in a new tab
+      const newWindow = window.open(document.signedUrl, '_blank');
+      
+      // If the window was blocked or failed to open
+      if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+        // Create a temporary anchor element
+        const link = document.createElement('a');
+        link.href = document.signedUrl;
+        link.setAttribute('download', filename);
+        link.setAttribute('target', '_blank');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast({
+          title: "Download Started",
+          description: "If the file doesn't open automatically, check your downloads folder",
+        });
+      }
+    } else {
+      // Multiple documents - show document selection dialog
+      setSelectedRecord(record);
+      setShowDocumentsDialog(true);
+    }
+  };
+
+  const handleViewDocument = (document) => {
+    if (!document?.signedUrl) {
       toast({
         title: "Error",
         description: "Secure download link not available",
@@ -115,35 +180,8 @@ export const StudentRecords = () => {
       return;
     }
     
-    // Determine file extension based on file URL
-    let extension = 'pdf';
-    if (record.fileUrl?.toLowerCase().endsWith('.doc')) extension = 'doc';
-    if (record.fileUrl?.toLowerCase().endsWith('.docx')) extension = 'docx';
-    
-    // Generate filename from record info if available
-    const filename = record ? 
-      `${record.recordType}_${record.title.replace(/\s+/g, '_')}.${extension}` : 
-      `academic_record.${extension}`;
-    
-    // Try to open the file in a new tab
-    const newWindow = window.open(record.signedUrl, '_blank');
-    
-    // If the window was blocked or failed to open
-    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-      // Create a temporary anchor element
-      const link = document.createElement('a');
-      link.href = record.signedUrl;
-      link.setAttribute('download', filename);
-      link.setAttribute('target', '_blank');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      toast({
-        title: "Download Started",
-        description: "If the file doesn't open automatically, check your downloads folder",
-      });
-    }
+    // Open document in new tab
+    window.open(document.signedUrl, '_blank');
   };
 
   const handleShareRecord = (hash) => {
@@ -216,10 +254,10 @@ export const StudentRecords = () => {
     e.preventDefault();
     
     // Enhanced validation
-    if (!recordType || !degreeLevel || !field || !document || !institutionId || !gpa) {
+    if (!recordType || !degreeLevel || !field || documents.length === 0 || !institutionId || !gpa) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields and upload a document",
+        description: "Please fill in all required fields and upload at least one document",
         variant: "destructive",
       });
       return;
@@ -265,25 +303,31 @@ export const StudentRecords = () => {
       return;
     }
     
-    // Check file size (max 10MB)
-    if (document.size > 10 * 1024 * 1024) {
-      toast({
-        title: "File Too Large",
-        description: "The file must be less than 10MB",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Check file type (PDF, DOC, DOCX)
+    // Check file sizes and types for all documents
     const allowedTypes = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
-    if (!allowedTypes.includes(document.type)) {
-      toast({
-        title: "Invalid File Type",
-        description: "Please upload a PDF or Word document",
-        variant: "destructive",
-      });
-      return;
+    
+    for (let i = 0; i < documents.length; i++) {
+      const doc = documents[i];
+      
+      // Check file size (max 10MB)
+      if (doc.size > 10 * 1024 * 1024) {
+        toast({
+          title: "File Too Large",
+          description: `${doc.name} must be less than 10MB`,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Check file type (PDF, DOC, DOCX)
+      if (!allowedTypes.includes(doc.type)) {
+        toast({
+          title: "Invalid File Type",
+          description: `${doc.name} must be a PDF or Word document`,
+          variant: "destructive",
+        });
+        return;
+      }
     }
     
     setSubmitting(true);
@@ -298,7 +342,10 @@ export const StudentRecords = () => {
       formData.append("field", field);
       formData.append("institutionId", institutionId);
       formData.append("gpa", gpa);
-      formData.append("documents", document);
+      // Append all documents
+      documents.forEach((doc) => {
+        formData.append("documents", doc);
+      });
       
       // Submit record
       const response = await api.post("/records", formData, {
@@ -320,7 +367,7 @@ export const StudentRecords = () => {
       setCustomTitle("");
       setGpa("");
       setInstitutionId("");
-      setDocument(null);
+      setDocuments([]);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -346,34 +393,40 @@ export const StudentRecords = () => {
   const handleReuploadRecord = async (e) => {
     e.preventDefault();
     
-    if (!selectedRecord || !document) {
+    if (!selectedRecord || documents.length === 0) {
       toast({
         title: "Missing Information",
-        description: "Please select a document to upload",
+        description: "Please select at least one document to upload",
         variant: "destructive",
       });
       return;
     }
     
-    // Check file size (max 10MB)
-    if (document.size > 10 * 1024 * 1024) {
-      toast({
-        title: "File Too Large",
-        description: "The file must be less than 10MB",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Check file type (PDF, DOC, DOCX)
+    // Check file sizes and types for all documents
     const allowedTypes = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
-    if (!allowedTypes.includes(document.type)) {
-      toast({
-        title: "Invalid File Type",
-        description: "Please upload a PDF or Word document",
-        variant: "destructive",
-      });
-      return;
+    
+    for (let i = 0; i < documents.length; i++) {
+      const doc = documents[i];
+      
+      // Check file size (max 10MB)
+      if (doc.size > 10 * 1024 * 1024) {
+        toast({
+          title: "File Too Large",
+          description: `${doc.name} must be less than 10MB`,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Check file type (PDF, DOC, DOCX)
+      if (!allowedTypes.includes(doc.type)) {
+        toast({
+          title: "Invalid File Type",
+          description: `${doc.name} must be a PDF or Word document`,
+          variant: "destructive",
+        });
+        return;
+      }
     }
     
     setSubmitting(true);
@@ -381,7 +434,10 @@ export const StudentRecords = () => {
     try {
       // Create form data
       const formData = new FormData();
-      formData.append("documents", document);
+      // Append all documents
+      documents.forEach((doc) => {
+        formData.append("documents", doc);
+      });
       
       // Update record
       const response = await api.put(`/records/${selectedRecord._id}`, formData, {
@@ -396,7 +452,7 @@ export const StudentRecords = () => {
       });
       
       // Reset form
-      setDocument(null);
+      setDocuments([]);
       if (reuploadFileInputRef.current) {
         reuploadFileInputRef.current.value = "";
       }
@@ -676,28 +732,49 @@ export const StudentRecords = () => {
 
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="document" className="col-span-1">
-                    Document
+                    Documents
                   </Label>
-                  <div
-                    className="col-span-3 border rounded-md p-4 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Upload className="h-6 w-6 text-muted-foreground" />
-                    {document ? (
-                      <p className="text-sm font-medium">{document.name}</p>
-                    ) : (
+                  <div className="col-span-3 space-y-2">
+                    <div
+                      className="border rounded-md p-4 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload className="h-6 w-6 text-muted-foreground" />
                       <p className="text-sm text-muted-foreground">
-                        Click to upload a PDF or Word document
+                        Click to upload PDF or Word documents
                       </p>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        id="document"
+                        multiple
+                        accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                    </div>
+                    
+                    {documents.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">Selected files:</p>
+                        <div className="space-y-1">
+                          {documents.map((doc, index) => (
+                            <div key={index} className="flex items-center justify-between bg-muted p-2 rounded text-sm">
+                              <span>{doc.name}</span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeDocument(index)}
+                                className="h-6 px-2"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     )}
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      id="document"
-                      accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                      onChange={handleFileChange}
-                      className="hidden"
-                    />
                   </div>
                 </div>
               </div>
@@ -780,7 +857,7 @@ export const StudentRecords = () => {
                             onClick={() => handleDownloadRecord(record)}
                           >
                             <Download className="h-3 w-3 mr-1" />
-                            PDF
+                            {record.documents?.length > 1 ? `${record.documents.length} Docs` : 'PDF'}
                           </Button>
                           {record.status === 'verified' && (
                             <Button 
@@ -842,28 +919,49 @@ export const StudentRecords = () => {
                 )}
                 
                 <div className="space-y-2">
-                  <Label htmlFor="reupload-document">Upload New Document</Label>
-                  <div
-                    className="border rounded-md p-4 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors"
-                    onClick={() => reuploadFileInputRef.current?.click()}
-                  >
-                    <UploadCloud className="h-6 w-6 text-muted-foreground" />
-                    {document ? (
-                      <p className="text-sm font-medium">{document.name}</p>
-                    ) : (
+                  <Label htmlFor="reupload-document">Upload New Documents</Label>
+                  <div className="space-y-2">
+                    <div
+                      className="border rounded-md p-4 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => reuploadFileInputRef.current?.click()}
+                    >
+                      <UploadCloud className="h-6 w-6 text-muted-foreground" />
                       <p className="text-sm text-muted-foreground">
-                        Click to upload a new PDF or Word document
+                        Click to upload new PDF or Word documents
                       </p>
+                      <input
+                        ref={reuploadFileInputRef}
+                        type="file"
+                        id="reupload-document"
+                        multiple
+                        accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        onChange={handleReuploadFileChange}
+                        className="hidden"
+                        required
+                      />
+                    </div>
+                    
+                    {documents.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">Selected files:</p>
+                        <div className="space-y-1">
+                          {documents.map((doc, index) => (
+                            <div key={index} className="flex items-center justify-between bg-muted p-2 rounded text-sm">
+                              <span>{doc.name}</span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeDocument(index)}
+                                className="h-6 px-2"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     )}
-                    <input
-                      ref={reuploadFileInputRef}
-                      type="file"
-                      id="reupload-document"
-                      accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                      onChange={handleReuploadFileChange}
-                      className="hidden"
-                      required
-                    />
                   </div>
                 </div>
               </div>
@@ -871,7 +969,7 @@ export const StudentRecords = () => {
                 <Button type="button" variant="outline" onClick={() => {
                   setShowReuploadDialog(false);
                   setSelectedRecord(null);
-                  setDocument(null);
+                  setDocuments([]);
                   if (reuploadFileInputRef.current) {
                     reuploadFileInputRef.current.value = "";
                   }
@@ -894,6 +992,64 @@ export const StudentRecords = () => {
               </DialogFooter>
             </form>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Documents Selection Dialog */}
+      <Dialog open={showDocumentsDialog} onOpenChange={setShowDocumentsDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>View Documents</DialogTitle>
+            <DialogDescription>
+              Select a document to view or download
+            </DialogDescription>
+          </DialogHeader>
+          {selectedRecord && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <h3 className="font-medium">{selectedRecord.title}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {selectedRecord.recordType} • {selectedRecord.institutionId?.name}
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <h4 className="font-medium">Documents ({selectedRecord.documents?.length || 0})</h4>
+                {selectedRecord.documents && selectedRecord.documents.length > 0 ? (
+                  <div className="space-y-2">
+                    {selectedRecord.documents.map((doc, index) => (
+                      <div key={index} className="flex items-center justify-between bg-muted p-3 rounded-md">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">{doc.documentName || `Document ${index + 1}`}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {doc.documentType} • {new Date(doc.uploadedAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewDocument(doc)}
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          View
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No documents available</p>
+                )}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowDocumentsDialog(false)}
+            >
+              Close
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

@@ -27,14 +27,28 @@ const academicRecordSchema = new mongoose.Schema(
       min: 0,
       max: 4.0,
     },
-    fileUrl: {
-      type: String,
-      required: true,
-    },
-    filePublicId: {
-      type: String,
-      required: true,
-    },
+    documents: [{
+      fileUrl: {
+        type: String,
+        required: true,
+      },
+      filePublicId: {
+        type: String,
+        required: true,
+      },
+      documentName: {
+        type: String,
+        required: true,
+      },
+      documentType: {
+        type: String,
+        required: true,
+      },
+      uploadedAt: {
+        type: Date,
+        default: Date.now,
+      },
+    }],
     hash: {
       type: String,
       required: true,

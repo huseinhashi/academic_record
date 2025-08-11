@@ -95,6 +95,7 @@ export const CompanyJobs = () => {
     category: "",
     customCategory: "",
     certificateRequirements: ["all"],
+    deadline: "",
     documents: [], // Array to store selected files
     status: "open",
   });
@@ -200,6 +201,26 @@ export const CompanyJobs = () => {
       return;
     }
 
+    // Deadline validation
+    if (!formData.deadline) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a deadline for the job",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const deadlineDate = new Date(formData.deadline);
+    if (deadlineDate <= new Date()) {
+      toast({
+        title: "Invalid Deadline",
+        description: "Deadline must be in the future",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Category validation
     if (!formData.category) {
       toast({
@@ -243,6 +264,7 @@ export const CompanyJobs = () => {
         formDataToSend.append("customCategory", formData.customCategory.trim());
       }
       formDataToSend.append("certificateRequirements", JSON.stringify(formData.certificateRequirements));
+      formDataToSend.append("deadline", formData.deadline);
       formDataToSend.append("status", formData.status);
       
       // Append all documents
@@ -284,6 +306,7 @@ export const CompanyJobs = () => {
         category: "",
         customCategory: "",
         certificateRequirements: ["all"],
+        deadline: "",
         documents: [],
         status: "open",
       });
@@ -422,6 +445,7 @@ export const CompanyJobs = () => {
       category: job.category || "",
       customCategory: job.customCategory || "",
       certificateRequirements: job.certificateRequirements || ["all"],
+      deadline: job.deadline ? new Date(job.deadline).toISOString().split('T')[0] : "",
       documents: [], // Reset documents array when editing
     });
     setCurrentAction("edit");
@@ -696,6 +720,7 @@ export const CompanyJobs = () => {
                       <th className="h-12 px-4 text-left align-middle font-medium">Description</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Category</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Location</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium">Deadline</th>
                       <th 
                         className="h-12 px-4 text-left align-middle font-medium cursor-pointer"
                         onClick={() => requestSort("createdAt")}
@@ -727,6 +752,14 @@ export const CompanyJobs = () => {
                             </Badge>
                           </td>
                           <td className="p-4 align-middle">{job.location}</td>
+                          <td className="p-4 align-middle">
+                            <div className="text-sm">
+                              {job.deadline ? formatDate(job.deadline) : "No deadline"}
+                            </div>
+                            {job.deadline && new Date(job.deadline) <= new Date() && (
+                              <div className="text-xs text-red-600 font-medium">Expired</div>
+                            )}
+                          </td>
                           <td className="p-4 align-middle">{formatDate(job.createdAt)}</td>
                           <td className="p-4 align-middle">
                             <div className="flex items-center">
@@ -754,7 +787,7 @@ export const CompanyJobs = () => {
                                 {job.documentUrl && (
                                   <DropdownMenuItem onClick={() => handleViewDocument(job)}>
                                     <FileText className="h-4 w-4 mr-2" />
-                                    View Job Document
+                                    View TOR
                                   </DropdownMenuItem>
                                 )}
                                 <DropdownMenuItem onClick={() => handleEditJob(job)}>
@@ -1012,6 +1045,22 @@ export const CompanyJobs = () => {
               )}
 
               <div className="space-y-2">
+                <Label htmlFor="deadline">Application Deadline</Label>
+                <Input
+                  id="deadline"
+                  type="date"
+                  name="deadline"
+                  value={formData.deadline}
+                  onChange={handleInputChange}
+                  min={new Date().toISOString().split('T')[0]}
+                  required
+                />
+                <p className="text-sm text-muted-foreground">
+                  Select the deadline for job applications
+                </p>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="certificateRequirements">Required Certificates</Label>
                 <Select
                   name="certificateRequirements"
@@ -1031,7 +1080,7 @@ export const CompanyJobs = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="documents">Job Documents</Label>
+                <Label htmlFor="documents">TOR</Label>
                 <div className="space-y-2">
                 <Input
                     id="documents"
@@ -1047,7 +1096,7 @@ export const CompanyJobs = () => {
                   }}
                 />
                 <p className="text-sm text-muted-foreground">
-                    Upload job description documents (PDF, DOC, or DOCX). First document is required.
+                    Upload Terms of Reference (TOR) documents (PDF, DOC, or DOCX). First document is required.
                 </p>
                   {formData.documents.length > 0 && (
                     <div className="space-y-2 mt-2">
@@ -1135,7 +1184,22 @@ export const CompanyJobs = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      if (record.signedUrl) {
+                      if (record?.documents && record.documents.length > 0) {
+                        // Open the first document
+                        const document = record.documents[0];
+                        if (document?.signedUrl) {
+                          window.open(document.signedUrl, "_blank");
+                        } else if (document?.fileUrl) {
+                          window.open(document.fileUrl, "_blank");
+                        } else {
+                          toast({
+                            title: "Error",
+                            description: "Document is not available for viewing",
+                            variant: "destructive",
+                          });
+                        }
+                      } else if (record.signedUrl) {
+                        // Fallback for old format
                         window.open(record.signedUrl, "_blank");
                       } else if (record.fileUrl) {
                         window.open(record.fileUrl, "_blank");
@@ -1257,7 +1321,22 @@ export const CompanyJobs = () => {
                           variant="link" 
                           className="p-0 h-auto mt-1"
                           onClick={() => {
-                            if (record.signedUrl) {
+                            if (record?.documents && record.documents.length > 0) {
+                              // Open the first document
+                              const document = record.documents[0];
+                              if (document?.signedUrl) {
+                                window.open(document.signedUrl, '_blank');
+                              } else if (document?.fileUrl) {
+                                window.open(document.fileUrl, '_blank');
+                              } else {
+                                toast({
+                                  title: "Error",
+                                  description: "Document is not available for viewing",
+                                  variant: "destructive"
+                                });
+                              }
+                            } else if (record.signedUrl) {
+                              // Fallback for old format
                               window.open(record.signedUrl, '_blank');
                             } else if (record.fileUrl) {
                               window.open(record.fileUrl, '_blank');

@@ -16,10 +16,15 @@ const addSignedUrlsToRecords = async (records) => {
     const recordsWithUrls = await Promise.all(
       records.map(async (record) => {
         const recordObj = record.toObject ? record.toObject() : record;
-        if (recordObj.filePublicId) {
-          recordObj.signedUrl = await cloudinaryUtils.generateSignedUrl(
-            recordObj.filePublicId,
+        if (recordObj.documents && recordObj.documents.length > 0) {
+          recordObj.documents = await Promise.all(
+            recordObj.documents.map(async (doc) => ({
+              ...doc,
+              signedUrl: await cloudinaryUtils.generateSignedUrl(
+                doc.filePublicId,
             3600 // URL valid for 1 hour
+              ),
+            }))
           );
         }
         return recordObj;
@@ -29,10 +34,15 @@ const addSignedUrlsToRecords = async (records) => {
   } else {
     // Handle single record
     const recordObj = records.toObject ? records.toObject() : records;
-    if (recordObj.filePublicId) {
-      recordObj.signedUrl = await cloudinaryUtils.generateSignedUrl(
-        recordObj.filePublicId,
+    if (recordObj.documents && recordObj.documents.length > 0) {
+      recordObj.documents = await Promise.all(
+        recordObj.documents.map(async (doc) => ({
+          ...doc,
+          signedUrl: await cloudinaryUtils.generateSignedUrl(
+            doc.filePublicId,
         3600 // URL valid for 1 hour
+          ),
+        }))
       );
     }
     return recordObj;
@@ -42,16 +52,14 @@ const addSignedUrlsToRecords = async (records) => {
 // Create a new academic record (by student)
 export const createAcademicRecord = async (req, res, next) => {
   try {
-    // File is available as req.files[0] thanks to multer middleware
+    // Files are available as req.files thanks to multer middleware
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({
         success: false,
-        message: "No file was uploaded",
+        message: "No files were uploaded",
       });
     }
 
-    // For academic records, we only use the first file
-    const file = req.files[0];
     const { recordType, title, institutionId, gpa } = req.body;
 
     // Validate GPA
@@ -91,13 +99,14 @@ export const createAcademicRecord = async (req, res, next) => {
       .substring(2, 15)}`;
     const hash = crypto.createHash("sha256").update(uniqueStr).digest("hex");
 
-    const filePublicId = file.filename;
-
-    // Generate a temporary signed URL (valid for 1 hour) to return to the client
-    const signedUrl = await cloudinaryUtils.generateSignedUrl(
-      filePublicId,
-      3600
-    );
+    // Process all uploaded files
+    const documents = req.files.map((file) => ({
+      fileUrl: file.path,
+      filePublicId: file.filename,
+      documentName: file.originalname,
+      documentType: file.mimetype,
+      uploadedAt: new Date(),
+    }));
 
     // Create the academic record
     const academicRecord = await AcademicRecord.create({
@@ -106,19 +115,18 @@ export const createAcademicRecord = async (req, res, next) => {
       recordType,
       title,
       gpa: gpaValue,
-      fileUrl: file.path,
-      filePublicId: filePublicId,
+      documents,
       hash,
       status: "pending", // Initially pending until institution verifies
     });
 
-    // Return the record with a temporary signed URL
+    // Add signed URLs to documents
+    const recordWithUrls = await addSignedUrlsToRecords(academicRecord);
+
+    // Return the record with signed URLs
     res.status(201).json({
       success: true,
-      data: {
-        ...academicRecord.toObject(),
-        signedUrl: signedUrl,
-      },
+      data: recordWithUrls,
     });
   } catch (error) {
     // If there's an error, cleanup any uploaded files
@@ -401,16 +409,13 @@ export const updateAcademicRecord = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    // File is available as req.files[0] thanks to multer middleware
+    // Files are available as req.files thanks to multer middleware
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({
         success: false,
-        message: "No file was uploaded",
+        message: "No files were uploaded",
       });
     }
-
-    // For academic records, we only use the first file
-    const file = req.files[0];
 
     const record = await AcademicRecord.findById(id);
 
@@ -449,31 +454,35 @@ export const updateAcademicRecord = async (req, res, next) => {
       });
     }
 
-    // Delete the old file from Cloudinary
-    if (record.filePublicId) {
-      await cloudinaryUtils.deleteFile(record.filePublicId);
+    // Delete the old documents from Cloudinary
+    if (record.documents && record.documents.length > 0) {
+      await Promise.all(
+        record.documents.map((doc) => cloudinaryUtils.deleteFile(doc.filePublicId))
+      );
     }
 
-    // Update the record with new file information
-    record.fileUrl = file.path;
-    record.filePublicId = file.filename;
+    // Process all uploaded files
+    const documents = req.files.map((file) => ({
+      fileUrl: file.path,
+      filePublicId: file.filename,
+      documentName: file.originalname,
+      documentType: file.mimetype,
+      uploadedAt: new Date(),
+    }));
+
+    // Update the record with new documents
+    record.documents = documents;
     record.status = "pending"; // Reset status to pending for new verification
     record.rejectionReason = null; // Clear rejection reason
 
     await record.save();
 
-    // Generate a new signed URL
-    const signedUrl = await cloudinaryUtils.generateSignedUrl(
-      record.filePublicId,
-      3600
-    );
+    // Add signed URLs to documents
+    const recordWithUrls = await addSignedUrlsToRecords(record);
 
     res.status(200).json({
       success: true,
-      data: {
-        ...record.toObject(),
-        signedUrl,
-      },
+      data: recordWithUrls,
     });
   } catch (error) {
     // If there's an error, cleanup any uploaded files
@@ -556,9 +565,11 @@ export const deleteAcademicRecord = async (req, res, next) => {
       });
     }
 
-    // Delete file from Cloudinary if it exists
-    if (record.filePublicId) {
-      await cloudinaryUtils.deleteFile(record.filePublicId);
+    // Delete documents from Cloudinary if they exist
+    if (record.documents && record.documents.length > 0) {
+      await Promise.all(
+        record.documents.map((doc) => cloudinaryUtils.deleteFile(doc.filePublicId))
+      );
     }
 
     await record.deleteOne();

@@ -162,6 +162,16 @@ export const StudentJobs = () => {
     if (!selectedJob) {
       return;
     }
+
+    // Check if job deadline has passed
+    if (selectedJob.deadline && new Date(selectedJob.deadline) <= new Date()) {
+      toast({
+        title: "Application Deadline Passed",
+        description: "Cannot apply to this job. The application deadline has passed.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     if (!coverLetter.trim()) {
       toast({
@@ -267,7 +277,22 @@ export const StudentJobs = () => {
 
   // Add a function to view academic record documents
   const handleViewDocument = (record) => {
-    if (record?.signedUrl) {
+    if (record?.documents && record.documents.length > 0) {
+      // Open the first document
+      const document = record.documents[0];
+      if (document?.signedUrl) {
+        window.open(document.signedUrl, '_blank');
+      } else if (document?.fileUrl) {
+        window.open(document.fileUrl, '_blank');
+      } else {
+        toast({
+          title: "Error",
+          description: "Document is not available for viewing",
+          variant: "destructive"
+        });
+      }
+    } else if (record?.signedUrl) {
+      // Fallback for old format
       window.open(record.signedUrl, '_blank');
     } else if (record?.fileUrl) {
       window.open(record.fileUrl, '_blank');
@@ -355,6 +380,7 @@ export const StudentJobs = () => {
                       <th className="h-12 px-4 text-left align-middle font-medium">Company</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Category</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Location</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium">Deadline</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Posted</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Actions</th>
@@ -371,6 +397,14 @@ export const StudentJobs = () => {
                             </Badge>
                           </td>
                           <td className="p-4 align-middle">{job.location}</td>
+                        <td className="p-4 align-middle">
+                          <div className="text-sm">
+                            {job.deadline ? formatDate(job.deadline) : "No deadline"}
+                          </div>
+                          {job.deadline && new Date(job.deadline) <= new Date() && (
+                            <div className="text-xs text-red-600 font-medium">Expired</div>
+                          )}
+                        </td>
                         <td className="p-4 align-middle">{formatDate(job.createdAt)}</td>
                         <td className="p-4 align-middle">
                           <Badge variant={job.status === "open" ? "outline" : "secondary"}>
@@ -658,7 +692,7 @@ export const StudentJobs = () => {
 
               {selectedJob.documentUrl && (
                 <div className="space-y-2">
-                  <h4 className="font-medium">Job Terms Document</h4>
+                  <h4 className="font-medium">TOR</h4>
                   <Button
                     variant="outline"
                     className="w-full"
@@ -681,14 +715,14 @@ export const StudentJobs = () => {
               )}
 
               {selectedJob?.documents && selectedJob.documents.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="font-medium">Job Documents</h4>
+                              <div className="space-y-2">
+                <h4 className="font-medium">TOR</h4>
                   <div className="space-y-2">
                     {selectedJob.documents.map((doc, index) => (
                       <div key={index} className="flex items-center justify-between bg-muted p-2 rounded-md">
                         <div className="flex items-center space-x-2">
                           <FileText className="h-4 w-4" />
-                          <span className="text-sm">{doc.documentName}</span>
+                          <span className="text-sm">TOR</span>
                         </div>
                         <Button
                           variant="ghost"

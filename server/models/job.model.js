@@ -104,6 +104,17 @@ const jobSchema = new mongoose.Schema(
       enum: ["specialty", "profession", "all"],
       default: ["all"],
     },
+    deadline: {
+      type: Date,
+      required: true,
+      validate: {
+        validator: function(value) {
+          // Deadline must be in the future
+          return value > new Date();
+        },
+        message: "Deadline must be in the future"
+      }
+    },
     hiredApplicant: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Student",
