@@ -85,6 +85,7 @@ export const JobDetails = () => {
   const [showInterviewDialog, setShowInterviewDialog] = useState(false);
   const [selectedInterview, setSelectedInterview] = useState(null);
   const [showDocumentsDialog, setShowDocumentsDialog] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState(null);
   const [interviews, setInterviews] = useState({});
   const [loadingInterviews, setLoadingInterviews] = useState({});
   
